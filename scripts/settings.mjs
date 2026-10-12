@@ -26,6 +26,7 @@ ${okresy.map(([name, code]) => `  - ${q(name)}: ${code}`).join("\n")}
   - "Today and tomorrow": today_tomorrow
   - "Next 24 hours": next_24h
   - "5 days": five_days
+  - "Weekend": weekend
   default: today_tomorrow
 - keyname: place
   field_type: string

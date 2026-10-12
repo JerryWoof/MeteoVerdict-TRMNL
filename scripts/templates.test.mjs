@@ -12,7 +12,7 @@ import { freezeTime, renderLayout } from "./render.mjs";
 const PRAHA = JSON.parse(readFileSync(new URL("../test/fixtures/CZ0100.json", import.meta.url)));
 const BRNO = JSON.parse(readFileSync(new URL("../test/fixtures/CZ0642.json", import.meta.url)));
 const CASES = [
-  ["full", "today_tomorrow"], ["full", "next_24h"], ["full", "five_days"],
+  ["full", "today_tomorrow"], ["full", "next_24h"], ["full", "five_days"], ["full", "weekend"],
   ["half_horizontal"], ["half_vertical"], ["quadrant"],
 ];
 // the saved files are from 12 October 2026, 15:20 UTC
@@ -30,7 +30,7 @@ for (const time of TIMES) {
         assert.doesNotMatch(html, /points=""|="NaN/);
         assert.match(words, /Praha/);
         assert.match(words, /\d+°/);
-        if (lang === "cs") assert.match(words, /Dnes|Zítra|Příštích|Předpověď/);
+        if (lang === "cs") assert.match(words, /Dnes|Zítra|Příštích|Předpověď|sobota|neděle/);
       });
     }
   }
@@ -154,6 +154,53 @@ test("the second day says how much warmer or colder", async () => {
   const warm = variant((f) => { for (const p of f.parts) if (p.day === "2026-10-13") p.tmax += 6; });
   assert.match(text(await renderLayout("full", warm, {})), /\d+° warmer/);
   assert.match(text(await renderLayout("full", warm, { lang: "cs" })), /o \d+° tepleji/);
+});
+
+// the saved Prague file a day later: 13 to 18 October, so it has the whole weekend
+const later = variant((f) => {
+  const next = (iso) => new Date(new Date(iso).getTime() + 86400000).toISOString();
+  for (const p of f.parts) p.day = next(`${p.day}T00:00:00Z`).slice(0, 10);
+  f.hourly.time = f.hourly.time.map((t) => `${next(t).slice(0, 16)}Z`);
+  f.generated = `${next(f.generated).slice(0, 16)}+00:00`;
+});
+
+test("weekend: on a weekday the coming Saturday and Sunday", async () => {
+  freezeTime("2026-10-14T10:00:00Z"); // Wednesday
+  const words = text(await renderLayout("full", later, { view: "weekend" }));
+  assert.match(words, /Saturday 17 October .* Sunday 18 October/);
+  assert.doesNotMatch(words, /beyond the forecast|Today|Wednesday/);
+  const sunday = later.forecast.parts.find((p) => p.day === "2026-10-18" && p.part === "day");
+  assert.match(words, new RegExp(`Sunday 18 October .*${Math.round(sunday.tmax)}°`));
+});
+
+test("weekend: on Saturday this weekend, on Sunday Sunday and Monday", async () => {
+  freezeTime("2026-10-17T10:00:00Z");
+  const sat = text(await renderLayout("full", later, { view: "weekend", lang: "cs" }));
+  assert.match(sat, /sobota 17\. října .* neděle 18\. října/);
+  assert.doesNotMatch(sat, /mimo předpověď/);
+  freezeTime("2026-10-18T10:00:00Z");
+  const sun = text(await renderLayout("full", later, { view: "weekend" }));
+  assert.match(sun, /Sunday 18 October .* Monday 19 October Monday is beyond the forecast/);
+  assert.doesNotMatch(sun, /Saturday/);
+});
+
+test("weekend: a day beyond the forecast gets a note; no weekend at all says so", async () => {
+  freezeTime("2026-10-12T10:00:00Z"); // Monday: the data ends on Saturday
+  const words = text(await renderLayout("full", PRAHA, { view: "weekend" }));
+  assert.match(words, /Saturday 17 October .* Sunday 18 October Sunday is beyond the forecast/);
+  assert.match(text(await renderLayout("full", PRAHA, { view: "weekend", lang: "cs" })), /Neděle je mimo předpověď/);
+  const short = variant((f) => { f.parts = f.parts.filter((p) => p.day < "2026-10-17"); });
+  assert.match(text(await renderLayout("full", short, { view: "weekend" })), /The weekend is beyond the forecast/);
+});
+
+test("daylight says how much shorter it is than the day before", async () => {
+  freezeTime("2026-10-12T10:00:00Z");
+  const words = text(await renderLayout("full", PRAHA, {}));
+  // 12 Oct: 07:19–18:17 (no 11 Oct in the data); 13 Oct: 07:20–18:15, 3 minutes shorter
+  assert.match(words, /of 10 h 58 min Clouds/);
+  assert.match(words, /of 10 h 55 min \(−3\)/);
+  const longer = variant((f) => { for (const p of f.parts) if (p.day === "2026-10-13") p.sunset = "18:20"; });
+  assert.match(text(await renderLayout("full", longer, { lang: "cs" })), /z 11 h 0 min \(\+2\)/);
 });
 
 test("Czech time follows summer time, hour by hour", async () => {
