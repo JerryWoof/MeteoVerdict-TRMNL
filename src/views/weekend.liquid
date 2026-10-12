@@ -1,9 +1,13 @@
 {%- comment -%}
   Saturday and Sunday side by side: the coming weekend from Monday to Friday, this one on
-  Saturday, and on Sunday Sunday and Monday. A day beyond the forecast gets a note; with
-  neither day in it, the screen says so.
+  Saturday, and on Sunday Sunday and Monday. With the evening switch on, from 18:00 it
+  counts from tomorrow: on Saturday evening Sunday and Monday, on Sunday evening the next
+  weekend. A day beyond the forecast gets a note; with neither day in it, the screen says so.
 {%- endcomment -%}
 {%- assign wk_noon = days.first | append: "T12:00:00Z" -%}
+{%- if evening_switch and now_hour >= 18 -%}
+  {%- assign wk_noon = wk_noon | date: "%s" | plus: 86400 | date: "%Y-%m-%dT12:00:00Z" -%}
+{%- endif -%}
 {%- assign wk_wd = wk_noon | date: "%w" | plus: 0 -%}
 {%- if wk_wd == 0 -%}{%- assign wk_ahead = 0 -%}{%- else -%}{%- assign wk_ahead = 6 | minus: wk_wd -%}{%- endif -%}
 {%- assign wk_e = wk_noon | date: "%s" | plus: 0 -%}

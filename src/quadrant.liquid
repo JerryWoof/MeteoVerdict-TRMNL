@@ -19,6 +19,8 @@
   .mv-q .tomorrow { display: flex; align-items: center; gap: 6px; border-top: 1px solid #000; padding-top: 3px; font-size: 16px; }
   .mv-q .tomorrow svg { width: 32px; height: 32px; }
   .mv-q .tomorrow b { font-weight: 800; }
+  .mv-q .line span { white-space: nowrap; }
+  .mv-q .line small { font-size: 12px; }
 </style>
 <div class="view view--quadrant">
   <div class="layout">
@@ -37,7 +39,7 @@
       <div class="line">
         <span>{{ drop_glyph }}<b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b> {{ chance | times: 100 | round }} %</span>
         {%- if shine != nil -%}<span>{{ sun_glyph }}<b>{{ shine | round: 1 | replace: ".", T_dec }} h</b></span>{%- endif -%}
-        {%- if rise -%}<span>{{ rise_svg }}{{ rise }} {{ set_svg }}{{ set }}</span>{%- endif -%}
+        {%- if rise -%}<span>{{ rise_svg }}{{ rise }} {{ set_svg }}{{ set }}{% if light_diff_s != "" %} <small>({{ light_diff_s }})</small>{% endif %}</span>{%- endif -%}
       </div>
       {%- assign next_start = start | plus: 1 -%}
       {%- if days.size > next_start -%}

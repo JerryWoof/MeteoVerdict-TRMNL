@@ -22,7 +22,8 @@ const CASES = [
   ["quadrant", {}],
 ];
 
-// the weekend view on Friday and Saturday, and on Sunday with the file moved a day later
+// the weekend view on Friday and Saturday, and on Sunday with the file moved a day later;
+// and on Saturday and Sunday evening (the evening switch is on by default)
 const LATER = structuredClone(PRAHA);
 const next = (iso) => new Date(new Date(iso).getTime() + 86400000).toISOString();
 for (const p of LATER.forecast.parts) p.day = next(`${p.day}T00:00:00Z`).slice(0, 10);
@@ -30,7 +31,8 @@ LATER.forecast.hourly.time = LATER.forecast.hourly.time.map((t) => `${next(t).sl
 LATER.forecast.generated = `${next(LATER.forecast.generated).slice(0, 16)}+00:00`;
 const WEEKEND = [["full", { view: "weekend" }], ["full", { view: "weekend", lang: "cs" }, LATER]];
 for (const [now, cases] of [["2026-10-12T15:40:00Z", CASES], ["2026-10-12T20:10:00Z", CASES], ["2026-10-13T05:30:00Z", CASES],
-  ["2026-10-16T09:00:00Z", WEEKEND], ["2026-10-17T09:00:00Z", WEEKEND], ["2026-10-18T09:00:00Z", WEEKEND.slice(1)]]) {
+  ["2026-10-16T09:00:00Z", WEEKEND], ["2026-10-17T09:00:00Z", WEEKEND], ["2026-10-18T09:00:00Z", WEEKEND.slice(1)],
+  ["2026-10-17T17:30:00Z", WEEKEND.slice(1)], ["2026-10-18T17:30:00Z", WEEKEND.slice(1)]]) {
   for (const [layout, opts, data = PRAHA] of cases) {
     test(`ruby = liquidjs: ${layout} ${JSON.stringify(opts)}${data === PRAHA ? "" : " (a day later)"} at ${now}`, { skip }, async () => {
       const settings = { view: opts.view, language: opts.lang, wind_unit: opts.wind, place: "Praha" };

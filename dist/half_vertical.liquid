@@ -130,6 +130,7 @@
   .mv-hv .mv-sun { font-size: 16px; }
   .mv-hv .mv-facts { grid-template-columns: repeat(4, 1fr); }
   .mv-hv .mv-fact b { font-size: 17px; }
+  .mv-hv .mv-fact i { white-space: nowrap; }
   .mv-parts { display: grid; grid-template-columns: repeat(4, 1fr); text-align: center; }
   .mv-part .n { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
   .mv-part svg { width: 36px; height: 36px; display: block; margin: 0 auto; }
@@ -185,6 +186,12 @@
     {%- assign ld_set = ld_row.sunset | slice: 0, 2 | times: 60 -%}{%- assign ld_set = ld_row.sunset | slice: 3, 2 | plus: ld_set -%}
     {%- assign ld_light = ld_set | minus: ld_rise -%}{%- assign light_diff = light | minus: ld_light -%}
   {%- endif -%}
+{%- endif -%}
+{%- assign light_diff_s = "" -%}
+{%- if light_diff != nil -%}
+  {%- if light_diff > 0 -%}{%- assign light_diff_s = light_diff | prepend: "+" -%}
+  {%- elsif light_diff < 0 -%}{%- assign light_diff_s = light_diff | abs | prepend: "−" -%}
+  {%- else -%}{%- assign light_diff_s = "±0" -%}{%- endif -%}
 {%- endif -%}
 {%- assign wd = noon | date: "%w" | plus: 0 -%}
 {%- assign mo = noon | date: "%m" | plus: 0 | minus: 1 -%}
@@ -250,7 +257,7 @@
       </div>
       <div class="mv-facts">
         <div class="mv-fact"><span>{{ T_rain }}</span><b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b><i>{{ chance | times: 100 | round }} %</i></div>
-        <div class="mv-fact"><span>{{ T_sunshine }}</span><b>{% if shine != nil %}{{ shine | round: 1 | replace: ".", T_dec }} h{% else %}–{% endif %}</b><i>&nbsp;</i></div>
+        <div class="mv-fact"><span>{{ T_sunshine }}</span><b>{% if shine != nil %}{{ shine | round: 1 | replace: ".", T_dec }} h{% else %}–{% endif %}</b><i>{% if light %}{{ light | divided_by: 60 | floor }} h {{ light | modulo: 60 }} min{% if light_diff_s != "" %} ({{ light_diff_s }}){% endif %}{% else %}&nbsp;{% endif %}</i></div>
         <div class="mv-fact"><span>{{ T_clouds }}</span><b>{% if cloud != nil %}{{ cloud | round }} %{% else %}–{% endif %}</b><i>&nbsp;</i></div>
         <div class="mv-fact"><span>{{ T_wind }}</span><b>{{ wind | times: wind_k | round }} {{ wind_unit }}</b><i>&nbsp;</i></div>
       </div>
@@ -392,6 +399,12 @@
     {%- assign ld_set = ld_row.sunset | slice: 0, 2 | times: 60 -%}{%- assign ld_set = ld_row.sunset | slice: 3, 2 | plus: ld_set -%}
     {%- assign ld_light = ld_set | minus: ld_rise -%}{%- assign light_diff = light | minus: ld_light -%}
   {%- endif -%}
+{%- endif -%}
+{%- assign light_diff_s = "" -%}
+{%- if light_diff != nil -%}
+  {%- if light_diff > 0 -%}{%- assign light_diff_s = light_diff | prepend: "+" -%}
+  {%- elsif light_diff < 0 -%}{%- assign light_diff_s = light_diff | abs | prepend: "−" -%}
+  {%- else -%}{%- assign light_diff_s = "±0" -%}{%- endif -%}
 {%- endif -%}
 {%- assign wd = noon | date: "%w" | plus: 0 -%}
 {%- assign mo = noon | date: "%m" | plus: 0 | minus: 1 -%}
