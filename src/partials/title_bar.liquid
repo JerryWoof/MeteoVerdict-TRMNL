@@ -1,0 +1,10 @@
+{%- comment -%} `compact`: the short version for half and quarter screens {%- endcomment -%}
+<div class="title_bar">
+  <span class="title">{{ place }}</span>
+  {%- assign updated = forecast.generated | date: "%s" | plus: offset -%}
+  {%- if compact -%}
+  <span class="instance">MeteoVerdict · {{ updated | date: "%H:%M" }}</span>
+  {%- else -%}
+  <span class="instance">MeteoVerdict{% if models_used > 0 %} · {{ models_used }} {{ T_models }}{% endif %} · {{ T_updated }} {{ updated | date: "%-d.%-m. %H:%M" }}</span>
+  {%- endif -%}
+</div>

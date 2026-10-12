@@ -1,0 +1,49 @@
+{%- comment -%}
+  MeteoVerdict for TRMNL: quarter screen (400x240, for mashups): today at a glance and
+  tomorrow in a line. https://github.com/JerryWoof/MeteoVerdict-TRMNL
+{%- endcomment -%}
+{% include "shared" %}
+<style>
+  .mv-q { display: flex; flex-direction: column; justify-content: space-between; }
+  .mv-q .top { display: flex; justify-content: space-between; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #000; }
+  .mv-q .top span + span { font-weight: 600; text-transform: none; letter-spacing: 0; }
+  .mv-q .hero { display: flex; align-items: center; gap: 6px; }
+  .mv-q .hero > svg { width: 84px; height: 84px; flex: none; }
+  .mv-q .mv-max { font-size: 64px; }
+  .mv-q .side { margin-left: auto; text-align: right; font-size: 16px; line-height: 1.35; }
+  .mv-q .side b { font-size: 17px; font-weight: 800; }
+  .mv-q .line { display: flex; justify-content: space-between; font-size: 15px; }
+  .mv-q .line b { font-weight: 800; }
+  .mv-q .mv-glyph { width: 16px; height: 16px; vertical-align: -3px; }
+  .mv-q .tomorrow { display: flex; align-items: center; gap: 6px; border-top: 1px solid #000; padding-top: 3px; font-size: 16px; }
+  .mv-q .tomorrow svg { width: 32px; height: 32px; }
+  .mv-q .tomorrow b { font-weight: 800; }
+</style>
+<div class="view view--quadrant">
+  <div class="layout">
+    <div class="mv mv-q">
+      {%- assign day = days[0] -%}{% include "partials/day" %}
+      <div class="top"><span>{{ T_today }}</span><span>{{ day_short }} {{ day_num }}{% if lang == "cs" %}.{% endif %} {{ T_months[mo] | slice: 0, 3 }}</span></div>
+      <div class="hero">
+        {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
+        {% include "partials/icon" %}
+        <span class="mv-max">{{ tmax | round }}°</span>
+        <div class="side"><b>{% include "partials/word" %}</b><br>{{ T_low }} {{ tmin | round }}°</div>
+      </div>
+      <div class="line">
+        <span>{{ drop_glyph }}<b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b> {{ chance | times: 100 | round }} %</span>
+        {%- if shine != nil -%}<span>{{ sun_glyph }}<b>{{ shine | round: 1 | replace: ".", T_dec }} h</b></span>{%- endif -%}
+        {%- if rise -%}<span>{{ rise_svg }}{{ rise }} {{ set_svg }}{{ set }}</span>{%- endif -%}
+      </div>
+      {%- assign day = days[1] -%}{% include "partials/day" %}
+      <div class="tomorrow">
+        <b>{{ T_tomorrow }}</b>
+        {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
+        {% include "partials/icon" %}
+        <span><b>{{ tmax | round }}°</b> / {{ tmin | round }}°{% if rain >= 0.1 %} · {{ rain | round: 1 | replace: ".", T_dec }} mm{% endif %}</span>
+      </div>
+    </div>
+  </div>
+  {%- assign compact = true -%}
+  {% include "partials/title_bar" %}
+</div>

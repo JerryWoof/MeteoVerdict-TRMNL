@@ -1,0 +1,57 @@
+{%- comment -%}
+  Five days from today: a card per day, one hourly curve under all of them (a day per
+  card's width) and a line naming the warmest, wettest and sunniest day.
+{%- endcomment -%}
+{%- assign five = "" -%}
+{%- for d in days limit: 5 -%}{%- assign five = five | append: d | append: "," -%}{%- endfor -%}
+{%- assign five = five | split: "," -%}
+{%- assign best_t = -99 -%}{%- assign best_r = 0 -%}{%- assign best_s = -1 -%}
+<style>
+  .mv-5 { display: flex; flex-direction: column; gap: 6px; }
+  .mv-5 .cards { display: grid; grid-template-columns: repeat({{ five.size }}, 1fr); }
+  .mv-5 .card { text-align: center; padding: 0 4px; }
+  .mv-5 .card + .card { border-left: 1px solid #000; }
+  .mv-5 .card .d { font-size: 17px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+  .mv-5 .card .n { font-size: 13px; font-weight: 600; }
+  .mv-5 .card > svg { width: 66px; height: 66px; display: block; margin: 2px auto 0; }
+  .mv-5 .card .mv-max { font-size: 44px; }
+  .mv-5 .card .lo { font-size: 20px; font-weight: 600; }
+  .mv-5 .card .f { font-size: 14px; line-height: 1.35; margin-top: 3px; }
+  .mv-5 .card .f b { font-weight: 800; }
+  .mv-5 .card .f .mv-glyph { width: 14px; height: 14px; vertical-align: -2px; margin-right: 2px; }
+  .mv-5 .mv-chart { flex: 1; min-height: 50px; }
+  .mv-5 .sum { font-size: 15px; text-align: center; }
+  .mv-5 .sum b { font-weight: 800; }
+</style>
+<div class="mv mv-5">
+  {%- assign day = five.first -%}{% include "partials/day" %}{%- assign first_long = day_long -%}
+  {%- assign day = five.last -%}{% include "partials/day" %}
+  <div class="mv-head"><span class="when">{{ T_days5 }}</span><span class="date">{{ first_long }} – {{ day_long }}</span></div>
+  <div class="cards">
+    {%- for day in five -%}
+      {% include "partials/day" %}
+      {%- if tmax > best_t -%}{%- assign best_t = tmax -%}{%- assign best_t_day = day_name -%}{%- endif -%}
+      {%- if rain > best_r -%}{%- assign best_r = rain -%}{%- assign best_r_day = day_name -%}{%- endif -%}
+      {%- if shine != nil and shine > best_s -%}{%- assign best_s = shine -%}{%- assign best_s_day = day_name -%}{%- endif -%}
+      <div class="card">
+        <div class="d">{% if forloop.first %}{{ T_today }}{% else %}{{ day_short }}{% endif %}</div>
+        <div class="n">{{ day_num }}{% if lang == "cs" %}.{% endif %} {{ T_months[mo] | slice: 0, 3 }}</div>
+        {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
+        {% include "partials/icon" %}
+        <div class="mv-max">{{ tmax | round }}°</div>
+        <div class="lo">{{ tmin | round }}°</div>
+        <div class="f">
+          {{ drop_glyph }}<b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b> · {{ chance | times: 100 | round }} %<br>
+          {%- if shine != nil -%}{{ sun_glyph }}<b>{{ shine | round | replace: ".", T_dec }} h</b> · {% endif %}{{ wind | round }} m/s
+        </div>
+      </div>
+    {%- endfor -%}
+  </div>
+  {%- assign chart_days = five -%}{%- assign chart_h = 60 -%}{%- assign chart_class = "" -%}
+  {% include "partials/chart" %}
+  <div class="sum">
+    {{ T_warmest }} <b>{{ best_t_day }} {{ best_t | round }}°</b>
+    {%- if best_r >= 0.5 %} · {{ T_wettest }} <b>{{ best_r_day }} {{ best_r | round: 1 | replace: ".", T_dec }} mm</b>{% endif -%}
+    {%- if best_s > 0 %} · {{ T_sunniest }} <b>{{ best_s_day }} {{ best_s | round | replace: ".", T_dec }} h</b>{% endif %}
+  </div>
+</div>
