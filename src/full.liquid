@@ -3,19 +3,17 @@
   today_tomorrow, next_24h, five_days or weekend. https://github.com/JerryWoof/MeteoVerdict-TRMNL
 {%- endcomment -%}
 {% include "shared" %}
-<div class="view view--full">
-  <div class="layout">
-    {%- if days.size == 0 -%}
-    <div class="mv"><p class="mv-empty">{{ T_none }} {{ generated_local | date: "%d.%m. %H:%M" }}.</p></div>
-    {%- else -%}
-    {%- case view -%}
-    {%- when "next_24h" -%}{% include "views/next_24h" %}
-    {%- when "five_days" -%}{% include "views/five_days" %}
-    {%- when "weekend" -%}{% include "views/weekend" %}
-    {%- else -%}{% include "views/today_tomorrow" %}
-    {%- endcase -%}
-    {%- endif -%}
-  </div>
-  {%- assign compact = false -%}
-  {% include "partials/title_bar" %}
+<div class="layout">
+  {%- if days.size == 0 -%}
+  <div class="mv"><p class="mv-empty">{{ T_none }} {{ generated_local | date: "%d.%m. %H:%M" }}.</p></div>
+  {%- else -%}
+  {%- case view -%}
+  {%- when "next_24h" -%}{% include "views/next_24h" %}
+  {%- when "five_days" -%}{% include "views/five_days" %}
+  {%- when "weekend" -%}{% include "views/weekend" %}
+  {%- else -%}{% include "views/today_tomorrow" %}
+  {%- endcase -%}
+  {%- endif -%}
 </div>
+{%- assign compact = false -%}
+{% include "partials/title_bar" %}

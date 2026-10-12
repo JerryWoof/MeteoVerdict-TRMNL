@@ -22,38 +22,36 @@
   .mv-q .line span { white-space: nowrap; }
   .mv-q .line small { font-size: 12px; }
 </style>
-<div class="view view--quadrant">
-  <div class="layout">
-    {%- if days.size == 0 -%}
-    <div class="mv"><p class="mv-empty">{{ T_none }} {{ generated_local | date: "%d.%m. %H:%M" }}.</p></div>
-    {%- else -%}
-    <div class="mv mv-q">
-      {%- assign day = days[start] -%}{% include "partials/day" %}{% include "partials/alerts" %}
-      <div class="top"><span>{% if start == 0 %}{{ T_today }}{% else %}{{ T_tomorrow }}{% endif %}{{ alerts }}</span><span>{{ day_short }} {{ day_date }}</span></div>
-      <div class="hero">
-        {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
-        {% include "partials/icon" %}
-        <span class="mv-max">{{ tmax | round }}°</span>
-        <div class="side"><b>{% include "partials/word" %}</b><br>{{ T_low }} {{ tmin | round }}°</div>
-      </div>
-      <div class="line">
-        <span>{{ drop_glyph }}<b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b> {{ chance | times: 100 | round }} %</span>
-        {%- if shine != nil -%}<span>{{ sun_glyph }}<b>{{ shine | round: 1 | replace: ".", T_dec }} h</b></span>{%- endif -%}
-        {%- if rise -%}<span>{{ rise_svg }}{{ rise }} {{ set_svg }}{{ set }}{% if light_diff_s != "" %} <small>({{ light_diff_s }})</small>{% endif %}</span>{%- endif -%}
-      </div>
-      {%- assign next_start = start | plus: 1 -%}
-      {%- if days.size > next_start -%}
-      {%- assign day = days[next_start] -%}{% include "partials/day" %}
-      <div class="tomorrow">
-        <b>{% if start == 0 %}{{ T_tomorrow }}{% else %}{{ day_name }}{% endif %}</b>
-        {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
-        {% include "partials/icon" %}
-        <span><b>{{ tmax | round }}°</b> / {{ tmin | round }}°{% if rain >= 0.1 %} · {{ rain | round: 1 | replace: ".", T_dec }} mm{% endif %}</span>
-      </div>
-      {%- endif -%}
+<div class="layout">
+  {%- if days.size == 0 -%}
+  <div class="mv"><p class="mv-empty">{{ T_none }} {{ generated_local | date: "%d.%m. %H:%M" }}.</p></div>
+  {%- else -%}
+  <div class="mv mv-q">
+    {%- assign day = days[start] -%}{% include "partials/day" %}{% include "partials/alerts" %}
+    <div class="top"><span>{% if start == 0 %}{{ T_today }}{% else %}{{ T_tomorrow }}{% endif %}{{ alerts }}</span><span>{{ day_short }} {{ day_date }}</span></div>
+    <div class="hero">
+      {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
+      {% include "partials/icon" %}
+      <span class="mv-max">{{ tmax | round }}°</span>
+      <div class="side"><b>{% include "partials/word" %}</b><br>{{ T_low }} {{ tmin | round }}°</div>
+    </div>
+    <div class="line">
+      <span>{{ drop_glyph }}<b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b> {{ chance | times: 100 | round }} %</span>
+      {%- if shine != nil -%}<span>{{ sun_glyph }}<b>{{ shine | round: 1 | replace: ".", T_dec }} h</b></span>{%- endif -%}
+      {%- if rise -%}<span>{{ rise_svg }}{{ rise }} {{ set_svg }}{{ set }}{% if light_diff_s != "" %} <small>({{ light_diff_s }})</small>{% endif %}</span>{%- endif -%}
+    </div>
+    {%- assign next_start = start | plus: 1 -%}
+    {%- if days.size > next_start -%}
+    {%- assign day = days[next_start] -%}{% include "partials/day" %}
+    <div class="tomorrow">
+      <b>{% if start == 0 %}{{ T_tomorrow }}{% else %}{{ day_name }}{% endif %}</b>
+      {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
+      {% include "partials/icon" %}
+      <span><b>{{ tmax | round }}°</b> / {{ tmin | round }}°{% if rain >= 0.1 %} · {{ rain | round: 1 | replace: ".", T_dec }} mm{% endif %}</span>
     </div>
     {%- endif -%}
   </div>
-  {%- assign compact = true -%}
-  {% include "partials/title_bar" %}
+  {%- endif -%}
 </div>
+{%- assign compact = true -%}
+{% include "partials/title_bar" %}
