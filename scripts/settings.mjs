@@ -36,7 +36,7 @@ ${okresy.map(([name, code]) => `  - ${q(name)}: ${code}`).join("\n")}
 - keyname: evening_switch
   field_type: boolean
   name: Move on to tomorrow in the evening
-  description: After 18:00 the day layouts show tomorrow and the day after instead of today and tomorrow.
+  description: After 18:00 the day layouts show tomorrow and the day after instead of today and tomorrow, and the weekend view looks a day ahead (on Sunday evening, the next weekend).
   default: true
 - keyname: wind_unit
   field_type: select

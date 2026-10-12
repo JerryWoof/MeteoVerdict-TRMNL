@@ -61,9 +61,14 @@ For planning the week:
 
 Saturday and Sunday side by side, each like a day of *Today and tomorrow*. From Monday to
 Friday it shows the coming weekend, on Saturday this one, and on Sunday Sunday and Monday.
+With the evening switch on, from 18:00 it looks a day further: on Saturday evening Sunday
+and Monday, and on Sunday evening the next weekend.
 The forecast reaches five days past today, so early in the week Sunday (or the whole
 weekend) can be beyond it: the screen then shows what there is and says *Sunday is beyond
-the forecast*, as above on a Monday.
+the forecast*, as above on a Monday. When neither day is in the forecast yet (as on
+Sunday evening, until Monday's forecast arrives), it shows the next two days instead,
+today and tomorrow (or tomorrow and the day after in the evening), under a small note:
+*Weekend not in the forecast yet*.
 
 ### Warnings
 
@@ -103,6 +108,11 @@ so you can show two or four places at once, or the weather next to your calendar
 |---|
 | ![Praha, Brno, Ostrava and Plzeň](screenshots/mashup-quadrants.png) |
 
+The half and quarter layouts also say how much longer or shorter today is than the day
+before: the tall half under its sunshine (*10 h 55 min (−3)*), the wide half and the
+quarter after the sunset time (*18:15 (−3)*). As on the full screen, the change is left
+out when the forecast does not have the day before.
+
 ## Install
 
 Until the recipe is published, add it as a private plugin. That takes about five minutes.
@@ -123,7 +133,7 @@ Until the recipe is published, add it as a private plugin. That takes about five
    | Okres | A dropdown of all 77. Required |
    | View | What the full screen shows: today and tomorrow, next 24 hours, 5 days, or the weekend |
    | Place name | Shown in the footer instead of the okres name. Optional |
-   | Move on to tomorrow in the evening | On by default |
+   | Move on to tomorrow in the evening | After 18:00 the day layouts show tomorrow and the day after, and the weekend view looks a day ahead (Sunday and Monday on Saturday evening, the next weekend on Sunday evening). On by default |
    | Wind speed in | m/s or km/h |
    | Language | English or Czech |
 4. **Edit Markup:** paste each file from [`dist/`](dist) into its tab:
