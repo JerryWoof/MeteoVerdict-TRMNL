@@ -7,6 +7,7 @@
   .mv-q { display: flex; flex-direction: column; justify-content: space-between; }
   .mv-q .top { display: flex; justify-content: space-between; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #000; }
   .mv-q .top span + span { font-weight: 600; text-transform: none; letter-spacing: 0; }
+  .mv-q .top .mv-badge { margin-left: 6px; font-size: 11px; vertical-align: 1px; }
   .mv-q .hero { display: flex; align-items: center; gap: 6px; }
   .mv-q .hero > svg { width: 84px; height: 84px; flex: none; }
   .mv-q .mv-max { font-size: 64px; }
@@ -21,9 +22,12 @@
 </style>
 <div class="view view--quadrant">
   <div class="layout">
+    {%- if days.size == 0 -%}
+    <div class="mv"><p class="mv-empty">{{ T_none }} {{ generated_local | date: "%d.%m. %H:%M" }}.</p></div>
+    {%- else -%}
     <div class="mv mv-q">
-      {%- assign day = days[0] -%}{% include "partials/day" %}
-      <div class="top"><span>{{ T_today }}</span><span>{{ day_short }} {{ day_num }}{% if lang == "cs" %}.{% endif %} {{ T_months[mo] | slice: 0, 3 }}</span></div>
+      {%- assign day = days[start] -%}{% include "partials/day" %}{% include "partials/alerts" %}
+      <div class="top"><span>{% if start == 0 %}{{ T_today }}{% else %}{{ T_tomorrow }}{% endif %}{{ alerts }}</span><span>{{ day_short }} {{ day_date }}</span></div>
       <div class="hero">
         {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
         {% include "partials/icon" %}
@@ -35,14 +39,18 @@
         {%- if shine != nil -%}<span>{{ sun_glyph }}<b>{{ shine | round: 1 | replace: ".", T_dec }} h</b></span>{%- endif -%}
         {%- if rise -%}<span>{{ rise_svg }}{{ rise }} {{ set_svg }}{{ set }}</span>{%- endif -%}
       </div>
-      {%- assign day = days[1] -%}{% include "partials/day" %}
+      {%- assign next_start = start | plus: 1 -%}
+      {%- if days.size > next_start -%}
+      {%- assign day = days[next_start] -%}{% include "partials/day" %}
       <div class="tomorrow">
-        <b>{{ T_tomorrow }}</b>
+        <b>{% if start == 0 %}{{ T_tomorrow }}{% else %}{{ day_name }}{% endif %}</b>
         {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
         {% include "partials/icon" %}
         <span><b>{{ tmax | round }}°</b> / {{ tmin | round }}°{% if rain >= 0.1 %} · {{ rain | round: 1 | replace: ".", T_dec }} mm{% endif %}</span>
       </div>
+      {%- endif -%}
     </div>
+    {%- endif -%}
   </div>
   {%- assign compact = true -%}
   {% include "partials/title_bar" %}

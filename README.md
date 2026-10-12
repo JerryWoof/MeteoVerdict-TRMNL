@@ -23,19 +23,23 @@ Pick the view for the full screen in the plugin's settings.
 Two days side by side. For each:
 - the symbol, high and low, and a one-word summary;
 - rain with its chance, hours of sunshine out of the day's daylight, cloud cover and wind;
-- sunrise and sunset;
+- sunrise and sunset, and for the second day how much warmer or colder it gets;
 - night, morning, afternoon and evening, each with its own symbol;
 - the hourly temperature curve, with rain bars, the night hatched and a dashed line at the
   current time.
+
+After 18:00 the screen moves on to tomorrow and the day after, since by then that's what
+you want to know. This can be switched off in the settings.
 
 ### Next 24 hours
 
 ![The next 24 hours in Prague](screenshots/next-24-hours.png)
 
 For "do I need an umbrella?":
-- the temperature now;
+- the temperature now and, when it's cold and windy, how it feels (wind chill);
 - a plain sentence about rain: *Rain from 15:00*, *Rain until 20:00*, or *Dry for the next
   24 hours*;
+- the best two hours to be outside: daylight, dry, sunny, near 21 °C and calm;
 - the next sunset and sunrise, and tomorrow in one line;
 - every 3 hours, a symbol, the temperature and the rain, over the hourly curve.
 
@@ -47,6 +51,24 @@ For planning the week:
 - each day's symbol, high and low, rain, sunshine and wind;
 - one continuous temperature curve over the five days;
 - a closing line naming the warmest, wettest and sunniest day.
+
+### Warnings
+
+![Warnings, with simulated winter data](screenshots/warnings-simulated.png)
+
+*Simulated winter data, to show the badges.*
+
+A day gets up to two badges:
+
+| Badge | When |
+|---|---|
+| Black ice / Náledí | An hour at or below 0.5 °C with precipitation |
+| Frost / Mráz | The low is at or below 0 °C |
+| Heavy rain / Vydatně prší | 10 mm or more |
+| Strong wind / Silný vítr | An hourly mean of 10 m/s (36 km/h) or more |
+| Hot / Vedro | 30 °C or more |
+
+These are thresholds on the forecast, not official ČHMÚ warnings.
 
 ### Czech
 
@@ -76,17 +98,21 @@ Until the recipe is published, add it as a private plugin. That takes about five
 2. **Strategy:** Polling. **Polling URL:**
 
    ```
-   https://jerrywoof.github.io/MeteoVerdict/api/v1/okresy/{{ okres }}.json
+   https://jerrywoof.github.io/MeteoVerdict/api/v1/okresy/{{ okres_code }}.json
    ```
 
-   `{{ okres }}` is filled in from the form in step 3.
-3. **Form fields:** paste [`src/settings.yml`](src/settings.yml). It creates four fields:
-   - **Okres:** a dropdown of all 77;
-   - **View:** what the full screen shows;
-   - **Place name:** optional;
-   - **Language:** English or Czech.
+   `{{ okres_code }}` is filled in from the form in step 3.
+3. **Form fields:** paste [`src/settings.yml`](src/settings.yml), then save, fill in the
+   form and save again. It creates these fields:
 
-   Save, fill in the form and save again.
+   | Field | |
+   |---|---|
+   | Okres | A dropdown of all 77. Required |
+   | View | What the full screen shows: today and tomorrow, next 24 hours, or 5 days |
+   | Place name | Shown in the footer instead of the okres name. Optional |
+   | Move on to tomorrow in the evening | On by default |
+   | Wind speed in | m/s or km/h |
+   | Language | English or Czech |
 4. **Edit Markup:** paste each file from [`dist/`](dist) into its tab:
 
    | Tab | File |
@@ -101,7 +127,9 @@ Until the recipe is published, add it as a private plugin. That takes about five
    and the "now" line move with the clock.
 6. Add the plugin to a playlist, or to a mashup.
 
-Times follow the time zone of your TRMNL account.
+Times are Czech time (CET, or CEST in summer), hour by hour, whatever your TRMNL
+account's time zone. The forecast is for Czechia, so that is the clock it should be read
+by.
 
 ## What's on the screen, and how far to trust it
 
@@ -111,20 +139,29 @@ Times follow the time zone of your TRMNL account.
 | Chance of rain | The weighted share of the models that forecast at least 0.2 mm for that period |
 | Clouds, sunshine | The plain average of the models. Not checked against observations, and the models disagree a lot on sunshine |
 | Sunrise, sunset | Calculated for the okres's forecast point (NOAA solar equations) |
-| Symbol | Rain, sleet or snow when likely; showers at a 30 % chance; otherwise by cloud cover |
+| Day and part-of-day symbols | MeteoVerdict's: rain, sleet or snow when likely; showers at a 30 % chance; otherwise by cloud cover |
+| Hourly symbols (next 24 hours) | The plugin's own, per hour: rain, sleet or snow from 0.5 mm, showers from 0.1 mm, otherwise clear under 25 % cloud, partly cloudy under 70 % |
+| Feels like | Wind chill (Environment Canada formula), at 10 °C or below with wind over 4.8 km/h |
 
 The forecast is for one point per okres, so in a large or hilly okres your village can
 differ from it, especially in temperature at night.
 
-The forecast updates at about 06:00 and 18:00 UTC. The footer shows when it was last
-updated and how many models went into it.
+The forecast updates at about 06:00 and 18:00 UTC. The full-screen footer shows when it
+was last updated and how many models went into it. The half and quarter footers show only
+the time, plus the date if the forecast isn't from today. A forecast older than 30 hours
+gets an *old forecast* badge. If the data has nothing left for today, the screen says so
+instead of showing an old day.
+
+Today's curve starts at 01:00 (02:00 in summer), because the forecast starts at
+midnight UTC.
 
 ## Develop
 
 ```bash
 npm ci
 npm run build                 # src/ → dist/ (inlines the includes)
-npm test                      # every layout, view and language against saved data
+npm test                      # every layout, view and language against saved data, plus
+                              # Ruby Liquid vs liquidjs (when ruby and the liquid gem are there)
 node scripts/render.mjs out.html --view next_24h --okres CZ0642 --lang cs
 npm run screenshots           # screenshots/ with headless Chrome (live data)
 npm run settings              # regenerate src/settings.yml from MeteoVerdict's okres list
@@ -137,8 +174,11 @@ npm run settings              # regenerate src/settings.yml from MeteoVerdict's 
 - **`dist/` is for pasting.** TRMNL wants one self-contained template per layout, so
   `npm run build` inlines every `{% include %}` and strips the comments. Commit `dist/`
   together with `src/`.
-- **Rendering and tests use [liquidjs](https://liquidjs.com).** TRMNL runs Ruby Liquid, so
-  the templates stick to what both support. For example, no filters inside `if` conditions.
+- **Two Liquid engines.** Rendering and most tests use [liquidjs](https://liquidjs.com), but
+  TRMNL runs Ruby Liquid. So `scripts/render.rb` renders the same layouts with the `liquid`
+  gem in strict mode, and a test checks that both engines produce the same text. CI
+  installs Ruby for this. The templates stick to what both engines support: for example,
+  no filters inside `if` conditions or `[]` indices.
 - **Data:** the open data files are documented in MeteoVerdict's
   [open data docs](https://github.com/JerryWoof/MeteoVerdict/blob/main/docs/open-data.md).
 

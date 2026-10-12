@@ -1,6 +1,6 @@
 {%- comment -%}
-  Hourly temperature curve over `chart_days` (local days), 240 units per day: rain bars
-  (mm in the hour, capped at 3), night hatched from sunset to sunrise, a dashed line at
+  Hourly temperature curve over `chart_days` (Czech days), 240 units per day, each value
+  at its own time: rain bars (mm in the hour before the value's time, capped at 3), night hatched from sunset to sunrise, a dashed line at
   the current time, a solid line between days. `chart_h`: height in units (the curve
   uses the top 60 %). Stretches to its box (preserveAspectRatio none): no text inside.
 {%- endcomment -%}
@@ -10,7 +10,8 @@
 {%- assign curve_h = chart_h | times: 0.6 -%}
 {%- assign c_lo = 99 -%}{%- assign c_hi = -99 -%}
 {%- for t in H.time -%}
-  {%- assign x = t | date: "%s" | plus: offset | minus: base | divided_by: 360.0 -%}
+  {%- assign e = t | date: "%s" | plus: 0 -%}{% include "partials/local" %}
+  {%- assign x = le | minus: base | divided_by: 360.0 -%}
   {%- if x < 0 or x >= cw -%}{%- continue -%}{%- endif -%}
   {%- assign v = H.temperature_2m[forloop.index0] -%}
   {%- if v != nil -%}
@@ -18,16 +19,20 @@
     {%- if v > c_hi -%}{%- assign c_hi = v -%}{%- endif -%}
   {%- endif -%}
 {%- endfor -%}
-{%- assign c_span = c_hi | minus: c_lo | at_least: 4 -%}
+{%- comment -%} a range under 4° is drawn as 4°, centred, so a flat day sits in the middle {%- endcomment -%}
+{%- assign c_range = c_hi | minus: c_lo -%}
+{%- assign c_span = c_range | at_least: 4 -%}
+{%- assign c_top = c_span | minus: c_range | divided_by: 2.0 | plus: c_hi -%}
 {%- assign pts = "" -%}{%- assign bars = "" -%}
 {%- for t in H.time -%}
-  {%- assign x = t | date: "%s" | plus: offset | minus: base | divided_by: 360.0 -%}
+  {%- assign e = t | date: "%s" | plus: 0 -%}{% include "partials/local" %}
+  {%- assign x = le | minus: base | divided_by: 360.0 -%}
   {%- if x < 0 or x >= cw -%}{%- continue -%}{%- endif -%}
   {%- assign i = forloop.index0 -%}
   {%- assign v = H.temperature_2m[i] -%}
   {%- if v != nil -%}
-    {%- assign y = c_hi | minus: v | times: curve_h | divided_by: c_span | plus: 5 | round: 1 -%}
-    {%- assign px = x | plus: 5 | round: 1 -%}
+    {%- assign y = c_top | minus: v | times: curve_h | divided_by: c_span | plus: 5 | round: 1 -%}
+    {%- assign px = x | round: 1 -%}
     {%- capture pt -%}{{ px }},{{ y }}{%- endcapture -%}
     {%- assign pts = pts | append: " " | append: pt -%}
   {%- endif -%}
