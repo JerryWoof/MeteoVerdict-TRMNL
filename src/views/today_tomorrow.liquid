@@ -1,0 +1,53 @@
+{%- comment -%} Today and tomorrow side by side, each with its parts of day and hourly curve. {%- endcomment -%}
+<style>
+  .mv-tt { display: flex; gap: 22px; }
+  .mv-tt .col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+  .mv-tt .hero { display: flex; align-items: center; gap: 6px; height: 96px; }
+  .mv-tt .hero > svg { width: 92px; height: 92px; flex: none; }
+  .mv-tt .temps { display: flex; flex-direction: column; flex: none; }
+  .mv-tt .mv-max { font-size: 72px; }
+  .mv-tt .min { font-size: 20px; font-weight: 600; margin-top: 2px; }
+  .mv-tt .side { margin-left: auto; text-align: right; line-height: 1.3; }
+  .mv-tt .what { font-size: 18px; font-weight: 800; margin-bottom: 4px; white-space: nowrap; }
+  .mv-tt .mv-sun { font-size: 18px; }
+  .mv-parts { display: grid; grid-template-columns: repeat(4, 1fr); text-align: center; }
+  .mv-part .n { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .mv-part svg { width: 38px; height: 38px; display: block; margin: 0 auto; }
+  .mv-part .t { font-size: 19px; font-weight: 800; line-height: 1; }
+  .mv-tt .mv-chart { flex: 1; min-height: 60px; }
+</style>
+<div class="mv mv-tt">
+  {%- for day in days limit: 2 -%}
+    {% include "partials/day" %}
+    <div class="col">
+      <div class="mv-head">
+        <span class="when">{% if forloop.first %}{{ T_today }}{% else %}{{ T_tomorrow }}{% endif %}</span>
+        <span class="date">{{ day_long }}</span>
+      </div>
+      <div class="hero">
+        {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
+        {% include "partials/icon" %}
+        <div class="temps">
+          <span class="mv-max">{{ tmax | round }}°</span>
+          <span class="min">{{ T_low }} {{ tmin | round }}°</span>
+        </div>
+        <div class="side">
+          <div class="what">{% include "partials/word" %}</div>
+          {%- if rise -%}
+          <div class="mv-sun">{{ rise_svg }} {{ rise }}</div>
+          <div class="mv-sun">{{ set_svg }} {{ set }}</div>
+          {%- endif -%}
+        </div>
+      </div>
+      <div class="mv-facts">
+        <div class="mv-fact"><span>{{ T_rain }}</span><b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b><i>{{ chance | times: 100 | round }} % {{ T_chance }}</i></div>
+        <div class="mv-fact"><span>{{ T_sunshine }}</span><b>{% if shine != nil %}{{ shine | round: 1 | replace: ".", T_dec }} h{% else %}–{% endif %}</b><i>{% if light %}{{ T_of }} {{ light | divided_by: 60 | floor }} h {{ light | modulo: 60 }} min{% endif %}</i></div>
+        <div class="mv-fact"><span>{{ T_clouds }}</span><b>{% if cloud != nil %}{{ cloud | round }} %{% else %}–{% endif %}</b><i>{{ T_daytime }}</i></div>
+        <div class="mv-fact"><span>{{ T_wind }}</span><b>{{ wind | round }} m/s</b><i>{{ T_max }}</i></div>
+      </div>
+      {% include "partials/parts" %}
+      {%- assign chart_days = day | split: "," -%}{%- assign chart_h = 74 -%}{%- assign chart_class = "" -%}
+      {% include "partials/chart" %}
+    </div>
+  {%- endfor -%}
+</div>

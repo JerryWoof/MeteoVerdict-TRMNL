@@ -1,0 +1,833 @@
+{%- comment -%} MeteoVerdict for TRMNL, full: https://github.com/JerryWoof/MeteoVerdict-TRMNL (built from src/, edit there) {%- endcomment -%}
+
+{%- assign settings = trmnl.plugin_settings.custom_fields_values -%}
+{%- assign lang = settings.language | default: "en" -%}
+{%- assign view = settings.view | default: "today_tomorrow" -%}
+{%- assign place = settings.place | default: "" | strip -%}
+{%- if place == "" -%}{%- assign place = okres.name -%}{%- endif -%}
+{%- if lang == "cs" -%}
+  {%- assign T_today = "Dnes" -%}{%- assign T_tomorrow = "Zítra" -%}
+  {%- assign T_next24 = "Příštích 24 hodin" -%}{%- assign T_days5 = "Předpověď na 5 dní" -%}
+  {%- assign T_rain = "Srážky" -%}{%- assign T_chance = "šance" -%}
+  {%- assign T_sunshine = "Slunce" -%}{%- assign T_of = "z" -%}
+  {%- assign T_clouds = "Oblačnost" -%}{%- assign T_daytime = "přes den" -%}
+  {%- assign T_wind = "Vítr" -%}{%- assign T_max = "nejvíc" -%}
+  {%- assign T_parts = "Noc,Ráno,Odpoledne,Večer" | split: "," -%}
+  {%- assign T_now = "Teď" -%}{%- assign T_high = "max" -%}{%- assign T_low = "min" -%}
+  {%- assign T_dry = "Příštích 24 hodin bez srážek" -%}
+  {%- assign T_rain_from = "Srážky od" -%}{%- assign T_rain_until = "Srážky do" -%}{%- assign T_rain_all = "Srážky celý den" -%}
+  {%- assign T_warmest = "Nejtepleji" -%}{%- assign T_wettest = "Nejvíc srážek" -%}{%- assign T_sunniest = "Nejvíc slunce" -%}
+  {%- assign T_updated = "aktualizace" -%}{%- assign T_models = "modelů" -%}
+  {%- assign T_symbols = "Jasno,Polojasno,Zataženo,Přeháňky,Déšť,Déšť se sněhem,Sněžení" | split: "," -%}
+  {%- assign T_days = "neděle,pondělí,úterý,středa,čtvrtek,pátek,sobota" | split: "," -%}
+  {%- assign T_days_short = "Ne,Po,Út,St,Čt,Pá,So" | split: "," -%}
+  {%- assign T_months = "ledna,února,března,dubna,května,června,července,srpna,září,října,listopadu,prosince" | split: "," -%}
+  {%- assign T_dec = "," -%}
+{%- else -%}
+  {%- assign T_today = "Today" -%}{%- assign T_tomorrow = "Tomorrow" -%}
+  {%- assign T_next24 = "Next 24 hours" -%}{%- assign T_days5 = "5-day forecast" -%}
+  {%- assign T_rain = "Rain" -%}{%- assign T_chance = "chance" -%}
+  {%- assign T_sunshine = "Sunshine" -%}{%- assign T_of = "of" -%}
+  {%- assign T_clouds = "Clouds" -%}{%- assign T_daytime = "daytime" -%}
+  {%- assign T_wind = "Wind" -%}{%- assign T_max = "max" -%}
+  {%- assign T_parts = "Night,Morning,Afternoon,Evening" | split: "," -%}
+  {%- assign T_now = "Now" -%}{%- assign T_high = "high" -%}{%- assign T_low = "low" -%}
+  {%- assign T_dry = "Dry for the next 24 hours" -%}
+  {%- assign T_rain_from = "Rain from" -%}{%- assign T_rain_until = "Rain until" -%}{%- assign T_rain_all = "Rain all day" -%}
+  {%- assign T_warmest = "Warmest" -%}{%- assign T_wettest = "Wettest" -%}{%- assign T_sunniest = "Sunniest" -%}
+  {%- assign T_updated = "updated" -%}{%- assign T_models = "models" -%}
+  {%- assign T_symbols = "Sunny,Partly cloudy,Cloudy,Showers,Rain,Sleet,Snow" | split: "," -%}
+  {%- assign T_days = "Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday" | split: "," -%}
+  {%- assign T_days_short = "Sun,Mon,Tue,Wed,Thu,Fri,Sat" | split: "," -%}
+  {%- assign T_months = "January,February,March,April,May,June,July,August,September,October,November,December" | split: "," -%}
+  {%- assign T_dec = "." -%}
+{%- endif -%}
+{%- assign SYMBOLS = "clear,partly,cloudy,showers,rain,sleet,snow" | split: "," -%}
+{%- assign offset = trmnl.user.utc_offset | default: 0 -%}
+{%- assign now_utc = "now" | date: "%s" | plus: 0 -%}
+{%- assign now_local = now_utc | plus: offset -%}
+{%- assign today = now_local | date: "%Y-%m-%d" -%}
+{%- assign all_days = forecast.parts | map: "day" | uniq -%}
+{%- unless all_days contains today -%}
+  {%- assign today = all_days.first -%}
+{%- endunless -%}
+{%- assign days = "" -%}
+{%- for d in all_days -%}{%- if d >= today -%}{%- assign days = days | append: d | append: "," -%}{%- endif -%}{%- endfor -%}
+{%- assign days = days | split: "," -%}
+{%- assign H = forecast.hourly -%}
+{%- assign models_used = models.variables.temperature_2m.lead_days["1"].size | default: 0 -%}
+{%- capture sun -%}<g stroke="#000" stroke-width="4" stroke-linecap="round"><circle cx="32" cy="32" r="11"/><path d="M32 6v7M32 51v7M6 32h7M51 32h7M13.6 13.6l5 5M45.4 45.4l5 5M13.6 50.4l5-5M45.4 18.6l5-5"/></g>{%- endcapture -%}
+{%- capture moon -%}<path d="M38 8a24 24 0 1 0 18 36A19 19 0 0 1 38 8z"/>{%- endcapture -%}
+{%- capture cloud_svg -%}<path d="M18 50H46A9 9 0 0 0 46 32A13 13 0 0 0 21 30A10 10 0 0 0 18 50Z" fill="#fff" stroke="#000" stroke-width="3.5" stroke-linejoin="round"/>{%- endcapture -%}
+{%- capture drops -%}<path d="M24 48l-3 8M33 48l-3 8M42 48l-3 8" stroke="#000" stroke-width="3.5" stroke-linecap="round"/>{%- endcapture -%}
+{%- capture drop1 -%}<path d="M30 48l-3 8M40 48l-3 8" stroke="#000" stroke-width="3.5" stroke-linecap="round"/>{%- endcapture -%}
+{%- capture flakes -%}<g stroke="#000" stroke-width="2.5" stroke-linecap="round"><path d="M22 47v10M17.7 49.5l8.6 5M17.7 54.5l8.6-5M42 47v10M37.7 49.5l8.6 5M37.7 54.5l8.6-5"/></g>{%- endcapture -%}
+{%- capture sleet -%}<path d="M24 47l-3 8" stroke="#000" stroke-width="3.5" stroke-linecap="round"/><g stroke="#000" stroke-width="2.5" stroke-linecap="round"><path d="M40 47v10M35.7 49.5l8.6 5M35.7 54.5l8.6-5"/></g>{%- endcapture -%}
+{%- capture rise_svg -%}<svg class="mv-glyph" viewBox="0 0 24 24"><path d="M2 19h20M6.5 19a5.5 5.5 0 0 1 11 0M12 3v7M8.5 6.5 12 3l3.5 3.5" fill="none" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>{%- endcapture -%}
+{%- capture sun_glyph -%}<svg class="mv-glyph" viewBox="0 0 24 24"><g stroke="#000" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="4.5" fill="#000"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/></g></svg>{%- endcapture -%}
+{%- capture drop_glyph -%}<svg class="mv-glyph" viewBox="0 0 24 24"><path d="M12 2.5C9 7.5 6 10.5 6 15a6 6 0 0 0 12 0c0-4.5-3-7.5-6-12.5z" fill="#000"/></svg>{%- endcapture -%}
+{%- capture set_svg -%}<svg class="mv-glyph" viewBox="0 0 24 24"><path d="M2 19h20M6.5 19a5.5 5.5 0 0 1 11 0M12 3v7M8.5 6.5 12 10l3.5-3.5" fill="none" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>{%- endcapture -%}
+<style>
+  .mv { width: 100%; height: 100%; font-family: "Inter", "Helvetica Neue", Arial, sans-serif; color: #000; }
+  .mv svg { overflow: visible; }
+  .mv-head { display: flex; justify-content: space-between; align-items: center; background: #000; color: #fff; border-radius: 8px; padding: 3px 12px; white-space: nowrap; }
+  .mv-head .when { font-size: 21px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
+  .mv-head .date { font-size: 17px; font-weight: 600; }
+  .mv-max { font-weight: 800; letter-spacing: -2px; line-height: 1; }
+  .mv-glyph { width: 22px; height: 22px; vertical-align: -5px; }
+  .mv-sun { font-weight: 700; white-space: nowrap; }
+  .mv-facts { display: grid; grid-template-columns: repeat(4, 1fr); border: 2px solid #000; border-radius: 8px; padding: 3px 0; text-align: center; }
+  .mv-fact + .mv-fact { border-left: 1px solid #000; }
+  .mv-fact span { display: block; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .mv-fact b { display: block; font-size: 20px; font-weight: 800; line-height: 1.15; }
+  .mv-fact i { display: block; font-size: 11px; font-style: normal; }
+  .mv-chart { width: 100%; display: block; }
+</style>
+<svg width="0" height="0" style="position:absolute">
+  <defs><pattern id="mv-night" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="1.3" height="6" fill="#000"/></pattern></defs>
+</svg>
+<div class="view view--full">
+  <div class="layout">
+    {%- case view -%}
+    {%- when "next_24h" -%}
+{%- assign s = 0 -%}
+{%- for t in H.time -%}{%- assign e = t | date: "%s" | plus: 0 -%}{%- if e <= now_utc -%}{%- assign s = forloop.index0 -%}{%- else -%}{%- break -%}{%- endif -%}{%- endfor -%}
+{%- assign last = s | plus: 24 | at_most: H.time.size | minus: 1 -%}
+{%- assign w_lo = 99 -%}{%- assign w_hi = -99 -%}{%- assign w_rain = 0 -%}{%- assign w_sun = 0 -%}{%- assign w_wind = 0 -%}
+{%- assign first_wet = -1 -%}{%- assign first_dry = -1 -%}
+{%- for i in (s..last) -%}
+  {%- assign v = H.temperature_2m[i] -%}
+  {%- if v != nil -%}
+    {%- if v < w_lo -%}{%- assign w_lo = v -%}{%- endif -%}
+    {%- if v > w_hi -%}{%- assign w_hi = v -%}{%- endif -%}
+  {%- endif -%}
+  {%- if i == s -%}{%- continue -%}{%- endif -%}
+  {%- assign p = H.precipitation[i] | default: 0 -%}
+  {%- assign w_rain = w_rain | plus: p -%}
+  {%- assign w_sun = w_sun | plus: H.sunshine_duration[i] -%}
+  {%- if H.wind_speed_10m[i] > w_wind -%}{%- assign w_wind = H.wind_speed_10m[i] -%}{%- endif -%}
+  {%- if p >= 0.2 and first_wet < 0 -%}{%- assign first_wet = i -%}{%- endif -%}
+  {%- if p < 0.2 and first_wet >= 0 and first_dry < 0 -%}{%- assign first_dry = i -%}{%- endif -%}
+{%- endfor -%}
+{%- assign w_span = w_hi | minus: w_lo | at_least: 4 -%}
+{%- assign s1 = s | plus: 1 -%}
+{%- if first_wet < 0 -%}
+  {%- assign rain_text = T_dry -%}
+{%- elsif first_wet == s1 -%}
+  {%- if first_dry < 0 -%}
+    {%- assign rain_text = T_rain_all -%}
+  {%- else -%}
+    {%- assign at = H.time[first_dry] | date: "%s" | plus: offset | minus: 3600 | date: "%H:%M" -%}
+    {%- assign rain_text = T_rain_until | append: " " | append: at -%}
+  {%- endif -%}
+{%- else -%}
+  {%- assign at = H.time[first_wet] | date: "%s" | plus: offset | minus: 3600 | date: "%H:%M" -%}
+  {%- assign rain_text = T_rain_from | append: " " | append: at -%}
+{%- endif -%}
+{%- assign day = days[0] -%}
+{%- assign rows = forecast.parts | where: "day", day -%}
+{%- assign whole = rows | where: "part", "day" | first -%}
+{%- assign tmin = 999 -%}{%- assign tmax = -999 -%}{%- assign rain = 0 -%}{%- assign chance = 0 -%}{%- assign wind = 0 -%}{%- assign cloud = nil -%}{%- assign shine = nil -%}
+{%- for r in rows -%}
+  {%- if r.part == "day" -%}{%- continue -%}{%- endif -%}
+  {%- if r.tmin != nil and r.tmin < tmin -%}{%- assign tmin = r.tmin -%}{%- endif -%}
+  {%- if r.tmax != nil and r.tmax > tmax -%}{%- assign tmax = r.tmax -%}{%- endif -%}
+  {%- assign rain = rain | plus: r.precipitation -%}
+  {%- if r.rain_probability > chance -%}{%- assign chance = r.rain_probability -%}{%- endif -%}
+  {%- if r.wind > wind -%}{%- assign wind = r.wind -%}{%- endif -%}
+  {%- if r.sunshine != nil -%}{%- assign shine = shine | plus: r.sunshine -%}{%- endif -%}
+{%- endfor -%}
+{%- if whole -%}
+  {%- assign tmin = whole.tmin -%}{%- assign tmax = whole.tmax -%}{%- assign rain = whole.precipitation -%}
+  {%- assign chance = whole.rain_probability -%}{%- assign wind = whole.wind -%}{%- assign cloud = whole.cloud -%}
+  {%- assign sym = whole.symbol -%}
+  {%- if whole.sunshine != nil -%}{%- assign shine = whole.sunshine -%}{%- endif -%}
+{%- else -%}
+  {%- assign pm = rows | where: "part", "afternoon" | first | default: rows.last -%}
+  {%- assign sym = pm.symbol -%}{%- assign cloud = pm.cloud -%}
+{%- endif -%}
+{%- assign rise = rows.first.sunrise -%}{%- assign set = rows.first.sunset -%}{%- assign light = nil -%}
+{%- if rise -%}
+  {%- assign rise_min = rise | slice: 0, 2 | times: 60 -%}{%- assign rise_min = rise | slice: 3, 2 | plus: rise_min -%}
+  {%- assign set_min = set | slice: 0, 2 | times: 60 -%}{%- assign set_min = set | slice: 3, 2 | plus: set_min -%}
+  {%- assign light = set_min | minus: rise_min -%}
+{%- endif -%}
+{%- assign noon = day | append: "T12:00:00Z" -%}
+{%- assign wd = noon | date: "%w" | plus: 0 -%}
+{%- assign mo = noon | date: "%m" | plus: 0 | minus: 1 -%}
+{%- assign day_num = noon | date: "%d" | plus: 0 -%}
+{%- assign day_name = T_days[wd] -%}{%- assign day_short = T_days_short[wd] -%}
+{%- if lang == "cs" -%}
+  {%- assign day_long = day_name | append: " " | append: day_num | append: ". " | append: T_months[mo] -%}
+{%- else -%}
+  {%- assign day_long = day_name | append: " " | append: day_num | append: " " | append: T_months[mo] -%}
+{%- endif -%}
+{%- assign t_rise = rise -%}{%- assign t_set = set -%}{%- assign t_rise_min = rise_min -%}{%- assign t_set_min = set_min -%}{%- assign today_long = day_long -%}
+{%- assign day = days[1] -%}
+{%- assign rows = forecast.parts | where: "day", day -%}
+{%- assign whole = rows | where: "part", "day" | first -%}
+{%- assign tmin = 999 -%}{%- assign tmax = -999 -%}{%- assign rain = 0 -%}{%- assign chance = 0 -%}{%- assign wind = 0 -%}{%- assign cloud = nil -%}{%- assign shine = nil -%}
+{%- for r in rows -%}
+  {%- if r.part == "day" -%}{%- continue -%}{%- endif -%}
+  {%- if r.tmin != nil and r.tmin < tmin -%}{%- assign tmin = r.tmin -%}{%- endif -%}
+  {%- if r.tmax != nil and r.tmax > tmax -%}{%- assign tmax = r.tmax -%}{%- endif -%}
+  {%- assign rain = rain | plus: r.precipitation -%}
+  {%- if r.rain_probability > chance -%}{%- assign chance = r.rain_probability -%}{%- endif -%}
+  {%- if r.wind > wind -%}{%- assign wind = r.wind -%}{%- endif -%}
+  {%- if r.sunshine != nil -%}{%- assign shine = shine | plus: r.sunshine -%}{%- endif -%}
+{%- endfor -%}
+{%- if whole -%}
+  {%- assign tmin = whole.tmin -%}{%- assign tmax = whole.tmax -%}{%- assign rain = whole.precipitation -%}
+  {%- assign chance = whole.rain_probability -%}{%- assign wind = whole.wind -%}{%- assign cloud = whole.cloud -%}
+  {%- assign sym = whole.symbol -%}
+  {%- if whole.sunshine != nil -%}{%- assign shine = whole.sunshine -%}{%- endif -%}
+{%- else -%}
+  {%- assign pm = rows | where: "part", "afternoon" | first | default: rows.last -%}
+  {%- assign sym = pm.symbol -%}{%- assign cloud = pm.cloud -%}
+{%- endif -%}
+{%- assign rise = rows.first.sunrise -%}{%- assign set = rows.first.sunset -%}{%- assign light = nil -%}
+{%- if rise -%}
+  {%- assign rise_min = rise | slice: 0, 2 | times: 60 -%}{%- assign rise_min = rise | slice: 3, 2 | plus: rise_min -%}
+  {%- assign set_min = set | slice: 0, 2 | times: 60 -%}{%- assign set_min = set | slice: 3, 2 | plus: set_min -%}
+  {%- assign light = set_min | minus: rise_min -%}
+{%- endif -%}
+{%- assign noon = day | append: "T12:00:00Z" -%}
+{%- assign wd = noon | date: "%w" | plus: 0 -%}
+{%- assign mo = noon | date: "%m" | plus: 0 | minus: 1 -%}
+{%- assign day_num = noon | date: "%d" | plus: 0 -%}
+{%- assign day_name = T_days[wd] -%}{%- assign day_short = T_days_short[wd] -%}
+{%- if lang == "cs" -%}
+  {%- assign day_long = day_name | append: " " | append: day_num | append: ". " | append: T_months[mo] -%}
+{%- else -%}
+  {%- assign day_long = day_name | append: " " | append: day_num | append: " " | append: T_months[mo] -%}
+{%- endif -%}
+{%- assign now_min = now_local | date: "%H" | times: 60 -%}{%- assign now_min = now_local | date: "%M" | plus: now_min -%}
+{%- if now_min < t_rise_min -%}{%- assign sun_a = rise_svg | append: " " | append: t_rise -%}{%- assign sun_b = set_svg | append: " " | append: t_set -%}
+{%- elsif now_min < t_set_min -%}{%- assign sun_a = set_svg | append: " " | append: t_set -%}{%- assign sun_b = rise_svg | append: " " | append: rise -%}
+{%- else -%}{%- assign sun_a = rise_svg | append: " " | append: rise -%}{%- assign sun_b = set_svg | append: " " | append: set -%}{%- endif -%}
+<style>
+  .mv-24 { display: flex; flex-direction: column; gap: 8px; }
+  .mv-24 .body { flex: 1; display: flex; gap: 18px; min-height: 0; }
+  .mv-24 .now { width: 236px; flex: none; display: flex; flex-direction: column; gap: 6px; }
+  .mv-24 .mv-now-l { font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .mv-24 .hero { display: flex; align-items: center; gap: 4px; }
+  .mv-24 .hero svg { width: 92px; height: 92px; flex: none; }
+  .mv-24 .mv-max { font-size: 84px; }
+  .mv-24 .range { font-size: 20px; font-weight: 700; }
+  .mv-24 .say { border: 2px solid #000; border-radius: 8px; padding: 6px 10px; font-size: 19px; font-weight: 800; line-height: 1.2; }
+  .mv-24 .say small { display: block; font-size: 14px; font-weight: 600; margin-top: 2px; }
+  .mv-24 .mv-kv { display: grid; grid-template-columns: auto 1fr; column-gap: 10px; font-size: 17px; line-height: 1.5; }
+  .mv-24 .mv-kv b { font-weight: 800; }
+  .mv-24 .mv-sun { font-size: 18px; display: flex; gap: 16px; }
+  .mv-24 .mv-tmrw { margin-top: auto; display: flex; align-items: center; gap: 8px; border-top: 2px solid #000; padding-top: 4px; font-size: 19px; }
+  .mv-24 .mv-tmrw .w { font-size: 14px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+  .mv-24 .mv-tmrw svg { width: 40px; height: 40px; }
+  .mv-24 .mv-tmrw b { font-weight: 800; }
+  .mv-24 .strip { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .mv-24 .cells { display: grid; grid-template-columns: repeat(8, 1fr); text-align: center; }
+  .mv-24 .cells .h { font-size: 15px; font-weight: 700; }
+  .mv-24 .cells svg { width: 44px; height: 44px; display: block; margin: 0 auto; }
+  .mv-24 .cells .t { font-size: 20px; font-weight: 800; line-height: 1; }
+  .mv-24 .cells .r { font-size: 13px; font-weight: 600; min-height: 16px; }
+  .mv-24 .graph { flex: 1; width: 100%; }
+</style>
+<div class="mv mv-24">
+  <div class="mv-head"><span class="when">{{ T_next24 }}</span><span class="date">{{ today_long }}</span></div>
+  <div class="body">
+    <div class="now">
+      <div class="mv-now-l">{{ T_now }} · {{ now_local | date: "%H:%M" }}</div>
+      <div class="hero">
+        {%- assign i = s | plus: 1 -%}
+{%- assign hp = H.precipitation[i] | default: 0 -%}
+{%- assign hc = H.cloud_cover[i] -%}
+{%- assign ht = H.temperature_2m[i] | default: 10 -%}
+{%- if hp >= 0.5 -%}
+  {%- if ht <= 0.5 -%}{%- assign icon = "snow" -%}{%- elsif ht <= 2 -%}{%- assign icon = "sleet" -%}{%- else -%}{%- assign icon = "rain" -%}{%- endif -%}
+{%- elsif hp >= 0.1 -%}{%- assign icon = "showers" -%}
+{%- elsif hc == nil -%}{%- assign icon = "" -%}
+{%- elsif hc < 25 -%}{%- assign icon = "clear" -%}
+{%- elsif hc < 70 -%}{%- assign icon = "partly" -%}
+{%- else -%}{%- assign icon = "cloudy" -%}{%- endif -%}
+{%- assign hl = H.time[i] | date: "%s" | plus: offset -%}
+{%- assign hday = hl | date: "%Y-%m-%d" -%}
+{%- assign hmin = hl | date: "%H" | times: 60 -%}
+{%- assign hrow = forecast.parts | where: "day", hday | first -%}
+{%- assign night = false -%}
+{%- if hrow.sunrise -%}
+  {%- assign r_min = hrow.sunrise | slice: 0, 2 | times: 60 -%}{%- assign r_min = hrow.sunrise | slice: 3, 2 | plus: r_min -%}
+  {%- assign s_min = hrow.sunset | slice: 0, 2 | times: 60 -%}{%- assign s_min = hrow.sunset | slice: 3, 2 | plus: s_min -%}
+  {%- if hmin < r_min or hmin >= s_min -%}{%- assign night = true -%}{%- endif -%}
+{%- endif -%}{%- assign icon_class = "" -%}
+{%- if night -%}{%- assign orb = moon -%}{%- else -%}{%- assign orb = sun -%}{%- endif -%}
+<svg class="{{ icon_class }}" viewBox="0 0 64 64">
+  {%- case icon -%}
+  {%- when "clear" -%}{{ orb }}
+  {%- when "partly" -%}<g transform="translate(2 0) scale(.62)">{{ orb }}</g>{{ cloud_svg }}
+  {%- when "cloudy" -%}<g transform="translate(-8 -12)">{{ cloud_svg | replace: '#fff', '#000' }}</g>{{ cloud_svg }}
+  {%- when "showers" -%}<g transform="translate(2 -6) scale(.62)">{{ orb }}</g><g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ drop1 }}
+  {%- when "rain" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ drops }}
+  {%- when "sleet" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ sleet }}
+  {%- when "snow" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ flakes }}
+  {%- endcase -%}
+</svg>
+        <span class="mv-max">{{ H.temperature_2m[s] | round }}°</span>
+      </div>
+      <div class="range">{{ T_high }} {{ w_hi | round }}° · {{ T_low }} {{ w_lo | round }}°</div>
+      <div class="say">{{ rain_text }}{% if w_rain >= 0.1 %}<small>{{ w_rain | round: 1 | replace: ".", T_dec }} mm</small>{% endif %}</div>
+      <div class="mv-kv">
+        <span>{{ T_sunshine }}</span><b>{{ w_sun | divided_by: 3600.0 | round: 1 | replace: ".", T_dec }} h</b>
+        <span>{{ T_wind }}</span><b>{{ w_wind | round }} m/s</b>
+      </div>
+      <div class="mv-sun"><span>{{ sun_a }}</span><span>{{ sun_b }}</span></div>
+      <div class="mv-tmrw">
+        <span class="w">{{ T_tomorrow }}</span>
+        {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
+{%- if night -%}{%- assign orb = moon -%}{%- else -%}{%- assign orb = sun -%}{%- endif -%}
+<svg class="{{ icon_class }}" viewBox="0 0 64 64">
+  {%- case icon -%}
+  {%- when "clear" -%}{{ orb }}
+  {%- when "partly" -%}<g transform="translate(2 0) scale(.62)">{{ orb }}</g>{{ cloud_svg }}
+  {%- when "cloudy" -%}<g transform="translate(-8 -12)">{{ cloud_svg | replace: '#fff', '#000' }}</g>{{ cloud_svg }}
+  {%- when "showers" -%}<g transform="translate(2 -6) scale(.62)">{{ orb }}</g><g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ drop1 }}
+  {%- when "rain" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ drops }}
+  {%- when "sleet" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ sleet }}
+  {%- when "snow" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ flakes }}
+  {%- endcase -%}
+</svg>
+        <span><b>{{ tmax | round }}°</b> / {{ tmin | round }}°</span>
+      </div>
+    </div>
+    <div class="strip">
+      <div class="cells">
+        {%- for j in (0..7) -%}
+          {%- assign i = j | times: 3 | plus: 1 | plus: s -%}
+          {%- assign i2 = i | plus: 1 -%}{%- assign i3 = i | plus: 2 -%}
+          {%- assign cell_rain = H.precipitation[i] | default: 0 | plus: H.precipitation[i2] | plus: H.precipitation[i3] -%}
+          {%- assign cl = H.time[i] | date: "%s" | plus: offset -%}
+          {%- assign ch = cl | date: "%H" | plus: 0 -%}
+          {%- assign ct = H.temperature_2m[i] -%}
+          <div>
+            <div class="h">{% if ch < 3 %}{%- assign cwd = cl | date: "%w" | plus: 0 -%}{{ T_days_short[cwd] }} {% endif %}{{ cl | date: "%H" }}</div>
+            {%- assign i = i2 -%}
+{%- assign hp = H.precipitation[i] | default: 0 -%}
+{%- assign hc = H.cloud_cover[i] -%}
+{%- assign ht = H.temperature_2m[i] | default: 10 -%}
+{%- if hp >= 0.5 -%}
+  {%- if ht <= 0.5 -%}{%- assign icon = "snow" -%}{%- elsif ht <= 2 -%}{%- assign icon = "sleet" -%}{%- else -%}{%- assign icon = "rain" -%}{%- endif -%}
+{%- elsif hp >= 0.1 -%}{%- assign icon = "showers" -%}
+{%- elsif hc == nil -%}{%- assign icon = "" -%}
+{%- elsif hc < 25 -%}{%- assign icon = "clear" -%}
+{%- elsif hc < 70 -%}{%- assign icon = "partly" -%}
+{%- else -%}{%- assign icon = "cloudy" -%}{%- endif -%}
+{%- assign hl = H.time[i] | date: "%s" | plus: offset -%}
+{%- assign hday = hl | date: "%Y-%m-%d" -%}
+{%- assign hmin = hl | date: "%H" | times: 60 -%}
+{%- assign hrow = forecast.parts | where: "day", hday | first -%}
+{%- assign night = false -%}
+{%- if hrow.sunrise -%}
+  {%- assign r_min = hrow.sunrise | slice: 0, 2 | times: 60 -%}{%- assign r_min = hrow.sunrise | slice: 3, 2 | plus: r_min -%}
+  {%- assign s_min = hrow.sunset | slice: 0, 2 | times: 60 -%}{%- assign s_min = hrow.sunset | slice: 3, 2 | plus: s_min -%}
+  {%- if hmin < r_min or hmin >= s_min -%}{%- assign night = true -%}{%- endif -%}
+{%- endif -%}{%- assign icon_class = "" -%}
+{%- if night -%}{%- assign orb = moon -%}{%- else -%}{%- assign orb = sun -%}{%- endif -%}
+<svg class="{{ icon_class }}" viewBox="0 0 64 64">
+  {%- case icon -%}
+  {%- when "clear" -%}{{ orb }}
+  {%- when "partly" -%}<g transform="translate(2 0) scale(.62)">{{ orb }}</g>{{ cloud_svg }}
+  {%- when "cloudy" -%}<g transform="translate(-8 -12)">{{ cloud_svg | replace: '#fff', '#000' }}</g>{{ cloud_svg }}
+  {%- when "showers" -%}<g transform="translate(2 -6) scale(.62)">{{ orb }}</g><g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ drop1 }}
+  {%- when "rain" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ drops }}
+  {%- when "sleet" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ sleet }}
+  {%- when "snow" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ flakes }}
+  {%- endcase -%}
+</svg>
+            <div class="t">{{ ct | round }}°</div>
+            <div class="r">{% if cell_rain >= 0.1 %}{{ cell_rain | round: 1 | replace: ".", T_dec }} mm{% endif %}</div>
+          </div>
+        {%- endfor -%}
+      </div>
+      {%- assign pts = "" -%}{%- assign bars = "" -%}{%- assign night = "" -%}{%- assign marks = "" -%}
+      {%- for j in (0..23) -%}
+        {%- assign i = s | plus: j -%}
+        {%- assign x = j | times: 10 | plus: 5 -%}
+        {%- assign v = H.temperature_2m[i] -%}
+        {%- if v != nil -%}
+          {%- assign y = w_hi | minus: v | times: 54.0 | divided_by: w_span | plus: 6 | round: 1 -%}
+          {%- capture pt -%}{{ x }},{{ y }}{%- endcapture -%}
+          {%- assign pts = pts | append: " " | append: pt -%}
+        {%- endif -%}
+        {%- assign i1 = i | plus: 1 -%}
+        {%- assign p = H.precipitation[i1] | default: 0 -%}
+        {%- if p >= 0.1 -%}
+          {%- assign bh = p | at_most: 3 | times: 11 | plus: 1.5 | round: 1 -%}
+          {%- capture bar -%}<rect x="{{ x | minus: 3.5 }}" y="{{ 100 | minus: bh }}" width="7" height="{{ bh }}"/>{%- endcapture -%}
+          {%- assign bars = bars | append: bar -%}
+        {%- endif -%}
+        {%- assign hl = H.time[i] | date: "%s" | plus: offset -%}
+        {%- assign hday = hl | date: "%Y-%m-%d" -%}
+        {%- assign m0 = hl | date: "%H" | times: 60 -%}
+        {%- if m0 == 0 and j > 0 -%}
+          {%- capture mark -%}<path d="M{{ j | times: 10 }} 0V100" stroke="#000" stroke-width="2" vector-effect="non-scaling-stroke"/>{%- endcapture -%}
+          {%- assign marks = marks | append: mark -%}
+        {%- endif -%}
+        {%- assign hrow = forecast.parts | where: "day", hday | first -%}
+        {%- if hrow.sunrise -%}
+          {%- assign r_min = hrow.sunrise | slice: 0, 2 | times: 60 -%}{%- assign r_min = hrow.sunrise | slice: 3, 2 | plus: r_min -%}
+          {%- assign s_min = hrow.sunset | slice: 0, 2 | times: 60 -%}{%- assign s_min = hrow.sunset | slice: 3, 2 | plus: s_min -%}
+          {%- assign m1 = m0 | plus: 60 -%}
+          {%- assign a = r_min | at_most: m1 | minus: m0 | at_least: 0 -%}
+          {%- if a > 0 -%}
+            {%- capture n -%}<rect x="{{ j | times: 10 }}" y="0" width="{{ a | divided_by: 6.0 | round: 2 }}" height="100"/>{%- endcapture -%}{%- assign night = night | append: n -%}
+          {%- endif -%}
+          {%- assign b0 = s_min | at_least: m0 -%}{%- assign b = m1 | minus: b0 | at_least: 0 -%}
+          {%- if b > 0 -%}
+            {%- capture n -%}<rect x="{{ b0 | minus: m0 | divided_by: 6.0 | plus: x | minus: 5 | round: 2 }}" y="0" width="{{ b | divided_by: 6.0 | round: 2 }}" height="100"/>{%- endcapture -%}{%- assign night = night | append: n -%}
+          {%- endif -%}
+        {%- endif -%}
+      {%- endfor -%}
+      <svg class="mv-chart graph" viewBox="0 0 240 102" preserveAspectRatio="none">
+        <g fill="url(#mv-night)">{{ night }}</g>
+        <path d="M30 0V100M60 0V100M90 0V100M120 0V100M150 0V100M180 0V100M210 0V100" stroke="#000" stroke-width="1" stroke-dasharray="2 3" vector-effect="non-scaling-stroke"/>
+        {{ marks }}
+        <g fill="#000" stroke="#fff" stroke-width=".8">{{ bars }}</g>
+        <polyline points="{{ pts | strip }}" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+        <polyline points="{{ pts | strip }}" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+        <path d="M0 100.5H240" stroke="#000" stroke-width="2" vector-effect="non-scaling-stroke"/>
+      </svg>
+    </div>
+  </div>
+</div>
+    {%- when "five_days" -%}
+{%- assign five = "" -%}
+{%- for d in days limit: 5 -%}{%- assign five = five | append: d | append: "," -%}{%- endfor -%}
+{%- assign five = five | split: "," -%}
+{%- assign best_t = -99 -%}{%- assign best_r = 0 -%}{%- assign best_s = -1 -%}
+<style>
+  .mv-5 { display: flex; flex-direction: column; gap: 6px; }
+  .mv-5 .cards { display: grid; grid-template-columns: repeat({{ five.size }}, 1fr); }
+  .mv-5 .card { text-align: center; padding: 0 4px; }
+  .mv-5 .card + .card { border-left: 1px solid #000; }
+  .mv-5 .card .d { font-size: 17px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+  .mv-5 .card .n { font-size: 13px; font-weight: 600; }
+  .mv-5 .card > svg { width: 66px; height: 66px; display: block; margin: 2px auto 0; }
+  .mv-5 .card .mv-max { font-size: 44px; }
+  .mv-5 .card .lo { font-size: 20px; font-weight: 600; }
+  .mv-5 .card .f { font-size: 14px; line-height: 1.35; margin-top: 3px; }
+  .mv-5 .card .f b { font-weight: 800; }
+  .mv-5 .card .f .mv-glyph { width: 14px; height: 14px; vertical-align: -2px; margin-right: 2px; }
+  .mv-5 .mv-chart { flex: 1; min-height: 50px; }
+  .mv-5 .sum { font-size: 15px; text-align: center; }
+  .mv-5 .sum b { font-weight: 800; }
+</style>
+<div class="mv mv-5">
+  {%- assign day = five.first -%}
+{%- assign rows = forecast.parts | where: "day", day -%}
+{%- assign whole = rows | where: "part", "day" | first -%}
+{%- assign tmin = 999 -%}{%- assign tmax = -999 -%}{%- assign rain = 0 -%}{%- assign chance = 0 -%}{%- assign wind = 0 -%}{%- assign cloud = nil -%}{%- assign shine = nil -%}
+{%- for r in rows -%}
+  {%- if r.part == "day" -%}{%- continue -%}{%- endif -%}
+  {%- if r.tmin != nil and r.tmin < tmin -%}{%- assign tmin = r.tmin -%}{%- endif -%}
+  {%- if r.tmax != nil and r.tmax > tmax -%}{%- assign tmax = r.tmax -%}{%- endif -%}
+  {%- assign rain = rain | plus: r.precipitation -%}
+  {%- if r.rain_probability > chance -%}{%- assign chance = r.rain_probability -%}{%- endif -%}
+  {%- if r.wind > wind -%}{%- assign wind = r.wind -%}{%- endif -%}
+  {%- if r.sunshine != nil -%}{%- assign shine = shine | plus: r.sunshine -%}{%- endif -%}
+{%- endfor -%}
+{%- if whole -%}
+  {%- assign tmin = whole.tmin -%}{%- assign tmax = whole.tmax -%}{%- assign rain = whole.precipitation -%}
+  {%- assign chance = whole.rain_probability -%}{%- assign wind = whole.wind -%}{%- assign cloud = whole.cloud -%}
+  {%- assign sym = whole.symbol -%}
+  {%- if whole.sunshine != nil -%}{%- assign shine = whole.sunshine -%}{%- endif -%}
+{%- else -%}
+  {%- assign pm = rows | where: "part", "afternoon" | first | default: rows.last -%}
+  {%- assign sym = pm.symbol -%}{%- assign cloud = pm.cloud -%}
+{%- endif -%}
+{%- assign rise = rows.first.sunrise -%}{%- assign set = rows.first.sunset -%}{%- assign light = nil -%}
+{%- if rise -%}
+  {%- assign rise_min = rise | slice: 0, 2 | times: 60 -%}{%- assign rise_min = rise | slice: 3, 2 | plus: rise_min -%}
+  {%- assign set_min = set | slice: 0, 2 | times: 60 -%}{%- assign set_min = set | slice: 3, 2 | plus: set_min -%}
+  {%- assign light = set_min | minus: rise_min -%}
+{%- endif -%}
+{%- assign noon = day | append: "T12:00:00Z" -%}
+{%- assign wd = noon | date: "%w" | plus: 0 -%}
+{%- assign mo = noon | date: "%m" | plus: 0 | minus: 1 -%}
+{%- assign day_num = noon | date: "%d" | plus: 0 -%}
+{%- assign day_name = T_days[wd] -%}{%- assign day_short = T_days_short[wd] -%}
+{%- if lang == "cs" -%}
+  {%- assign day_long = day_name | append: " " | append: day_num | append: ". " | append: T_months[mo] -%}
+{%- else -%}
+  {%- assign day_long = day_name | append: " " | append: day_num | append: " " | append: T_months[mo] -%}
+{%- endif -%}{%- assign first_long = day_long -%}
+  {%- assign day = five.last -%}
+{%- assign rows = forecast.parts | where: "day", day -%}
+{%- assign whole = rows | where: "part", "day" | first -%}
+{%- assign tmin = 999 -%}{%- assign tmax = -999 -%}{%- assign rain = 0 -%}{%- assign chance = 0 -%}{%- assign wind = 0 -%}{%- assign cloud = nil -%}{%- assign shine = nil -%}
+{%- for r in rows -%}
+  {%- if r.part == "day" -%}{%- continue -%}{%- endif -%}
+  {%- if r.tmin != nil and r.tmin < tmin -%}{%- assign tmin = r.tmin -%}{%- endif -%}
+  {%- if r.tmax != nil and r.tmax > tmax -%}{%- assign tmax = r.tmax -%}{%- endif -%}
+  {%- assign rain = rain | plus: r.precipitation -%}
+  {%- if r.rain_probability > chance -%}{%- assign chance = r.rain_probability -%}{%- endif -%}
+  {%- if r.wind > wind -%}{%- assign wind = r.wind -%}{%- endif -%}
+  {%- if r.sunshine != nil -%}{%- assign shine = shine | plus: r.sunshine -%}{%- endif -%}
+{%- endfor -%}
+{%- if whole -%}
+  {%- assign tmin = whole.tmin -%}{%- assign tmax = whole.tmax -%}{%- assign rain = whole.precipitation -%}
+  {%- assign chance = whole.rain_probability -%}{%- assign wind = whole.wind -%}{%- assign cloud = whole.cloud -%}
+  {%- assign sym = whole.symbol -%}
+  {%- if whole.sunshine != nil -%}{%- assign shine = whole.sunshine -%}{%- endif -%}
+{%- else -%}
+  {%- assign pm = rows | where: "part", "afternoon" | first | default: rows.last -%}
+  {%- assign sym = pm.symbol -%}{%- assign cloud = pm.cloud -%}
+{%- endif -%}
+{%- assign rise = rows.first.sunrise -%}{%- assign set = rows.first.sunset -%}{%- assign light = nil -%}
+{%- if rise -%}
+  {%- assign rise_min = rise | slice: 0, 2 | times: 60 -%}{%- assign rise_min = rise | slice: 3, 2 | plus: rise_min -%}
+  {%- assign set_min = set | slice: 0, 2 | times: 60 -%}{%- assign set_min = set | slice: 3, 2 | plus: set_min -%}
+  {%- assign light = set_min | minus: rise_min -%}
+{%- endif -%}
+{%- assign noon = day | append: "T12:00:00Z" -%}
+{%- assign wd = noon | date: "%w" | plus: 0 -%}
+{%- assign mo = noon | date: "%m" | plus: 0 | minus: 1 -%}
+{%- assign day_num = noon | date: "%d" | plus: 0 -%}
+{%- assign day_name = T_days[wd] -%}{%- assign day_short = T_days_short[wd] -%}
+{%- if lang == "cs" -%}
+  {%- assign day_long = day_name | append: " " | append: day_num | append: ". " | append: T_months[mo] -%}
+{%- else -%}
+  {%- assign day_long = day_name | append: " " | append: day_num | append: " " | append: T_months[mo] -%}
+{%- endif -%}
+  <div class="mv-head"><span class="when">{{ T_days5 }}</span><span class="date">{{ first_long }} – {{ day_long }}</span></div>
+  <div class="cards">
+    {%- for day in five -%}
+{%- assign rows = forecast.parts | where: "day", day -%}
+{%- assign whole = rows | where: "part", "day" | first -%}
+{%- assign tmin = 999 -%}{%- assign tmax = -999 -%}{%- assign rain = 0 -%}{%- assign chance = 0 -%}{%- assign wind = 0 -%}{%- assign cloud = nil -%}{%- assign shine = nil -%}
+{%- for r in rows -%}
+  {%- if r.part == "day" -%}{%- continue -%}{%- endif -%}
+  {%- if r.tmin != nil and r.tmin < tmin -%}{%- assign tmin = r.tmin -%}{%- endif -%}
+  {%- if r.tmax != nil and r.tmax > tmax -%}{%- assign tmax = r.tmax -%}{%- endif -%}
+  {%- assign rain = rain | plus: r.precipitation -%}
+  {%- if r.rain_probability > chance -%}{%- assign chance = r.rain_probability -%}{%- endif -%}
+  {%- if r.wind > wind -%}{%- assign wind = r.wind -%}{%- endif -%}
+  {%- if r.sunshine != nil -%}{%- assign shine = shine | plus: r.sunshine -%}{%- endif -%}
+{%- endfor -%}
+{%- if whole -%}
+  {%- assign tmin = whole.tmin -%}{%- assign tmax = whole.tmax -%}{%- assign rain = whole.precipitation -%}
+  {%- assign chance = whole.rain_probability -%}{%- assign wind = whole.wind -%}{%- assign cloud = whole.cloud -%}
+  {%- assign sym = whole.symbol -%}
+  {%- if whole.sunshine != nil -%}{%- assign shine = whole.sunshine -%}{%- endif -%}
+{%- else -%}
+  {%- assign pm = rows | where: "part", "afternoon" | first | default: rows.last -%}
+  {%- assign sym = pm.symbol -%}{%- assign cloud = pm.cloud -%}
+{%- endif -%}
+{%- assign rise = rows.first.sunrise -%}{%- assign set = rows.first.sunset -%}{%- assign light = nil -%}
+{%- if rise -%}
+  {%- assign rise_min = rise | slice: 0, 2 | times: 60 -%}{%- assign rise_min = rise | slice: 3, 2 | plus: rise_min -%}
+  {%- assign set_min = set | slice: 0, 2 | times: 60 -%}{%- assign set_min = set | slice: 3, 2 | plus: set_min -%}
+  {%- assign light = set_min | minus: rise_min -%}
+{%- endif -%}
+{%- assign noon = day | append: "T12:00:00Z" -%}
+{%- assign wd = noon | date: "%w" | plus: 0 -%}
+{%- assign mo = noon | date: "%m" | plus: 0 | minus: 1 -%}
+{%- assign day_num = noon | date: "%d" | plus: 0 -%}
+{%- assign day_name = T_days[wd] -%}{%- assign day_short = T_days_short[wd] -%}
+{%- if lang == "cs" -%}
+  {%- assign day_long = day_name | append: " " | append: day_num | append: ". " | append: T_months[mo] -%}
+{%- else -%}
+  {%- assign day_long = day_name | append: " " | append: day_num | append: " " | append: T_months[mo] -%}
+{%- endif -%}
+      {%- if tmax > best_t -%}{%- assign best_t = tmax -%}{%- assign best_t_day = day_name -%}{%- endif -%}
+      {%- if rain > best_r -%}{%- assign best_r = rain -%}{%- assign best_r_day = day_name -%}{%- endif -%}
+      {%- if shine != nil and shine > best_s -%}{%- assign best_s = shine -%}{%- assign best_s_day = day_name -%}{%- endif -%}
+      <div class="card">
+        <div class="d">{% if forloop.first %}{{ T_today }}{% else %}{{ day_short }}{% endif %}</div>
+        <div class="n">{{ day_num }}{% if lang == "cs" %}.{% endif %} {{ T_months[mo] | slice: 0, 3 }}</div>
+        {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
+{%- if night -%}{%- assign orb = moon -%}{%- else -%}{%- assign orb = sun -%}{%- endif -%}
+<svg class="{{ icon_class }}" viewBox="0 0 64 64">
+  {%- case icon -%}
+  {%- when "clear" -%}{{ orb }}
+  {%- when "partly" -%}<g transform="translate(2 0) scale(.62)">{{ orb }}</g>{{ cloud_svg }}
+  {%- when "cloudy" -%}<g transform="translate(-8 -12)">{{ cloud_svg | replace: '#fff', '#000' }}</g>{{ cloud_svg }}
+  {%- when "showers" -%}<g transform="translate(2 -6) scale(.62)">{{ orb }}</g><g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ drop1 }}
+  {%- when "rain" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ drops }}
+  {%- when "sleet" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ sleet }}
+  {%- when "snow" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ flakes }}
+  {%- endcase -%}
+</svg>
+        <div class="mv-max">{{ tmax | round }}°</div>
+        <div class="lo">{{ tmin | round }}°</div>
+        <div class="f">
+          {{ drop_glyph }}<b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b> · {{ chance | times: 100 | round }} %<br>
+          {%- if shine != nil -%}{{ sun_glyph }}<b>{{ shine | round | replace: ".", T_dec }} h</b> · {% endif %}{{ wind | round }} m/s
+        </div>
+      </div>
+    {%- endfor -%}
+  </div>
+  {%- assign chart_days = five -%}{%- assign chart_h = 60 -%}{%- assign chart_class = "" -%}
+{%- assign cw = chart_days.size | times: 240 -%}
+{%- assign base = chart_days.first | append: "T00:00:00Z" | date: "%s" | plus: 0 -%}
+{%- assign floor_y = chart_h | minus: 4 -%}
+{%- assign curve_h = chart_h | times: 0.6 -%}
+{%- assign c_lo = 99 -%}{%- assign c_hi = -99 -%}
+{%- for t in H.time -%}
+  {%- assign x = t | date: "%s" | plus: offset | minus: base | divided_by: 360.0 -%}
+  {%- if x < 0 or x >= cw -%}{%- continue -%}{%- endif -%}
+  {%- assign v = H.temperature_2m[forloop.index0] -%}
+  {%- if v != nil -%}
+    {%- if v < c_lo -%}{%- assign c_lo = v -%}{%- endif -%}
+    {%- if v > c_hi -%}{%- assign c_hi = v -%}{%- endif -%}
+  {%- endif -%}
+{%- endfor -%}
+{%- assign c_span = c_hi | minus: c_lo | at_least: 4 -%}
+{%- assign pts = "" -%}{%- assign bars = "" -%}
+{%- for t in H.time -%}
+  {%- assign x = t | date: "%s" | plus: offset | minus: base | divided_by: 360.0 -%}
+  {%- if x < 0 or x >= cw -%}{%- continue -%}{%- endif -%}
+  {%- assign i = forloop.index0 -%}
+  {%- assign v = H.temperature_2m[i] -%}
+  {%- if v != nil -%}
+    {%- assign y = c_hi | minus: v | times: curve_h | divided_by: c_span | plus: 5 | round: 1 -%}
+    {%- assign px = x | plus: 5 | round: 1 -%}
+    {%- capture pt -%}{{ px }},{{ y }}{%- endcapture -%}
+    {%- assign pts = pts | append: " " | append: pt -%}
+  {%- endif -%}
+  {%- assign p = H.precipitation[i] | default: 0 -%}
+  {%- if p >= 0.1 -%}
+    {%- assign bh = p | at_most: 3 | times: 0.15 | times: chart_h | plus: 2 | round: 1 -%}
+    {%- assign by = floor_y | minus: bh -%}
+    {%- capture bar -%}<rect x="{{ x | minus: 8.5 | round: 1 }}" y="{{ by }}" width="7" height="{{ bh }}"/>{%- endcapture -%}
+    {%- assign bars = bars | append: bar -%}
+  {%- endif -%}
+{%- endfor -%}
+<svg class="mv-chart {{ chart_class }}" viewBox="0 0 {{ cw }} {{ chart_h }}" preserveAspectRatio="none">
+  {%- for cd in chart_days -%}
+    {%- assign x0 = forloop.index0 | times: 240 -%}
+    {%- assign crow = forecast.parts | where: "day", cd | first -%}
+    {%- if crow.sunrise -%}
+      {%- assign r_min = crow.sunrise | slice: 0, 2 | times: 60 -%}{%- assign r_min = crow.sunrise | slice: 3, 2 | plus: r_min -%}
+      {%- assign s_min = crow.sunset | slice: 0, 2 | times: 60 -%}{%- assign s_min = crow.sunset | slice: 3, 2 | plus: s_min -%}
+      <rect x="{{ x0 }}" y="0" width="{{ r_min | divided_by: 6.0 | round: 1 }}" height="{{ floor_y }}" fill="url(#mv-night)"/>
+      <rect x="{{ s_min | divided_by: 6.0 | plus: x0 | round: 1 }}" y="0" width="{{ 1440 | minus: s_min | divided_by: 6.0 | round: 1 }}" height="{{ floor_y }}" fill="url(#mv-night)"/>
+    {%- endif -%}
+    {%- if chart_days.size == 1 -%}
+      <path d="M60 0V{{ floor_y }}M120 0V{{ floor_y }}M180 0V{{ floor_y }}" stroke="#000" stroke-width="1" stroke-dasharray="2 3" vector-effect="non-scaling-stroke"/>
+    {%- elsif forloop.index0 > 0 -%}
+      <path d="M{{ x0 }} 0V{{ floor_y }}" stroke="#000" stroke-width="2" vector-effect="non-scaling-stroke"/>
+    {%- endif -%}
+  {%- endfor -%}
+  <g fill="#000" stroke="#fff" stroke-width="1" vector-effect="non-scaling-stroke">{{ bars }}</g>
+  <polyline points="{{ pts | strip }}" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+  <polyline points="{{ pts | strip }}" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+  {%- assign now_x = now_local | minus: base | divided_by: 360.0 -%}
+  {%- if now_x >= 0 and now_x < cw -%}
+    <path d="M{{ now_x | round: 1 }} 0V{{ floor_y }}" stroke="#000" stroke-width="2" stroke-dasharray="4 2" vector-effect="non-scaling-stroke"/>
+  {%- endif -%}
+  <path d="M0 {{ floor_y | plus: 0.5 }}H{{ cw }}" stroke="#000" stroke-width="2" vector-effect="non-scaling-stroke"/>
+</svg>
+  <div class="sum">
+    {{ T_warmest }} <b>{{ best_t_day }} {{ best_t | round }}°</b>
+    {%- if best_r >= 0.5 %} · {{ T_wettest }} <b>{{ best_r_day }} {{ best_r | round: 1 | replace: ".", T_dec }} mm</b>{% endif -%}
+    {%- if best_s > 0 %} · {{ T_sunniest }} <b>{{ best_s_day }} {{ best_s | round | replace: ".", T_dec }} h</b>{% endif %}
+  </div>
+</div>
+    {%- else -%}
+<style>
+  .mv-tt { display: flex; gap: 22px; }
+  .mv-tt .col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+  .mv-tt .hero { display: flex; align-items: center; gap: 6px; height: 96px; }
+  .mv-tt .hero > svg { width: 92px; height: 92px; flex: none; }
+  .mv-tt .temps { display: flex; flex-direction: column; flex: none; }
+  .mv-tt .mv-max { font-size: 72px; }
+  .mv-tt .min { font-size: 20px; font-weight: 600; margin-top: 2px; }
+  .mv-tt .side { margin-left: auto; text-align: right; line-height: 1.3; }
+  .mv-tt .what { font-size: 18px; font-weight: 800; margin-bottom: 4px; white-space: nowrap; }
+  .mv-tt .mv-sun { font-size: 18px; }
+  .mv-parts { display: grid; grid-template-columns: repeat(4, 1fr); text-align: center; }
+  .mv-part .n { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .mv-part svg { width: 38px; height: 38px; display: block; margin: 0 auto; }
+  .mv-part .t { font-size: 19px; font-weight: 800; line-height: 1; }
+  .mv-tt .mv-chart { flex: 1; min-height: 60px; }
+</style>
+<div class="mv mv-tt">
+  {%- for day in days limit: 2 -%}
+{%- assign rows = forecast.parts | where: "day", day -%}
+{%- assign whole = rows | where: "part", "day" | first -%}
+{%- assign tmin = 999 -%}{%- assign tmax = -999 -%}{%- assign rain = 0 -%}{%- assign chance = 0 -%}{%- assign wind = 0 -%}{%- assign cloud = nil -%}{%- assign shine = nil -%}
+{%- for r in rows -%}
+  {%- if r.part == "day" -%}{%- continue -%}{%- endif -%}
+  {%- if r.tmin != nil and r.tmin < tmin -%}{%- assign tmin = r.tmin -%}{%- endif -%}
+  {%- if r.tmax != nil and r.tmax > tmax -%}{%- assign tmax = r.tmax -%}{%- endif -%}
+  {%- assign rain = rain | plus: r.precipitation -%}
+  {%- if r.rain_probability > chance -%}{%- assign chance = r.rain_probability -%}{%- endif -%}
+  {%- if r.wind > wind -%}{%- assign wind = r.wind -%}{%- endif -%}
+  {%- if r.sunshine != nil -%}{%- assign shine = shine | plus: r.sunshine -%}{%- endif -%}
+{%- endfor -%}
+{%- if whole -%}
+  {%- assign tmin = whole.tmin -%}{%- assign tmax = whole.tmax -%}{%- assign rain = whole.precipitation -%}
+  {%- assign chance = whole.rain_probability -%}{%- assign wind = whole.wind -%}{%- assign cloud = whole.cloud -%}
+  {%- assign sym = whole.symbol -%}
+  {%- if whole.sunshine != nil -%}{%- assign shine = whole.sunshine -%}{%- endif -%}
+{%- else -%}
+  {%- assign pm = rows | where: "part", "afternoon" | first | default: rows.last -%}
+  {%- assign sym = pm.symbol -%}{%- assign cloud = pm.cloud -%}
+{%- endif -%}
+{%- assign rise = rows.first.sunrise -%}{%- assign set = rows.first.sunset -%}{%- assign light = nil -%}
+{%- if rise -%}
+  {%- assign rise_min = rise | slice: 0, 2 | times: 60 -%}{%- assign rise_min = rise | slice: 3, 2 | plus: rise_min -%}
+  {%- assign set_min = set | slice: 0, 2 | times: 60 -%}{%- assign set_min = set | slice: 3, 2 | plus: set_min -%}
+  {%- assign light = set_min | minus: rise_min -%}
+{%- endif -%}
+{%- assign noon = day | append: "T12:00:00Z" -%}
+{%- assign wd = noon | date: "%w" | plus: 0 -%}
+{%- assign mo = noon | date: "%m" | plus: 0 | minus: 1 -%}
+{%- assign day_num = noon | date: "%d" | plus: 0 -%}
+{%- assign day_name = T_days[wd] -%}{%- assign day_short = T_days_short[wd] -%}
+{%- if lang == "cs" -%}
+  {%- assign day_long = day_name | append: " " | append: day_num | append: ". " | append: T_months[mo] -%}
+{%- else -%}
+  {%- assign day_long = day_name | append: " " | append: day_num | append: " " | append: T_months[mo] -%}
+{%- endif -%}
+    <div class="col">
+      <div class="mv-head">
+        <span class="when">{% if forloop.first %}{{ T_today }}{% else %}{{ T_tomorrow }}{% endif %}</span>
+        <span class="date">{{ day_long }}</span>
+      </div>
+      <div class="hero">
+        {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
+{%- if night -%}{%- assign orb = moon -%}{%- else -%}{%- assign orb = sun -%}{%- endif -%}
+<svg class="{{ icon_class }}" viewBox="0 0 64 64">
+  {%- case icon -%}
+  {%- when "clear" -%}{{ orb }}
+  {%- when "partly" -%}<g transform="translate(2 0) scale(.62)">{{ orb }}</g>{{ cloud_svg }}
+  {%- when "cloudy" -%}<g transform="translate(-8 -12)">{{ cloud_svg | replace: '#fff', '#000' }}</g>{{ cloud_svg }}
+  {%- when "showers" -%}<g transform="translate(2 -6) scale(.62)">{{ orb }}</g><g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ drop1 }}
+  {%- when "rain" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ drops }}
+  {%- when "sleet" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ sleet }}
+  {%- when "snow" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ flakes }}
+  {%- endcase -%}
+</svg>
+        <div class="temps">
+          <span class="mv-max">{{ tmax | round }}°</span>
+          <span class="min">{{ T_low }} {{ tmin | round }}°</span>
+        </div>
+        <div class="side">
+          <div class="what">
+{%- for s in SYMBOLS -%}{%- if s == icon -%}{{ T_symbols[forloop.index0] }}{%- endif -%}{%- endfor -%}</div>
+          {%- if rise -%}
+          <div class="mv-sun">{{ rise_svg }} {{ rise }}</div>
+          <div class="mv-sun">{{ set_svg }} {{ set }}</div>
+          {%- endif -%}
+        </div>
+      </div>
+      <div class="mv-facts">
+        <div class="mv-fact"><span>{{ T_rain }}</span><b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b><i>{{ chance | times: 100 | round }} % {{ T_chance }}</i></div>
+        <div class="mv-fact"><span>{{ T_sunshine }}</span><b>{% if shine != nil %}{{ shine | round: 1 | replace: ".", T_dec }} h{% else %}–{% endif %}</b><i>{% if light %}{{ T_of }} {{ light | divided_by: 60 | floor }} h {{ light | modulo: 60 }} min{% endif %}</i></div>
+        <div class="mv-fact"><span>{{ T_clouds }}</span><b>{% if cloud != nil %}{{ cloud | round }} %{% else %}–{% endif %}</b><i>{{ T_daytime }}</i></div>
+        <div class="mv-fact"><span>{{ T_wind }}</span><b>{{ wind | round }} m/s</b><i>{{ T_max }}</i></div>
+      </div>
+<div class="mv-parts">
+  {%- assign part_names = "night,morning,afternoon,evening" | split: "," -%}
+  {%- for part in part_names -%}
+    {%- assign p = rows | where: "part", part | first -%}
+    <div class="mv-part">
+      <div class="n">{{ T_parts[forloop.index0] }}</div>
+      {%- if p -%}
+        {%- assign icon = p.symbol -%}{%- assign icon_class = "" -%}
+        {%- if part == "night" or part == "evening" -%}{%- assign night = true -%}{%- else -%}{%- assign night = false -%}{%- endif -%}
+{%- if night -%}{%- assign orb = moon -%}{%- else -%}{%- assign orb = sun -%}{%- endif -%}
+<svg class="{{ icon_class }}" viewBox="0 0 64 64">
+  {%- case icon -%}
+  {%- when "clear" -%}{{ orb }}
+  {%- when "partly" -%}<g transform="translate(2 0) scale(.62)">{{ orb }}</g>{{ cloud_svg }}
+  {%- when "cloudy" -%}<g transform="translate(-8 -12)">{{ cloud_svg | replace: '#fff', '#000' }}</g>{{ cloud_svg }}
+  {%- when "showers" -%}<g transform="translate(2 -6) scale(.62)">{{ orb }}</g><g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ drop1 }}
+  {%- when "rain" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ drops }}
+  {%- when "sleet" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ sleet }}
+  {%- when "snow" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ flakes }}
+  {%- endcase -%}
+</svg>
+        <div class="t">{% if part == "night" %}{{ p.tmin | round }}{% else %}{{ p.tmax | round }}{% endif %}°</div>
+      {%- else -%}
+        <svg viewBox="0 0 64 64"></svg><div class="t">–</div>
+      {%- endif -%}
+    </div>
+  {%- endfor -%}
+</div>
+      {%- assign chart_days = day | split: "," -%}{%- assign chart_h = 74 -%}{%- assign chart_class = "" -%}
+{%- assign cw = chart_days.size | times: 240 -%}
+{%- assign base = chart_days.first | append: "T00:00:00Z" | date: "%s" | plus: 0 -%}
+{%- assign floor_y = chart_h | minus: 4 -%}
+{%- assign curve_h = chart_h | times: 0.6 -%}
+{%- assign c_lo = 99 -%}{%- assign c_hi = -99 -%}
+{%- for t in H.time -%}
+  {%- assign x = t | date: "%s" | plus: offset | minus: base | divided_by: 360.0 -%}
+  {%- if x < 0 or x >= cw -%}{%- continue -%}{%- endif -%}
+  {%- assign v = H.temperature_2m[forloop.index0] -%}
+  {%- if v != nil -%}
+    {%- if v < c_lo -%}{%- assign c_lo = v -%}{%- endif -%}
+    {%- if v > c_hi -%}{%- assign c_hi = v -%}{%- endif -%}
+  {%- endif -%}
+{%- endfor -%}
+{%- assign c_span = c_hi | minus: c_lo | at_least: 4 -%}
+{%- assign pts = "" -%}{%- assign bars = "" -%}
+{%- for t in H.time -%}
+  {%- assign x = t | date: "%s" | plus: offset | minus: base | divided_by: 360.0 -%}
+  {%- if x < 0 or x >= cw -%}{%- continue -%}{%- endif -%}
+  {%- assign i = forloop.index0 -%}
+  {%- assign v = H.temperature_2m[i] -%}
+  {%- if v != nil -%}
+    {%- assign y = c_hi | minus: v | times: curve_h | divided_by: c_span | plus: 5 | round: 1 -%}
+    {%- assign px = x | plus: 5 | round: 1 -%}
+    {%- capture pt -%}{{ px }},{{ y }}{%- endcapture -%}
+    {%- assign pts = pts | append: " " | append: pt -%}
+  {%- endif -%}
+  {%- assign p = H.precipitation[i] | default: 0 -%}
+  {%- if p >= 0.1 -%}
+    {%- assign bh = p | at_most: 3 | times: 0.15 | times: chart_h | plus: 2 | round: 1 -%}
+    {%- assign by = floor_y | minus: bh -%}
+    {%- capture bar -%}<rect x="{{ x | minus: 8.5 | round: 1 }}" y="{{ by }}" width="7" height="{{ bh }}"/>{%- endcapture -%}
+    {%- assign bars = bars | append: bar -%}
+  {%- endif -%}
+{%- endfor -%}
+<svg class="mv-chart {{ chart_class }}" viewBox="0 0 {{ cw }} {{ chart_h }}" preserveAspectRatio="none">
+  {%- for cd in chart_days -%}
+    {%- assign x0 = forloop.index0 | times: 240 -%}
+    {%- assign crow = forecast.parts | where: "day", cd | first -%}
+    {%- if crow.sunrise -%}
+      {%- assign r_min = crow.sunrise | slice: 0, 2 | times: 60 -%}{%- assign r_min = crow.sunrise | slice: 3, 2 | plus: r_min -%}
+      {%- assign s_min = crow.sunset | slice: 0, 2 | times: 60 -%}{%- assign s_min = crow.sunset | slice: 3, 2 | plus: s_min -%}
+      <rect x="{{ x0 }}" y="0" width="{{ r_min | divided_by: 6.0 | round: 1 }}" height="{{ floor_y }}" fill="url(#mv-night)"/>
+      <rect x="{{ s_min | divided_by: 6.0 | plus: x0 | round: 1 }}" y="0" width="{{ 1440 | minus: s_min | divided_by: 6.0 | round: 1 }}" height="{{ floor_y }}" fill="url(#mv-night)"/>
+    {%- endif -%}
+    {%- if chart_days.size == 1 -%}
+      <path d="M60 0V{{ floor_y }}M120 0V{{ floor_y }}M180 0V{{ floor_y }}" stroke="#000" stroke-width="1" stroke-dasharray="2 3" vector-effect="non-scaling-stroke"/>
+    {%- elsif forloop.index0 > 0 -%}
+      <path d="M{{ x0 }} 0V{{ floor_y }}" stroke="#000" stroke-width="2" vector-effect="non-scaling-stroke"/>
+    {%- endif -%}
+  {%- endfor -%}
+  <g fill="#000" stroke="#fff" stroke-width="1" vector-effect="non-scaling-stroke">{{ bars }}</g>
+  <polyline points="{{ pts | strip }}" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+  <polyline points="{{ pts | strip }}" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+  {%- assign now_x = now_local | minus: base | divided_by: 360.0 -%}
+  {%- if now_x >= 0 and now_x < cw -%}
+    <path d="M{{ now_x | round: 1 }} 0V{{ floor_y }}" stroke="#000" stroke-width="2" stroke-dasharray="4 2" vector-effect="non-scaling-stroke"/>
+  {%- endif -%}
+  <path d="M0 {{ floor_y | plus: 0.5 }}H{{ cw }}" stroke="#000" stroke-width="2" vector-effect="non-scaling-stroke"/>
+</svg>
+    </div>
+  {%- endfor -%}
+</div>
+    {%- endcase -%}
+  </div>
+  {%- assign compact = false -%}
+<div class="title_bar">
+  <span class="title">{{ place }}</span>
+  {%- assign updated = forecast.generated | date: "%s" | plus: offset -%}
+  {%- if compact -%}
+  <span class="instance">MeteoVerdict · {{ updated | date: "%H:%M" }}</span>
+  {%- else -%}
+  <span class="instance">MeteoVerdict{% if models_used > 0 %} · {{ models_used }} {{ T_models }}{% endif %} · {{ T_updated }} {{ updated | date: "%-d.%-m. %H:%M" }}</span>
+  {%- endif -%}
+</div>
+</div>

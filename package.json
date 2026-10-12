@@ -1,0 +1,17 @@
+{
+  "name": "meteoverdict-trmnl",
+  "private": true,
+  "type": "module",
+  "description": "MeteoVerdict weather for TRMNL e-ink displays",
+  "license": "MIT",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "settings": "node scripts/settings.mjs",
+    "render": "node scripts/render.mjs",
+    "screenshots": "node scripts/screenshots.mjs",
+    "test": "node scripts/build.mjs && node --test scripts/*.test.mjs"
+  },
+  "devDependencies": {
+    "liquidjs": "10.21.1"
+  }
+}
