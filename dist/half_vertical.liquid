@@ -141,13 +141,12 @@
   .mv-hv .tomorrow b { font-weight: 800; }
   .mv-hv .tomorrow .lbl { font-weight: 800; text-transform: uppercase; letter-spacing: 1px; font-size: 15px; }
 </style>
-<div class="view view--half_vertical">
-  <div class="layout">
-    {%- if days.size == 0 -%}
-    <div class="mv"><p class="mv-empty">{{ T_none }} {{ generated_local | date: "%d.%m. %H:%M" }}.</p></div>
-    {%- else -%}
-    <div class="mv mv-hv">
-      {%- assign day = days[start] -%}
+<div class="layout">
+  {%- if days.size == 0 -%}
+  <div class="mv"><p class="mv-empty">{{ T_none }} {{ generated_local | date: "%d.%m. %H:%M" }}.</p></div>
+  {%- else -%}
+  <div class="mv mv-hv">
+    {%- assign day = days[start] -%}
 {%- if day -%}{%- assign rows = forecast.parts | where: "day", day -%}{%- else -%}{%- assign rows = "" | split: "," -%}{%- endif -%}
 {%- assign whole = rows | where: "part", "day" | first -%}
 {%- assign tmin = 999 -%}{%- assign tmax = -999 -%}{%- assign rain = 0 -%}{%- assign chance = 0 -%}{%- assign wind = 0 -%}{%- assign cloud = nil -%}{%- assign shine = nil -%}
@@ -232,9 +231,9 @@
 {%- if rows.size > 0 and tmax >= 30 and n_alerts < 2 -%}
   {%- capture a -%}<span class="mv-badge">{{ T_heat }} {{ tmax | round }}°</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
 {%- endif -%}
-      <div class="mv-head"><span class="when">{% if start == 0 %}{{ T_today }}{% else %}{{ T_tomorrow }}{% endif %}{{ alerts }}</span><span class="date">{{ day_date }}</span></div>
-      <div class="hero">
-        {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
+    <div class="mv-head"><span class="when">{% if start == 0 %}{{ T_today }}{% else %}{{ T_tomorrow }}{% endif %}{{ alerts }}</span><span class="date">{{ day_date }}</span></div>
+    <div class="hero">
+      {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
 {%- if night -%}{%- assign orb = moon -%}{%- else -%}{%- assign orb = sun -%}{%- endif -%}
 <svg class="{{ icon_class }}" viewBox="0 0 64 64">
   {%- case icon -%}
@@ -247,20 +246,20 @@
   {%- when "snow" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ flakes }}
   {%- endcase -%}
 </svg>
-        <span class="mv-max">{{ tmax | round }}°</span>
-        <div class="side">
-          <div class="what">
+      <span class="mv-max">{{ tmax | round }}°</span>
+      <div class="side">
+        <div class="what">
 {%- for s in SYMBOLS -%}{%- if s == icon -%}{{ T_symbols[forloop.index0] }}{%- endif -%}{%- endfor -%}</div>
-          <div class="lo">{{ T_low }} {{ tmin | round }}°</div>
-          {%- if rise -%}<div class="mv-sun">{{ rise_svg }}{{ rise }} {{ set_svg }}{{ set }}</div>{%- endif -%}
-        </div>
+        <div class="lo">{{ T_low }} {{ tmin | round }}°</div>
+        {%- if rise -%}<div class="mv-sun">{{ rise_svg }}{{ rise }} {{ set_svg }}{{ set }}</div>{%- endif -%}
       </div>
-      <div class="mv-facts">
-        <div class="mv-fact"><span>{{ T_rain }}</span><b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b><i>{{ chance | times: 100 | round }} %</i></div>
-        <div class="mv-fact"><span>{{ T_sunshine }}</span><b>{% if shine != nil %}{{ shine | round: 1 | replace: ".", T_dec }} h{% else %}–{% endif %}</b><i>{% if light %}{{ light | divided_by: 60 | floor }} h {{ light | modulo: 60 }} min{% if light_diff_s != "" %} ({{ light_diff_s }}){% endif %}{% else %}&nbsp;{% endif %}</i></div>
-        <div class="mv-fact"><span>{{ T_clouds }}</span><b>{% if cloud != nil %}{{ cloud | round }} %{% else %}–{% endif %}</b><i>&nbsp;</i></div>
-        <div class="mv-fact"><span>{{ T_wind }}</span><b>{{ wind | times: wind_k | round }} {{ wind_unit }}</b><i>&nbsp;</i></div>
-      </div>
+    </div>
+    <div class="mv-facts">
+      <div class="mv-fact"><span>{{ T_rain }}</span><b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b><i>{{ chance | times: 100 | round }} %</i></div>
+      <div class="mv-fact"><span>{{ T_sunshine }}</span><b>{% if shine != nil %}{{ shine | round: 1 | replace: ".", T_dec }} h{% else %}–{% endif %}</b><i>{% if light %}{{ light | divided_by: 60 | floor }} h {{ light | modulo: 60 }} min{% if light_diff_s != "" %} ({{ light_diff_s }}){% endif %}{% else %}&nbsp;{% endif %}</i></div>
+      <div class="mv-fact"><span>{{ T_clouds }}</span><b>{% if cloud != nil %}{{ cloud | round }} %{% else %}–{% endif %}</b><i>&nbsp;</i></div>
+      <div class="mv-fact"><span>{{ T_wind }}</span><b>{{ wind | times: wind_k | round }} {{ wind_unit }}</b><i>&nbsp;</i></div>
+    </div>
 <div class="mv-parts">
   {%- assign part_names = "night,morning,afternoon,evening" | split: "," -%}
   {%- for part in part_names -%}
@@ -291,7 +290,7 @@
     </div>
   {%- endfor -%}
 </div>
-      {%- assign chart_days = day | split: "," -%}{%- assign chart_h = 74 -%}{%- assign chart_class = "" -%}
+    {%- assign chart_days = day | split: "," -%}{%- assign chart_h = 74 -%}{%- assign chart_class = "" -%}
 {%- assign cw = chart_days.size | times: 240 -%}
 {%- assign base = chart_days.first | append: "T00:00:00Z" | date: "%s" | plus: 0 -%}
 {%- assign floor_y = chart_h | minus: 4 -%}
@@ -358,9 +357,9 @@
   {%- endif -%}
   <path d="M0 {{ floor_y | plus: 0.5 }}H{{ cw }}" stroke="#000" stroke-width="2" vector-effect="non-scaling-stroke"/>
 </svg>
-      {%- assign next_start = start | plus: 1 -%}
-      {%- if days.size > next_start -%}
-      {%- assign day = days[next_start] -%}
+    {%- assign next_start = start | plus: 1 -%}
+    {%- if days.size > next_start -%}
+    {%- assign day = days[next_start] -%}
 {%- if day -%}{%- assign rows = forecast.parts | where: "day", day -%}{%- else -%}{%- assign rows = "" | split: "," -%}{%- endif -%}
 {%- assign whole = rows | where: "part", "day" | first -%}
 {%- assign tmin = 999 -%}{%- assign tmax = -999 -%}{%- assign rain = 0 -%}{%- assign chance = 0 -%}{%- assign wind = 0 -%}{%- assign cloud = nil -%}{%- assign shine = nil -%}
@@ -419,9 +418,9 @@
   {%- assign day_long = day_name | append: " " | append: day_dm -%}
   {%- assign day_date = T_months[mo] | slice: 0, 3 | prepend: " " | prepend: day_num -%}
 {%- endif -%}
-      <div class="tomorrow">
-        <span class="lbl">{% if start == 0 %}{{ T_tomorrow }}{% else %}{{ day_name }}{% endif %}</span>
-        {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
+    <div class="tomorrow">
+      <span class="lbl">{% if start == 0 %}{{ T_tomorrow }}{% else %}{{ day_name }}{% endif %}</span>
+      {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
 {%- if night -%}{%- assign orb = moon -%}{%- else -%}{%- assign orb = sun -%}{%- endif -%}
 <svg class="{{ icon_class }}" viewBox="0 0 64 64">
   {%- case icon -%}
@@ -434,13 +433,13 @@
   {%- when "snow" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ flakes }}
   {%- endcase -%}
 </svg>
-        <span><b>{{ tmax | round }}°</b> / {{ tmin | round }}°{% if rain >= 0.1 %} · {{ rain | round: 1 | replace: ".", T_dec }} mm{% endif %}</span>
-      </div>
-      {%- endif -%}
+      <span><b>{{ tmax | round }}°</b> / {{ tmin | round }}°{% if rain >= 0.1 %} · {{ rain | round: 1 | replace: ".", T_dec }} mm{% endif %}</span>
     </div>
     {%- endif -%}
   </div>
-  {%- assign compact = true -%}
+  {%- endif -%}
+</div>
+{%- assign compact = true -%}
 {%- if lang == "cs" -%}
   {%- assign gmo = generated_local | date: "%m" | plus: 0 -%}
   {%- assign gdate = generated_local | date: "%d" | plus: 0 | append: ". " | append: gmo | append: "." -%}
@@ -459,5 +458,4 @@
   {%- else -%}
   <span class="instance">MeteoVerdict{% if models_used > 0 %} · {{ models_used }} {{ T_models }}{% endif %} · {{ T_updated }} {{ gdate }} {{ gtime }}</span>
   {%- endif -%}
-</div>
 </div>
