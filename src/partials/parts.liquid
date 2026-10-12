@@ -1,0 +1,18 @@
+{%- comment -%} night, morning, afternoon and evening of `rows`: name, symbol, temperature {%- endcomment -%}
+<div class="mv-parts">
+  {%- assign part_names = "night,morning,afternoon,evening" | split: "," -%}
+  {%- for part in part_names -%}
+    {%- assign p = rows | where: "part", part | first -%}
+    <div class="mv-part">
+      <div class="n">{{ T_parts[forloop.index0] }}</div>
+      {%- if p -%}
+        {%- assign icon = p.symbol -%}{%- assign icon_class = "" -%}
+        {%- if part == "night" or part == "evening" -%}{%- assign night = true -%}{%- else -%}{%- assign night = false -%}{%- endif -%}
+        {% include "partials/icon" %}
+        <div class="t">{% if part == "night" %}{{ p.tmin | round }}{% else %}{{ p.tmax | round }}{% endif %}°</div>
+      {%- else -%}
+        <svg viewBox="0 0 64 64"></svg><div class="t">–</div>
+      {%- endif -%}
+    </div>
+  {%- endfor -%}
+</div>
