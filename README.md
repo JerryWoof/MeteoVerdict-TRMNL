@@ -115,7 +115,9 @@ out when the forecast does not have the day before.
 
 ## Install
 
-Until the recipe is published, add it as a private plugin. That takes about five minutes.
+MeteoVerdict is being prepared as a public TRMNL recipe (see [Publishing](#publishing)).
+Until it's out, or if you'd rather have your own copy of the markup, add it as a private
+plugin. That takes about five minutes.
 
 1. In TRMNL go to **Plugins → Private Plugin → Add new**, name it, e.g. *MeteoVerdict*.
 2. **Strategy:** Polling. **Polling URL:**
@@ -130,6 +132,7 @@ Until the recipe is published, add it as a private plugin. That takes about five
 
    | Field | |
    |---|---|
+   | About This Plugin | The description and links. Nothing to fill in |
    | Okres | A dropdown of all 77. Required |
    | View | What the full screen shows: today and tomorrow, next 24 hours, 5 days, or the weekend |
    | Place name | Shown in the footer instead of the okres name. Optional |
@@ -153,6 +156,12 @@ Until the recipe is published, add it as a private plugin. That takes about five
 Times are Czech time (CET, or CEST in summer), hour by hour, whatever your TRMNL
 account's time zone. The forecast is for Czechia, so that is the clock it should be read
 by.
+
+## Publishing
+
+[`recipe/README.md`](recipe/README.md) has everything for submitting the plugin as a
+public TRMNL recipe: the icon, the texts for TRMNL's forms, a step-by-step checklist, and
+where the plugin stands against each of TRMNL's recipe requirements.
 
 ## What's on the screen, and how far to trust it
 
@@ -196,7 +205,10 @@ npm run settings              # regenerate src/settings.yml from MeteoVerdict's 
   icons, the hourly chart and the footer.
 - **`dist/` is for pasting.** TRMNL wants one self-contained template per layout, so
   `npm run build` inlines every `{% include %}` and strips the comments. Commit `dist/`
-  together with `src/`.
+  together with `src/`. The layouts leave out the `view view--full` (etc.) wrapper,
+  because TRMNL adds it. `scripts/render.mjs` adds it too.
+- **Recipe checks.** `scripts/recipe.test.mjs` runs the checks of TRMNL's recipe linter
+  that can run locally, and prints the inline-style count it limits.
 - **Two Liquid engines.** Rendering and most tests use [liquidjs](https://liquidjs.com), but
   TRMNL runs Ruby Liquid. So `scripts/render.rb` renders the same layouts with the `liquid`
   gem in strict mode, and a test checks that both engines produce the same text. CI

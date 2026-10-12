@@ -119,13 +119,12 @@
 <svg width="0" height="0" style="position:absolute">
   <defs><pattern id="mv-night" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="1.3" height="6" fill="#000"/></pattern></defs>
 </svg>
-<div class="view view--full">
-  <div class="layout">
-    {%- if days.size == 0 -%}
-    <div class="mv"><p class="mv-empty">{{ T_none }} {{ generated_local | date: "%d.%m. %H:%M" }}.</p></div>
-    {%- else -%}
-    {%- case view -%}
-    {%- when "next_24h" -%}
+<div class="layout">
+  {%- if days.size == 0 -%}
+  <div class="mv"><p class="mv-empty">{{ T_none }} {{ generated_local | date: "%d.%m. %H:%M" }}.</p></div>
+  {%- else -%}
+  {%- case view -%}
+  {%- when "next_24h" -%}
 {%- assign s = 0 -%}
 {%- for t in H.time -%}{%- assign e = t | date: "%s" | plus: 0 -%}{%- if e <= now_utc -%}{%- assign s = forloop.index0 -%}{%- else -%}{%- break -%}{%- endif -%}{%- endfor -%}
 {%- assign cap = n_hours | minus: 1 -%}
@@ -618,7 +617,7 @@
     </div>
   </div>
 </div>
-    {%- when "five_days" -%}
+  {%- when "five_days" -%}
 {%- assign five = "" -%}
 {%- for d in days limit: 5 -%}{%- assign five = five | append: d | append: "," -%}{%- endfor -%}
 {%- assign five = five | split: "," -%}
@@ -950,7 +949,7 @@
     {%- if best_s > 0 %} · {{ T_sunniest }} <b>{{ best_s_day }} {{ best_s | round | replace: ".", T_dec }} h</b>{% endif %}
   </div>
 </div>
-    {%- when "weekend" -%}
+  {%- when "weekend" -%}
 {%- assign wk_noon = days.first | append: "T12:00:00Z" -%}
 {%- if evening_switch and now_hour >= 18 -%}
   {%- assign wk_noon = wk_noon | date: "%s" | plus: 86400 | date: "%Y-%m-%dT12:00:00Z" -%}
@@ -1502,7 +1501,7 @@
 </div>
 </div>
 {%- endif -%}
-    {%- else -%}
+  {%- else -%}
 {%- assign pair = "" -%}
 {%- for d in days offset: start limit: 2 -%}{%- assign pair = pair | append: d | append: "," -%}{%- endfor -%}
 {%- assign pair = pair | split: "," -%}
@@ -1769,10 +1768,10 @@
     </div>
   {%- endfor -%}
 </div>
-    {%- endcase -%}
-    {%- endif -%}
-  </div>
-  {%- assign compact = false -%}
+  {%- endcase -%}
+  {%- endif -%}
+</div>
+{%- assign compact = false -%}
 {%- if lang == "cs" -%}
   {%- assign gmo = generated_local | date: "%m" | plus: 0 -%}
   {%- assign gdate = generated_local | date: "%d" | plus: 0 | append: ". " | append: gmo | append: "." -%}
@@ -1791,5 +1790,4 @@
   {%- else -%}
   <span class="instance">MeteoVerdict{% if models_used > 0 %} · {{ models_used }} {{ T_models }}{% endif %} · {{ T_updated }} {{ gdate }} {{ gtime }}</span>
   {%- endif -%}
-</div>
 </div>

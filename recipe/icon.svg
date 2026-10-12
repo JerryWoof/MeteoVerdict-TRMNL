@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- MeteoVerdict recipe icon: a sun half behind a cloud, with a verdict tick. Black on white. -->
+  <rect width="512" height="512" fill="#fff"/>
+  <g transform="translate(14 22)">
+    <g stroke="#000" stroke-width="34" stroke-linecap="round" fill="none">
+      <circle cx="196" cy="196" r="78"/>
+      <path d="M196 42v36M42 196h36M87 87l26 26M305 87l-26 26M87 305l26-26"/>
+    </g>
+    <path d="M150 430H372A72 72 0 0 0 372 286A106 106 0 0 0 168 266A82 82 0 0 0 150 430Z"
+          fill="#fff" stroke="#000" stroke-width="34" stroke-linejoin="round"/>
+    <path d="M210 336l40 40 80-84" fill="none" stroke="#000" stroke-width="38" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
