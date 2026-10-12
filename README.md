@@ -1,7 +1,7 @@
 # MeteoVerdict for TRMNL
 
 Weather for your Czech district on a [TRMNL](https://trmnl.com) e-ink display: today and
-tomorrow, the next 24 hours or five days, with temperature, rain, sunshine, clouds, wind,
+tomorrow, the next 24 hours, five days or the weekend, with temperature, rain, sunshine, clouds, wind,
 sunrise and sunset. In English or Czech.
 
 ![Today and tomorrow in Prague](screenshots/today-tomorrow.png)
@@ -15,14 +15,17 @@ opinion. Free, no API key.
 ## Views
 
 A weather display gets a glance on your way out, so each view answers one question:
-*what's today like, and tomorrow?*, *when will it rain?*, *what does the week look like?*
+*what's today like, and tomorrow?*, *when will it rain?*, *what does the week look like?*,
+*what about the weekend?*
 Pick the view for the full screen in the plugin's settings.
 
 ### Today and tomorrow
 
 Two days side by side. For each:
 - the symbol, high and low, and a one-word summary;
-- rain with its chance, hours of sunshine out of the day's daylight, cloud cover and wind;
+- rain with its chance, hours of sunshine out of the day's daylight (and how many minutes
+  longer or shorter the day is than the day before: *of 10 h 55 min (−3)*), cloud cover
+  and wind;
 - sunrise and sunset, and for the second day how much warmer or colder it gets;
 - night, morning, afternoon and evening, each with its own symbol;
 - the hourly temperature curve, with rain bars, the night hatched and a dashed line at the
@@ -51,6 +54,16 @@ For planning the week:
 - each day's symbol, high and low, rain, sunshine and wind;
 - one continuous temperature curve over the five days;
 - a closing line naming the warmest, wettest and sunniest day.
+
+### Weekend
+
+![The weekend in Prague, seen on a Monday](screenshots/weekend.png)
+
+Saturday and Sunday side by side, each like a day of *Today and tomorrow*. From Monday to
+Friday it shows the coming weekend, on Saturday this one, and on Sunday Sunday and Monday.
+The forecast reaches five days past today, so early in the week Sunday (or the whole
+weekend) can be beyond it: the screen then shows what there is and says *Sunday is beyond
+the forecast*, as above on a Monday.
 
 ### Warnings
 
@@ -108,7 +121,7 @@ Until the recipe is published, add it as a private plugin. That takes about five
    | Field | |
    |---|---|
    | Okres | A dropdown of all 77. Required |
-   | View | What the full screen shows: today and tomorrow, next 24 hours, or 5 days |
+   | View | What the full screen shows: today and tomorrow, next 24 hours, 5 days, or the weekend |
    | Place name | Shown in the footer instead of the okres name. Optional |
    | Move on to tomorrow in the evening | On by default |
    | Wind speed in | m/s or km/h |
@@ -168,9 +181,9 @@ npm run settings              # regenerate src/settings.yml from MeteoVerdict's 
 ```
 
 - **Edit in `src/`.** `src/shared.liquid` holds the settings, the labels in both languages,
-  the icons and the styles. `src/views/` holds the three full-screen views, and
-  `src/partials/` the pieces they share: a day's numbers, the icons, the hourly chart and
-  the footer.
+  the icons and the styles. `src/views/` holds the four full-screen views, and
+  `src/partials/` the pieces they share: a day's numbers, two days side by side, the
+  icons, the hourly chart and the footer.
 - **`dist/` is for pasting.** TRMNL wants one self-contained template per layout, so
   `npm run build` inlines every `{% include %}` and strips the comments. Commit `dist/`
   together with `src/`.
