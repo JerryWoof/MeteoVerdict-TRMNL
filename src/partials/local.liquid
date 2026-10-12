@@ -1,0 +1,2 @@
+{%- comment -%} `le`: the UTC epoch `e` moved to Czech time (CET, or CEST in summer) {%- endcomment -%}
+{%- if e >= dst_start and e < dst_end -%}{%- assign le = e | plus: 7200 -%}{%- else -%}{%- assign le = e | plus: 3600 -%}{%- endif -%}

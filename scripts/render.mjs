@@ -31,9 +31,9 @@ export async function load({ okres = "CZ0100", data } = {}) {
   return (await fetch(`${API}/${okres}.json`)).json();
 }
 
-export async function renderLayout(layout, json, { view, place, lang, offset = 7200 } = {}) {
+export async function renderLayout(layout, json, { view, place, lang, offset = 7200, evening, wind } = {}) {
   const template = readFileSync(join(root, "dist", `${layout}.liquid`), "utf-8");
-  const settings = { custom_fields_values: { view, place, language: lang } };
+  const settings = { custom_fields_values: { view, place, language: lang, evening_switch: evening, wind_unit: wind } };
   return new Liquid({ timezoneOffset: 0 }).parseAndRender(template, {
     ...json,
     trmnl: { user: { utc_offset: offset }, plugin_settings: settings },
@@ -60,7 +60,7 @@ function args(argv) {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const a = args(process.argv.slice(2));
   if (a.now) freezeTime(a.now);
-  const opts = { view: a.view, place: a.place, lang: a.lang, offset: Number(a.offset ?? 7200) };
+  const opts = { view: a.view, place: a.place, lang: a.lang, offset: Number(a.offset ?? 7200), evening: a.evening, wind: a.wind };
   let html;
   if (a.mashup) {
     const slots = a.mashup.split(",").map((s) => s.split(":"));

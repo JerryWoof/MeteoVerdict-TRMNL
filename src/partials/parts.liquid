@@ -7,7 +7,10 @@
       <div class="n">{{ T_parts[forloop.index0] }}</div>
       {%- if p -%}
         {%- assign icon = p.symbol -%}{%- assign icon_class = "" -%}
-        {%- if part == "night" or part == "evening" -%}{%- assign night = true -%}{%- else -%}{%- assign night = false -%}{%- endif -%}
+        {%- comment -%} a moon at night, and in the evening when the sun sets before 20:00 {%- endcomment -%}
+        {%- assign night = false -%}
+        {%- if part == "night" -%}{%- assign night = true -%}{%- endif -%}
+        {%- if part == "evening" and set_min != nil and set_min < 1200 -%}{%- assign night = true -%}{%- endif -%}
         {% include "partials/icon" %}
         <div class="t">{% if part == "night" %}{{ p.tmin | round }}{% else %}{{ p.tmax | round }}{% endif %}°</div>
       {%- else -%}

@@ -19,7 +19,9 @@
   .mv-5 .card .f { font-size: 14px; line-height: 1.35; margin-top: 3px; }
   .mv-5 .card .f b { font-weight: 800; }
   .mv-5 .card .f .mv-glyph { width: 14px; height: 14px; vertical-align: -2px; margin-right: 2px; }
-  .mv-5 .mv-chart { flex: 1; min-height: 50px; }
+  .mv-5 .card .b { margin-top: 3px; line-height: 1; }
+  .mv-5 .card .b .mv-badge { font-size: 11px; }
+  .mv-5 .mv-chart { flex: 1; min-height: 44px; }
   .mv-5 .sum { font-size: 15px; text-align: center; }
   .mv-5 .sum b { font-weight: 800; }
 </style>
@@ -29,21 +31,22 @@
   <div class="mv-head"><span class="when">{{ T_days5 }}</span><span class="date">{{ first_long }} – {{ day_long }}</span></div>
   <div class="cards">
     {%- for day in five -%}
-      {% include "partials/day" %}
+      {% include "partials/day" %}{% include "partials/alerts" %}
       {%- if tmax > best_t -%}{%- assign best_t = tmax -%}{%- assign best_t_day = day_name -%}{%- endif -%}
       {%- if rain > best_r -%}{%- assign best_r = rain -%}{%- assign best_r_day = day_name -%}{%- endif -%}
       {%- if shine != nil and shine > best_s -%}{%- assign best_s = shine -%}{%- assign best_s_day = day_name -%}{%- endif -%}
       <div class="card">
         <div class="d">{% if forloop.first %}{{ T_today }}{% else %}{{ day_short }}{% endif %}</div>
-        <div class="n">{{ day_num }}{% if lang == "cs" %}.{% endif %} {{ T_months[mo] | slice: 0, 3 }}</div>
+        <div class="n">{{ day_date }}</div>
         {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
         {% include "partials/icon" %}
         <div class="mv-max">{{ tmax | round }}°</div>
         <div class="lo">{{ tmin | round }}°</div>
         <div class="f">
           {{ drop_glyph }}<b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b> · {{ chance | times: 100 | round }} %<br>
-          {%- if shine != nil -%}{{ sun_glyph }}<b>{{ shine | round | replace: ".", T_dec }} h</b> · {% endif %}{{ wind | round }} m/s
+          {%- if shine != nil -%}{{ sun_glyph }}<b>{{ shine | round | replace: ".", T_dec }} h</b> · {% endif %}{{ wind | times: wind_k | round }} {{ wind_unit }}
         </div>
+        <div class="b">{% if alerts != "" %}{{ alerts }}{% else %}&nbsp;{% endif %}</div>
       </div>
     {%- endfor -%}
   </div>

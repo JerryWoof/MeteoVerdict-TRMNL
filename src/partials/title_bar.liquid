@@ -1,10 +1,23 @@
-{%- comment -%} `compact`: the short version for half and quarter screens {%- endcomment -%}
+{%- comment -%}
+  The footer: place, and when the forecast was made. `compact` (half and quarter
+  screens): the time only, unless the forecast is not from today. An old forecast says so.
+{%- endcomment -%}
+{%- if lang == "cs" -%}
+  {%- assign gmo = generated_local | date: "%m" | plus: 0 -%}
+  {%- assign gdate = generated_local | date: "%d" | plus: 0 | append: ". " | append: gmo | append: "." -%}
+{%- else -%}
+  {%- assign gmo = generated_local | date: "%m" | plus: 0 | minus: 1 -%}
+  {%- assign gdate = T_months[gmo] | slice: 0, 3 -%}{%- assign gdate = generated_local | date: "%d" | plus: 0 | append: " " | append: gdate -%}
+{%- endif -%}
+{%- assign gtime = generated_local | date: "%H:%M" -%}
+{%- assign gday = generated_local | date: "%Y-%m-%d" -%}
 <div class="title_bar">
   <span class="title">{{ place }}</span>
-  {%- assign updated = forecast.generated | date: "%s" | plus: offset -%}
-  {%- if compact -%}
-  <span class="instance">MeteoVerdict · {{ updated | date: "%H:%M" }}</span>
+  {%- if stale -%}
+  <span class="instance"><span class="mv-badge">{{ T_stale }}</span> {{ gdate }} {{ gtime }}</span>
+  {%- elsif compact -%}
+  <span class="instance">MeteoVerdict · {% if gday != real_today %}{{ gdate }} {% endif %}{{ gtime }}</span>
   {%- else -%}
-  <span class="instance">MeteoVerdict{% if models_used > 0 %} · {{ models_used }} {{ T_models }}{% endif %} · {{ T_updated }} {{ updated | date: "%-d.%-m. %H:%M" }}</span>
+  <span class="instance">MeteoVerdict{% if models_used > 0 %} · {{ models_used }} {{ T_models }}{% endif %} · {{ T_updated }} {{ gdate }} {{ gtime }}</span>
   {%- endif -%}
 </div>

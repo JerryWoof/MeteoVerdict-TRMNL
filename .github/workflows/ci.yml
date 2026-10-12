@@ -15,6 +15,11 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+      - name: Ruby Liquid, the engine TRMNL renders with
+        run: gem install liquid
       - run: npm ci
       - run: npm test
       - name: dist/ is built from src/
