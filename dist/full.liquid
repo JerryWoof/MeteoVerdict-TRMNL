@@ -294,6 +294,12 @@
     {%- assign ld_light = ld_set | minus: ld_rise -%}{%- assign light_diff = light | minus: ld_light -%}
   {%- endif -%}
 {%- endif -%}
+{%- assign light_diff_s = "" -%}
+{%- if light_diff != nil -%}
+  {%- if light_diff > 0 -%}{%- assign light_diff_s = light_diff | prepend: "+" -%}
+  {%- elsif light_diff < 0 -%}{%- assign light_diff_s = light_diff | abs | prepend: "−" -%}
+  {%- else -%}{%- assign light_diff_s = "±0" -%}{%- endif -%}
+{%- endif -%}
 {%- assign wd = noon | date: "%w" | plus: 0 -%}
 {%- assign mo = noon | date: "%m" | plus: 0 | minus: 1 -%}
 {%- assign day_num = noon | date: "%d" | plus: 0 -%}
@@ -373,6 +379,12 @@
     {%- assign ld_set = ld_row.sunset | slice: 0, 2 | times: 60 -%}{%- assign ld_set = ld_row.sunset | slice: 3, 2 | plus: ld_set -%}
     {%- assign ld_light = ld_set | minus: ld_rise -%}{%- assign light_diff = light | minus: ld_light -%}
   {%- endif -%}
+{%- endif -%}
+{%- assign light_diff_s = "" -%}
+{%- if light_diff != nil -%}
+  {%- if light_diff > 0 -%}{%- assign light_diff_s = light_diff | prepend: "+" -%}
+  {%- elsif light_diff < 0 -%}{%- assign light_diff_s = light_diff | abs | prepend: "−" -%}
+  {%- else -%}{%- assign light_diff_s = "±0" -%}{%- endif -%}
 {%- endif -%}
 {%- assign wd = noon | date: "%w" | plus: 0 -%}
 {%- assign mo = noon | date: "%m" | plus: 0 | minus: 1 -%}
@@ -671,6 +683,12 @@
     {%- assign ld_light = ld_set | minus: ld_rise -%}{%- assign light_diff = light | minus: ld_light -%}
   {%- endif -%}
 {%- endif -%}
+{%- assign light_diff_s = "" -%}
+{%- if light_diff != nil -%}
+  {%- if light_diff > 0 -%}{%- assign light_diff_s = light_diff | prepend: "+" -%}
+  {%- elsif light_diff < 0 -%}{%- assign light_diff_s = light_diff | abs | prepend: "−" -%}
+  {%- else -%}{%- assign light_diff_s = "±0" -%}{%- endif -%}
+{%- endif -%}
 {%- assign wd = noon | date: "%w" | plus: 0 -%}
 {%- assign mo = noon | date: "%m" | plus: 0 | minus: 1 -%}
 {%- assign day_num = noon | date: "%d" | plus: 0 -%}
@@ -723,6 +741,12 @@
     {%- assign ld_set = ld_row.sunset | slice: 0, 2 | times: 60 -%}{%- assign ld_set = ld_row.sunset | slice: 3, 2 | plus: ld_set -%}
     {%- assign ld_light = ld_set | minus: ld_rise -%}{%- assign light_diff = light | minus: ld_light -%}
   {%- endif -%}
+{%- endif -%}
+{%- assign light_diff_s = "" -%}
+{%- if light_diff != nil -%}
+  {%- if light_diff > 0 -%}{%- assign light_diff_s = light_diff | prepend: "+" -%}
+  {%- elsif light_diff < 0 -%}{%- assign light_diff_s = light_diff | abs | prepend: "−" -%}
+  {%- else -%}{%- assign light_diff_s = "±0" -%}{%- endif -%}
 {%- endif -%}
 {%- assign wd = noon | date: "%w" | plus: 0 -%}
 {%- assign mo = noon | date: "%m" | plus: 0 | minus: 1 -%}
@@ -778,6 +802,12 @@
     {%- assign ld_set = ld_row.sunset | slice: 0, 2 | times: 60 -%}{%- assign ld_set = ld_row.sunset | slice: 3, 2 | plus: ld_set -%}
     {%- assign ld_light = ld_set | minus: ld_rise -%}{%- assign light_diff = light | minus: ld_light -%}
   {%- endif -%}
+{%- endif -%}
+{%- assign light_diff_s = "" -%}
+{%- if light_diff != nil -%}
+  {%- if light_diff > 0 -%}{%- assign light_diff_s = light_diff | prepend: "+" -%}
+  {%- elsif light_diff < 0 -%}{%- assign light_diff_s = light_diff | abs | prepend: "−" -%}
+  {%- else -%}{%- assign light_diff_s = "±0" -%}{%- endif -%}
 {%- endif -%}
 {%- assign wd = noon | date: "%w" | plus: 0 -%}
 {%- assign mo = noon | date: "%m" | plus: 0 | minus: 1 -%}
@@ -922,6 +952,9 @@
 </div>
     {%- when "weekend" -%}
 {%- assign wk_noon = days.first | append: "T12:00:00Z" -%}
+{%- if evening_switch and now_hour >= 18 -%}
+  {%- assign wk_noon = wk_noon | date: "%s" | plus: 86400 | date: "%Y-%m-%dT12:00:00Z" -%}
+{%- endif -%}
 {%- assign wk_wd = wk_noon | date: "%w" | plus: 0 -%}
 {%- if wk_wd == 0 -%}{%- assign wk_ahead = 0 -%}{%- else -%}{%- assign wk_ahead = 6 | minus: wk_wd -%}{%- endif -%}
 {%- assign wk_e = wk_noon | date: "%s" | plus: 0 -%}
@@ -994,6 +1027,12 @@
     {%- assign ld_set = ld_row.sunset | slice: 0, 2 | times: 60 -%}{%- assign ld_set = ld_row.sunset | slice: 3, 2 | plus: ld_set -%}
     {%- assign ld_light = ld_set | minus: ld_rise -%}{%- assign light_diff = light | minus: ld_light -%}
   {%- endif -%}
+{%- endif -%}
+{%- assign light_diff_s = "" -%}
+{%- if light_diff != nil -%}
+  {%- if light_diff > 0 -%}{%- assign light_diff_s = light_diff | prepend: "+" -%}
+  {%- elsif light_diff < 0 -%}{%- assign light_diff_s = light_diff | abs | prepend: "−" -%}
+  {%- else -%}{%- assign light_diff_s = "±0" -%}{%- endif -%}
 {%- endif -%}
 {%- assign wd = noon | date: "%w" | plus: 0 -%}
 {%- assign mo = noon | date: "%m" | plus: 0 | minus: 1 -%}
@@ -1078,7 +1117,7 @@
       </div>
       <div class="mv-facts">
         <div class="mv-fact"><span>{{ T_rain }}</span><b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b><i>{{ chance | times: 100 | round }} % {{ T_chance }}</i></div>
-        <div class="mv-fact"><span>{{ T_sunshine }}</span><b>{% if shine != nil %}{{ shine | round: 1 | replace: ".", T_dec }} h{% else %}–{% endif %}</b><i>{% if light %}{{ T_of }} {{ light | divided_by: 60 | floor }} h {{ light | modulo: 60 }} min{% if light_diff != nil %} ({% if light_diff > 0 %}+{{ light_diff }}{% elsif light_diff < 0 %}−{{ light_diff | abs }}{% else %}±0{% endif %}){% endif %}{% endif %}</i></div>
+        <div class="mv-fact"><span>{{ T_sunshine }}</span><b>{% if shine != nil %}{{ shine | round: 1 | replace: ".", T_dec }} h{% else %}–{% endif %}</b><i>{% if light %}{{ T_of }} {{ light | divided_by: 60 | floor }} h {{ light | modulo: 60 }} min{% if light_diff_s != "" %} ({{ light_diff_s }}){% endif %}{% endif %}</i></div>
         <div class="mv-fact"><span>{{ T_clouds }}</span><b>{% if cloud != nil %}{{ cloud | round }} %{% else %}–{% endif %}</b><i>{{ T_daytime }}</i></div>
         <div class="mv-fact"><span>{{ T_wind }}</span><b>{{ wind | times: wind_k | round }} {{ wind_unit }}</b><i>{{ T_max }}</i></div>
       </div>
@@ -1259,6 +1298,12 @@
     {%- assign ld_light = ld_set | minus: ld_rise -%}{%- assign light_diff = light | minus: ld_light -%}
   {%- endif -%}
 {%- endif -%}
+{%- assign light_diff_s = "" -%}
+{%- if light_diff != nil -%}
+  {%- if light_diff > 0 -%}{%- assign light_diff_s = light_diff | prepend: "+" -%}
+  {%- elsif light_diff < 0 -%}{%- assign light_diff_s = light_diff | abs | prepend: "−" -%}
+  {%- else -%}{%- assign light_diff_s = "±0" -%}{%- endif -%}
+{%- endif -%}
 {%- assign wd = noon | date: "%w" | plus: 0 -%}
 {%- assign mo = noon | date: "%m" | plus: 0 | minus: 1 -%}
 {%- assign day_num = noon | date: "%d" | plus: 0 -%}
@@ -1342,7 +1387,7 @@
       </div>
       <div class="mv-facts">
         <div class="mv-fact"><span>{{ T_rain }}</span><b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b><i>{{ chance | times: 100 | round }} % {{ T_chance }}</i></div>
-        <div class="mv-fact"><span>{{ T_sunshine }}</span><b>{% if shine != nil %}{{ shine | round: 1 | replace: ".", T_dec }} h{% else %}–{% endif %}</b><i>{% if light %}{{ T_of }} {{ light | divided_by: 60 | floor }} h {{ light | modulo: 60 }} min{% if light_diff != nil %} ({% if light_diff > 0 %}+{{ light_diff }}{% elsif light_diff < 0 %}−{{ light_diff | abs }}{% else %}±0{% endif %}){% endif %}{% endif %}</i></div>
+        <div class="mv-fact"><span>{{ T_sunshine }}</span><b>{% if shine != nil %}{{ shine | round: 1 | replace: ".", T_dec }} h{% else %}–{% endif %}</b><i>{% if light %}{{ T_of }} {{ light | divided_by: 60 | floor }} h {{ light | modulo: 60 }} min{% if light_diff_s != "" %} ({{ light_diff_s }}){% endif %}{% endif %}</i></div>
         <div class="mv-fact"><span>{{ T_clouds }}</span><b>{% if cloud != nil %}{{ cloud | round }} %{% else %}–{% endif %}</b><i>{{ T_daytime }}</i></div>
         <div class="mv-fact"><span>{{ T_wind }}</span><b>{{ wind | times: wind_k | round }} {{ wind_unit }}</b><i>{{ T_max }}</i></div>
       </div>
