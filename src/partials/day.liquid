@@ -2,10 +2,10 @@
   Everything about one `day` ("2026-10-12"): rows (its parts), tmin, tmax, rain, chance,
   wind, cloud, shine, sym, rise, set, light (minutes of daylight), rise_min, set_min,
   and its names: day_long ("Monday 12 October"), day_name ("Monday"), day_short ("Mon"),
-  day_num ("12"). Today's whole-day row is missing when the forecast is a few hours
+  day_num ("12"), day_date ("12 Oct" / "12. 10."). Today's whole-day row is missing when the forecast is a few hours
   short; the parts stand in for it.
 {%- endcomment -%}
-{%- assign rows = forecast.parts | where: "day", day -%}
+{%- if day -%}{%- assign rows = forecast.parts | where: "day", day -%}{%- else -%}{%- assign rows = "" | split: "," -%}{%- endif -%}
 {%- assign whole = rows | where: "part", "day" | first -%}
 {%- assign tmin = 999 -%}{%- assign tmax = -999 -%}{%- assign rain = 0 -%}{%- assign chance = 0 -%}{%- assign wind = 0 -%}{%- assign cloud = nil -%}{%- assign shine = nil -%}
 {%- for r in rows -%}
@@ -39,6 +39,8 @@
 {%- assign day_name = T_days[wd] -%}{%- assign day_short = T_days_short[wd] -%}
 {%- if lang == "cs" -%}
   {%- assign day_long = day_name | append: " " | append: day_num | append: ". " | append: T_months[mo] -%}
+  {%- assign day_date = mo | plus: 1 | prepend: ". " | prepend: day_num | append: "." -%}
 {%- else -%}
   {%- assign day_long = day_name | append: " " | append: day_num | append: " " | append: T_months[mo] -%}
+  {%- assign day_date = T_months[mo] | slice: 0, 3 | prepend: " " | prepend: day_num -%}
 {%- endif -%}

@@ -1,0 +1,30 @@
+{%- comment -%}
+  `alerts`: up to two badges for the day just read by partials/day: black ice (an hour at
+  or below 0.5 °C with precipitation), frost (low at or below 0 °C), heavy rain (10 mm or
+  more), strong wind (10 m/s or more, hourly mean), heat (30 °C or more).
+{%- endcomment -%}
+{%- assign alerts = "" -%}{%- assign n_alerts = 0 -%}
+{%- assign ice = false -%}
+{%- if day and tmin <= 1 -%}
+  {%- for t in H.time -%}
+    {%- assign e = t | date: "%s" | plus: 0 -%}{% include "partials/local" %}
+    {%- assign hd = le | date: "%Y-%m-%d" -%}
+    {%- if hd != day -%}{%- continue -%}{%- endif -%}
+    {%- assign ht = H.temperature_2m[forloop.index0] -%}{%- assign hp = H.precipitation[forloop.index0] | default: 0 -%}
+    {%- if ht != nil and ht <= 0.5 and hp >= 0.1 -%}{%- assign ice = true -%}{%- break -%}{%- endif -%}
+  {%- endfor -%}
+{%- endif -%}
+{%- if ice -%}
+  {%- capture a -%}<span class="mv-badge">{{ T_ice }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
+{%- elsif rows.size > 0 and tmin <= 0 -%}
+  {%- capture a -%}<span class="mv-badge">{{ T_frost }} {{ tmin | round }}°</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
+{%- endif -%}
+{%- if rows.size > 0 and rain >= 10 -%}
+  {%- capture a -%}<span class="mv-badge">{{ T_downpour }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
+{%- endif -%}
+{%- if rows.size > 0 and wind >= 10 and n_alerts < 2 -%}
+  {%- capture a -%}<span class="mv-badge">{{ T_storm }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
+{%- endif -%}
+{%- if rows.size > 0 and tmax >= 30 and n_alerts < 2 -%}
+  {%- capture a -%}<span class="mv-badge">{{ T_heat }} {{ tmax | round }}°</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
+{%- endif -%}
