@@ -65,9 +65,10 @@ With the evening switch on, from 18:00 it looks a day further: on Saturday eveni
 and Monday, and on Sunday evening the next weekend.
 The forecast reaches five days past today, so early in the week Sunday (or the whole
 weekend) can be beyond it: the screen then shows what there is and says *Sunday is beyond
-the forecast*, as above on a Monday. On Sunday evening the next weekend is usually all
-beyond it, and the screen says *The weekend is beyond the forecast* until Monday's
-forecast arrives.
+the forecast*, as above on a Monday. When neither day is in the forecast yet (as on
+Sunday evening, until Monday's forecast arrives), it shows the next two days instead,
+today and tomorrow (or tomorrow and the day after in the evening), under a small note:
+*Weekend not in the forecast yet*.
 
 ### Warnings
 

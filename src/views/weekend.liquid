@@ -2,7 +2,9 @@
   Saturday and Sunday side by side: the coming weekend from Monday to Friday, this one on
   Saturday, and on Sunday Sunday and Monday. With the evening switch on, from 18:00 it
   counts from tomorrow: on Saturday evening Sunday and Monday, on Sunday evening the next
-  weekend. A day beyond the forecast gets a note; with neither day in it, the screen says so.
+  weekend. A day beyond the forecast gets a note. With neither day in it, the next two
+  forecast days from `start` instead (today and tomorrow, or tomorrow and the day after in
+  the evening), under a one-line note.
 {%- endcomment -%}
 {%- assign wk_noon = days.first | append: "T12:00:00Z" -%}
 {%- if evening_switch and now_hour >= 18 -%}
@@ -20,5 +22,16 @@
 {%- if days contains wk_first -%}
 {% include "partials/two_days" %}
 {%- else -%}
-<div class="mv"><p class="mv-empty">{{ T_weekend_beyond }}</p></div>
+{%- assign pair = "" -%}
+{%- for d in days offset: start limit: 2 -%}{%- assign pair = pair | append: d | append: "," -%}{%- endfor -%}
+{%- assign pair = pair | split: "," -%}
+<style>
+  .mv-wk { display: flex; flex-direction: column; gap: 4px; }
+  .mv-wk .note { font-size: 14px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-bottom: 2px solid #000; padding-bottom: 2px; }
+  .mv-wk .mv-tt { flex: 1; min-height: 0; height: auto; }
+</style>
+<div class="mv mv-wk">
+  <div class="note">{{ T_weekend_later }}</div>
+  {% include "partials/two_days" %}
+</div>
 {%- endif -%}
