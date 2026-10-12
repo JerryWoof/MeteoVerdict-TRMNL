@@ -115,9 +115,7 @@ out when the forecast does not have the day before.
 
 ## Install
 
-MeteoVerdict is being prepared as a public TRMNL recipe (see [Publishing](#publishing)).
-Until it's out, or if you'd rather have your own copy of the markup, add it as a private
-plugin. That takes about five minutes.
+Add it to your TRMNL as a private plugin. That takes about five minutes.
 
 1. In TRMNL go to **Plugins → Private Plugin → Add new**, name it, e.g. *MeteoVerdict*.
 2. **Strategy:** Polling. **Polling URL:**
@@ -159,9 +157,10 @@ by.
 
 ## Publishing
 
-[`recipe/README.md`](recipe/README.md) has everything for submitting the plugin as a
-public TRMNL recipe: the icon, the texts for TRMNL's forms, a step-by-step checklist, and
-where the plugin stands against each of TRMNL's recipe requirements.
+The plugin is not published as a TRMNL recipe; install it as a private plugin as above.
+[`recipe/README.md`](recipe/README.md) keeps the notes for publishing it later: the icon,
+the texts for TRMNL's forms, a checklist, and where it stands against TRMNL's recipe
+requirements (its own styles exceed the linter's limit on inline layout styles).
 
 ## What's on the screen, and how far to trust it
 
