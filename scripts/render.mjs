@@ -1,5 +1,5 @@
 // Renders a layout the way TRMNL does (liquidjs instead of Ruby Liquid) into an HTML page
-// at the device's size, with TRMNL's framework CSS.
+// at the device's size, with TRMNL's framework CSS and its view wrapper.
 //   node scripts/render.mjs out.html [--layout full] [--view next_24h] [--okres CZ0100]
 //     [--place Praha] [--lang cs] [--data file.json] [--now 2026-10-12T15:30:00Z]
 //     [--offset 7200] [--mashup "half_horizontal:CZ0100,half_horizontal:CZ0642"]
@@ -34,10 +34,12 @@ export async function load({ okres = "CZ0100", data } = {}) {
 export async function renderLayout(layout, json, { view, place, lang, offset = 7200, evening, wind } = {}) {
   const template = readFileSync(join(root, "dist", `${layout}.liquid`), "utf-8");
   const settings = { custom_fields_values: { view, place, language: lang, evening_switch: evening, wind_unit: wind } };
-  return new Liquid({ timezoneOffset: 0 }).parseAndRender(template, {
+  const body = await new Liquid({ timezoneOffset: 0 }).parseAndRender(template, {
     ...json,
     trmnl: { user: { utc_offset: offset }, plugin_settings: settings },
   });
+  // TRMNL wraps each layout's markup in its view element, so the templates leave it out.
+  return `<div class="view view--${layout}">${body}</div>`;
 }
 
 export function page(body, [w, h] = SIZES.full) {
