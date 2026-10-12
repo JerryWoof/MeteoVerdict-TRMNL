@@ -25,6 +25,8 @@
   .mv-hh .card .hi { font-size: 26px; font-weight: 800; line-height: 1; }
   .mv-hh .card .lo { font-size: 16px; font-weight: 600; }
   .mv-hh .card .r { font-size: 13px; }
+  .mv-hh .line span { white-space: nowrap; }
+  .mv-hh .line small { font-size: 12px; }
 </style>
 <div class="view view--half_horizontal">
   <div class="layout">
@@ -42,9 +44,9 @@
           <div class="side"><b>{% include "partials/word" %}</b><br>{{ T_low }} {{ tmin | round }}°<br>{{ T_wind }} {{ wind | times: wind_k | round }} {{ wind_unit }}</div>
         </div>
         <div class="line">
-          <span>{{ drop_glyph }} <b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b> {{ chance | times: 100 | round }} %</span>
-          {%- if shine != nil -%}<span>{{ sun_glyph }} <b>{{ shine | round: 1 | replace: ".", T_dec }} h</b></span>{%- endif -%}
-          {%- if rise -%}<span>{{ rise_svg }}{{ rise }} {{ set_svg }}{{ set }}</span>{%- endif -%}
+          <span>{{ drop_glyph }}<b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b> {{ chance | times: 100 | round }} %</span>
+          {%- if shine != nil -%}<span>{{ sun_glyph }}<b>{{ shine | round: 1 | replace: ".", T_dec }} h</b></span>{%- endif -%}
+          {%- if rise -%}<span>{{ rise_svg }}{{ rise }} {{ set_svg }}{{ set }}{% if light_diff_s != "" %} <small>({{ light_diff_s }})</small>{% endif %}</span>{%- endif -%}
         </div>
       </div>
       <div class="next">

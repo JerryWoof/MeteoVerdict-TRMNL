@@ -184,13 +184,72 @@ test("weekend: on Saturday this weekend, on Sunday Sunday and Monday", async () 
   assert.doesNotMatch(sun, /Saturday/);
 });
 
-test("weekend: a day beyond the forecast gets a note; no weekend at all says so", async () => {
+// the saved Prague file moved `n` days later; `extra` more days copied from its last day
+const shifted = (n, extra = 0) => variant((f) => {
+  const move = (iso, k) => new Date(new Date(iso).getTime() + k * 86400000).toISOString();
+  const last = f.parts.at(-1).day;
+  const lastParts = f.parts.filter((p) => p.day === last);
+  const lastHours = f.hourly.time.length - 24;
+  for (let k = 1; k <= extra; k += 1) {
+    for (const p of lastParts) f.parts.push({ ...p, day: move(`${last}T00:00:00Z`, k).slice(0, 10) });
+    for (const name of Object.keys(f.hourly)) {
+      const tail = f.hourly[name].slice(lastHours, lastHours + 24);
+      f.hourly[name].push(...(name === "time" ? tail.map((t) => `${move(t, k).slice(0, 16)}Z`) : tail));
+    }
+  }
+  for (const p of f.parts) p.day = move(`${p.day}T00:00:00Z`, n).slice(0, 10);
+  f.hourly.time = f.hourly.time.map((t) => `${move(t, n).slice(0, 16)}Z`);
+  f.generated = `${move(f.generated, n).slice(0, 16)}+00:00`;
+});
+
+test("weekend: on Saturday evening Sunday and Monday", async () => {
+  freezeTime("2026-10-17T17:30:00Z"); // Saturday 19:30 in Prague
+  const words = text(await renderLayout("full", later, { view: "weekend" }));
+  assert.match(words, /Sunday 18 October .* Monday 19 October Monday is beyond the forecast/);
+  assert.doesNotMatch(words, /Saturday/);
+  const cs = text(await renderLayout("full", later, { view: "weekend", lang: "cs" }));
+  assert.match(cs, /neděle 18\. října .* pondělí 19\. října Pondělí je mimo předpověď/);
+});
+
+test("weekend: on Sunday evening the next weekend", async () => {
+  freezeTime("2026-10-18T17:30:00Z"); // Sunday 19:30 in Prague
+  // a forecast from Sunday reaches Friday: the next weekend is all beyond it, so a note
+  // and the next two days from tomorrow
+  const sunday = shifted(6);
+  const en = text(await renderLayout("full", sunday, { view: "weekend" }));
+  assert.match(en, /^ ?Weekend not in the forecast yet Monday 19 October .* Tuesday 20 October/);
+  assert.doesNotMatch(en, /beyond the forecast|Sunday|Today|Tomorrow/);
+  const cs = text(await renderLayout("full", sunday, { view: "weekend", lang: "cs" }));
+  assert.match(cs, /Víkend zatím mimo předpověď pondělí 19\. října .* úterý 20\. října/);
+  // one more day of data: Saturday, and a note for Sunday
+  const words = text(await renderLayout("full", shifted(6, 1), { view: "weekend" }));
+  assert.match(words, /Saturday 24 October .* Sunday 25 October Sunday is beyond the forecast/);
+  assert.doesNotMatch(words, /18 October|Monday/);
+});
+
+test("weekend: with the evening switch off, the evening is like the day", async () => {
+  freezeTime("2026-10-17T17:30:00Z"); // Saturday 19:30
+  const sat = text(await renderLayout("full", later, { view: "weekend", evening: false }));
+  assert.match(sat, /Saturday 17 October .* Sunday 18 October/);
+  freezeTime("2026-10-18T17:30:00Z"); // Sunday 19:30
+  const sun = text(await renderLayout("full", shifted(6, 1), { view: "weekend", evening: false }));
+  assert.match(sun, /Sunday 18 October .* Monday 19 October/);
+  freezeTime("2026-10-17T15:30:00Z"); // Saturday 17:30, before the switch
+  assert.match(text(await renderLayout("full", later, { view: "weekend" })), /Saturday 17 October .* Sunday 18 October/);
+});
+
+test("weekend: a day beyond the forecast gets a note; no weekend at all, the next days", async () => {
   freezeTime("2026-10-12T10:00:00Z"); // Monday: the data ends on Saturday
   const words = text(await renderLayout("full", PRAHA, { view: "weekend" }));
   assert.match(words, /Saturday 17 October .* Sunday 18 October Sunday is beyond the forecast/);
   assert.match(text(await renderLayout("full", PRAHA, { view: "weekend", lang: "cs" })), /Neděle je mimo předpověď/);
   const short = variant((f) => { f.parts = f.parts.filter((p) => p.day < "2026-10-17"); });
-  assert.match(text(await renderLayout("full", short, { view: "weekend" })), /The weekend is beyond the forecast/);
+  const none = text(await renderLayout("full", short, { view: "weekend" }));
+  assert.match(none, /Weekend not in the forecast yet Monday 12 October .* Tuesday 13 October/);
+  assert.doesNotMatch(none, /Saturday|beyond the forecast/);
+  freezeTime("2026-10-12T17:30:00Z"); // 19:30: from tomorrow, unless the switch is off
+  assert.match(text(await renderLayout("full", short, { view: "weekend" })), /Weekend not in the forecast yet Tuesday 13 October .* Wednesday 14 October/);
+  assert.match(text(await renderLayout("full", short, { view: "weekend", evening: false })), /Weekend not in the forecast yet Monday 12 October .* Tuesday 13 October/);
 });
 
 test("daylight says how much shorter it is than the day before", async () => {
@@ -201,6 +260,20 @@ test("daylight says how much shorter it is than the day before", async () => {
   assert.match(words, /of 10 h 55 min \(−3\)/);
   const longer = variant((f) => { for (const p of f.parts) if (p.day === "2026-10-13") p.sunset = "18:20"; });
   assert.match(text(await renderLayout("full", longer, { lang: "cs" })), /z 11 h 0 min \(\+2\)/);
+});
+
+test("the half and quarter layouts show the day-length change too", async () => {
+  freezeTime("2026-10-13T10:00:00Z"); // 13 Oct: 3 minutes shorter than the 12th
+  assert.match(text(await renderLayout("half_vertical", PRAHA, {})), /Sunshine [\d.]+ h 10 h 55 min \(−3\)/);
+  assert.match(text(await renderLayout("half_vertical", PRAHA, { lang: "cs" })), /Slunce [\d,]+ h 10 h 55 min \(−3\)/);
+  for (const layout of ["half_horizontal", "quadrant"]) {
+    assert.match(text(await renderLayout(layout, PRAHA, {})), /07:20 18:15 \(−3\)/);
+  }
+  freezeTime("2026-10-12T10:00:00Z"); // no 11 Oct in the data: daylight without a change
+  assert.match(text(await renderLayout("half_vertical", PRAHA, {})), /10 h 58 min Clouds/);
+  for (const layout of ["half_horizontal", "quadrant"]) {
+    assert.doesNotMatch(text(await renderLayout(layout, PRAHA, {})), /18:17 \(/);
+  }
 });
 
 test("Czech time follows summer time, hour by hour", async () => {

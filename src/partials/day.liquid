@@ -2,7 +2,7 @@
   Everything about one `day` ("2026-10-12"): rows (its parts), tmin, tmax, rain, chance,
   wind, cloud, shine, sym, rise, set, light (minutes of daylight), rise_min, set_min,
   light_diff (minutes of daylight more than the day before; nil when that day is not in
-  the data), and its names: day_long ("Monday 12 October"), day_name ("Monday"),
+  the data) and light_diff_s ("+2", "−3", "±0"; "" when nil), and its names: day_long ("Monday 12 October"), day_name ("Monday"),
   day_short ("Mon"), day_num ("12"), day_dm ("12 October" / "12. října"), day_date
   ("12 Oct" / "12. 10."). Today's whole-day row is missing when the forecast is a few hours
   short; the parts stand in for it.
@@ -45,6 +45,12 @@
     {%- assign ld_set = ld_row.sunset | slice: 0, 2 | times: 60 -%}{%- assign ld_set = ld_row.sunset | slice: 3, 2 | plus: ld_set -%}
     {%- assign ld_light = ld_set | minus: ld_rise -%}{%- assign light_diff = light | minus: ld_light -%}
   {%- endif -%}
+{%- endif -%}
+{%- assign light_diff_s = "" -%}
+{%- if light_diff != nil -%}
+  {%- if light_diff > 0 -%}{%- assign light_diff_s = light_diff | prepend: "+" -%}
+  {%- elsif light_diff < 0 -%}{%- assign light_diff_s = light_diff | abs | prepend: "−" -%}
+  {%- else -%}{%- assign light_diff_s = "±0" -%}{%- endif -%}
 {%- endif -%}
 {%- assign wd = noon | date: "%w" | plus: 0 -%}
 {%- assign mo = noon | date: "%m" | plus: 0 | minus: 1 -%}

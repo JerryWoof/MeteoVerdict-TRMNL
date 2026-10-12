@@ -11,7 +11,7 @@
 {%- if lang == "cs" -%}
   {%- assign T_today = "Dnes" -%}{%- assign T_tomorrow = "Zítra" -%}
   {%- assign T_next24 = "Příštích 24 hodin" -%}{%- assign T_days5 = "Předpověď na 5 dní" -%}
-  {%- assign T_beyond = "# je mimo předpověď" -%}{%- assign T_weekend_beyond = "Víkend je mimo předpověď" -%}
+  {%- assign T_beyond = "# je mimo předpověď" -%}{%- assign T_weekend_later = "Víkend zatím mimo předpověď" -%}
   {%- assign T_rain = "Srážky" -%}{%- assign T_chance = "šance" -%}
   {%- assign T_sunshine = "Slunce" -%}{%- assign T_of = "z" -%}
   {%- assign T_clouds = "Oblačnost" -%}{%- assign T_daytime = "přes den" -%}
@@ -36,7 +36,7 @@
 {%- else -%}
   {%- assign T_today = "Today" -%}{%- assign T_tomorrow = "Tomorrow" -%}
   {%- assign T_next24 = "Next 24 hours" -%}{%- assign T_days5 = "5-day forecast" -%}
-  {%- assign T_beyond = "# is beyond the forecast" -%}{%- assign T_weekend_beyond = "The weekend is beyond the forecast" -%}
+  {%- assign T_beyond = "# is beyond the forecast" -%}{%- assign T_weekend_later = "Weekend not in the forecast yet" -%}
   {%- assign T_rain = "Rain" -%}{%- assign T_chance = "chance" -%}
   {%- assign T_sunshine = "Sunshine" -%}{%- assign T_of = "of" -%}
   {%- assign T_clouds = "Clouds" -%}{%- assign T_daytime = "daytime" -%}
@@ -141,6 +141,8 @@
   .mv-hh .card .hi { font-size: 26px; font-weight: 800; line-height: 1; }
   .mv-hh .card .lo { font-size: 16px; font-weight: 600; }
   .mv-hh .card .r { font-size: 13px; }
+  .mv-hh .line span { white-space: nowrap; }
+  .mv-hh .line small { font-size: 12px; }
 </style>
 <div class="view view--half_horizontal">
   <div class="layout">
@@ -187,6 +189,12 @@
     {%- assign ld_set = ld_row.sunset | slice: 0, 2 | times: 60 -%}{%- assign ld_set = ld_row.sunset | slice: 3, 2 | plus: ld_set -%}
     {%- assign ld_light = ld_set | minus: ld_rise -%}{%- assign light_diff = light | minus: ld_light -%}
   {%- endif -%}
+{%- endif -%}
+{%- assign light_diff_s = "" -%}
+{%- if light_diff != nil -%}
+  {%- if light_diff > 0 -%}{%- assign light_diff_s = light_diff | prepend: "+" -%}
+  {%- elsif light_diff < 0 -%}{%- assign light_diff_s = light_diff | abs | prepend: "−" -%}
+  {%- else -%}{%- assign light_diff_s = "±0" -%}{%- endif -%}
 {%- endif -%}
 {%- assign wd = noon | date: "%w" | plus: 0 -%}
 {%- assign mo = noon | date: "%m" | plus: 0 | minus: 1 -%}
@@ -248,9 +256,9 @@
 {%- for s in SYMBOLS -%}{%- if s == icon -%}{{ T_symbols[forloop.index0] }}{%- endif -%}{%- endfor -%}</b><br>{{ T_low }} {{ tmin | round }}°<br>{{ T_wind }} {{ wind | times: wind_k | round }} {{ wind_unit }}</div>
         </div>
         <div class="line">
-          <span>{{ drop_glyph }} <b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b> {{ chance | times: 100 | round }} %</span>
-          {%- if shine != nil -%}<span>{{ sun_glyph }} <b>{{ shine | round: 1 | replace: ".", T_dec }} h</b></span>{%- endif -%}
-          {%- if rise -%}<span>{{ rise_svg }}{{ rise }} {{ set_svg }}{{ set }}</span>{%- endif -%}
+          <span>{{ drop_glyph }}<b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b> {{ chance | times: 100 | round }} %</span>
+          {%- if shine != nil -%}<span>{{ sun_glyph }}<b>{{ shine | round: 1 | replace: ".", T_dec }} h</b></span>{%- endif -%}
+          {%- if rise -%}<span>{{ rise_svg }}{{ rise }} {{ set_svg }}{{ set }}{% if light_diff_s != "" %} <small>({{ light_diff_s }})</small>{% endif %}</span>{%- endif -%}
         </div>
       </div>
       <div class="next">
@@ -294,6 +302,12 @@
     {%- assign ld_set = ld_row.sunset | slice: 0, 2 | times: 60 -%}{%- assign ld_set = ld_row.sunset | slice: 3, 2 | plus: ld_set -%}
     {%- assign ld_light = ld_set | minus: ld_rise -%}{%- assign light_diff = light | minus: ld_light -%}
   {%- endif -%}
+{%- endif -%}
+{%- assign light_diff_s = "" -%}
+{%- if light_diff != nil -%}
+  {%- if light_diff > 0 -%}{%- assign light_diff_s = light_diff | prepend: "+" -%}
+  {%- elsif light_diff < 0 -%}{%- assign light_diff_s = light_diff | abs | prepend: "−" -%}
+  {%- else -%}{%- assign light_diff_s = "±0" -%}{%- endif -%}
 {%- endif -%}
 {%- assign wd = noon | date: "%w" | plus: 0 -%}
 {%- assign mo = noon | date: "%m" | plus: 0 | minus: 1 -%}
