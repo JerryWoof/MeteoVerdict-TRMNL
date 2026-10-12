@@ -1,0 +1,20 @@
+{%- comment -%}
+  Saturday and Sunday side by side: the coming weekend from Monday to Friday, this one on
+  Saturday, and on Sunday Sunday and Monday. A day beyond the forecast gets a note; with
+  neither day in it, the screen says so.
+{%- endcomment -%}
+{%- assign wk_noon = days.first | append: "T12:00:00Z" -%}
+{%- assign wk_wd = wk_noon | date: "%w" | plus: 0 -%}
+{%- if wk_wd == 0 -%}{%- assign wk_ahead = 0 -%}{%- else -%}{%- assign wk_ahead = 6 | minus: wk_wd -%}{%- endif -%}
+{%- assign wk_e = wk_noon | date: "%s" | plus: 0 -%}
+{%- assign wk_e = wk_ahead | times: 86400 | plus: wk_e -%}
+{%- assign wk_first = wk_e | date: "%Y-%m-%d" -%}
+{%- assign wk_e = wk_e | plus: 86400 -%}
+{%- assign wk_second = wk_e | date: "%Y-%m-%d" -%}
+{%- assign pair = wk_first | append: "," | append: wk_second | split: "," -%}
+{%- assign weekend = true -%}
+{%- if days contains wk_first -%}
+{% include "partials/two_days" %}
+{%- else -%}
+<div class="mv"><p class="mv-empty">{{ T_weekend_beyond }}</p></div>
+{%- endif -%}
