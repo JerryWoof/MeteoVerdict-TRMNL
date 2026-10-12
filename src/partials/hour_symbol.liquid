@@ -1,0 +1,25 @@
+{%- comment -%}
+  `icon` and `night` for hour `i` of the hourly series (as the forecast's own symbols, by
+  the hour): precipitation first, otherwise sky by cloud cover; night between sunset and
+  sunrise of that local day.
+{%- endcomment -%}
+{%- assign hp = H.precipitation[i] | default: 0 -%}
+{%- assign hc = H.cloud_cover[i] -%}
+{%- assign ht = H.temperature_2m[i] | default: 10 -%}
+{%- if hp >= 0.5 -%}
+  {%- if ht <= 0.5 -%}{%- assign icon = "snow" -%}{%- elsif ht <= 2 -%}{%- assign icon = "sleet" -%}{%- else -%}{%- assign icon = "rain" -%}{%- endif -%}
+{%- elsif hp >= 0.1 -%}{%- assign icon = "showers" -%}
+{%- elsif hc == nil -%}{%- assign icon = "" -%}
+{%- elsif hc < 25 -%}{%- assign icon = "clear" -%}
+{%- elsif hc < 70 -%}{%- assign icon = "partly" -%}
+{%- else -%}{%- assign icon = "cloudy" -%}{%- endif -%}
+{%- assign hl = H.time[i] | date: "%s" | plus: offset -%}
+{%- assign hday = hl | date: "%Y-%m-%d" -%}
+{%- assign hmin = hl | date: "%H" | times: 60 -%}
+{%- assign hrow = forecast.parts | where: "day", hday | first -%}
+{%- assign night = false -%}
+{%- if hrow.sunrise -%}
+  {%- assign r_min = hrow.sunrise | slice: 0, 2 | times: 60 -%}{%- assign r_min = hrow.sunrise | slice: 3, 2 | plus: r_min -%}
+  {%- assign s_min = hrow.sunset | slice: 0, 2 | times: 60 -%}{%- assign s_min = hrow.sunset | slice: 3, 2 | plus: s_min -%}
+  {%- if hmin < r_min or hmin >= s_min -%}{%- assign night = true -%}{%- endif -%}
+{%- endif -%}

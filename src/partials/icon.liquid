@@ -1,0 +1,13 @@
+{%- comment -%} the symbol `icon` (clear, partly, ...) as SVG; a moon instead of the sun when `night` {%- endcomment -%}
+{%- if night -%}{%- assign orb = moon -%}{%- else -%}{%- assign orb = sun -%}{%- endif -%}
+<svg class="{{ icon_class }}" viewBox="0 0 64 64">
+  {%- case icon -%}
+  {%- when "clear" -%}{{ orb }}
+  {%- when "partly" -%}<g transform="translate(2 0) scale(.62)">{{ orb }}</g>{{ cloud_svg }}
+  {%- when "cloudy" -%}<g transform="translate(-8 -12)">{{ cloud_svg | replace: '#fff', '#000' }}</g>{{ cloud_svg }}
+  {%- when "showers" -%}<g transform="translate(2 -6) scale(.62)">{{ orb }}</g><g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ drop1 }}
+  {%- when "rain" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ drops }}
+  {%- when "sleet" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ sleet }}
+  {%- when "snow" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ flakes }}
+  {%- endcase -%}
+</svg>

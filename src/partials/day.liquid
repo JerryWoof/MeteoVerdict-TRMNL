@@ -1,0 +1,44 @@
+{%- comment -%}
+  Everything about one `day` ("2026-10-12"): rows (its parts), tmin, tmax, rain, chance,
+  wind, cloud, shine, sym, rise, set, light (minutes of daylight), rise_min, set_min,
+  and its names: day_long ("Monday 12 October"), day_name ("Monday"), day_short ("Mon"),
+  day_num ("12"). Today's whole-day row is missing when the forecast is a few hours
+  short; the parts stand in for it.
+{%- endcomment -%}
+{%- assign rows = forecast.parts | where: "day", day -%}
+{%- assign whole = rows | where: "part", "day" | first -%}
+{%- assign tmin = 999 -%}{%- assign tmax = -999 -%}{%- assign rain = 0 -%}{%- assign chance = 0 -%}{%- assign wind = 0 -%}{%- assign cloud = nil -%}{%- assign shine = nil -%}
+{%- for r in rows -%}
+  {%- if r.part == "day" -%}{%- continue -%}{%- endif -%}
+  {%- if r.tmin != nil and r.tmin < tmin -%}{%- assign tmin = r.tmin -%}{%- endif -%}
+  {%- if r.tmax != nil and r.tmax > tmax -%}{%- assign tmax = r.tmax -%}{%- endif -%}
+  {%- assign rain = rain | plus: r.precipitation -%}
+  {%- if r.rain_probability > chance -%}{%- assign chance = r.rain_probability -%}{%- endif -%}
+  {%- if r.wind > wind -%}{%- assign wind = r.wind -%}{%- endif -%}
+  {%- if r.sunshine != nil -%}{%- assign shine = shine | plus: r.sunshine -%}{%- endif -%}
+{%- endfor -%}
+{%- if whole -%}
+  {%- assign tmin = whole.tmin -%}{%- assign tmax = whole.tmax -%}{%- assign rain = whole.precipitation -%}
+  {%- assign chance = whole.rain_probability -%}{%- assign wind = whole.wind -%}{%- assign cloud = whole.cloud -%}
+  {%- assign sym = whole.symbol -%}
+  {%- if whole.sunshine != nil -%}{%- assign shine = whole.sunshine -%}{%- endif -%}
+{%- else -%}
+  {%- assign pm = rows | where: "part", "afternoon" | first | default: rows.last -%}
+  {%- assign sym = pm.symbol -%}{%- assign cloud = pm.cloud -%}
+{%- endif -%}
+{%- assign rise = rows.first.sunrise -%}{%- assign set = rows.first.sunset -%}{%- assign light = nil -%}
+{%- if rise -%}
+  {%- assign rise_min = rise | slice: 0, 2 | times: 60 -%}{%- assign rise_min = rise | slice: 3, 2 | plus: rise_min -%}
+  {%- assign set_min = set | slice: 0, 2 | times: 60 -%}{%- assign set_min = set | slice: 3, 2 | plus: set_min -%}
+  {%- assign light = set_min | minus: rise_min -%}
+{%- endif -%}
+{%- assign noon = day | append: "T12:00:00Z" -%}
+{%- assign wd = noon | date: "%w" | plus: 0 -%}
+{%- assign mo = noon | date: "%m" | plus: 0 | minus: 1 -%}
+{%- assign day_num = noon | date: "%d" | plus: 0 -%}
+{%- assign day_name = T_days[wd] -%}{%- assign day_short = T_days_short[wd] -%}
+{%- if lang == "cs" -%}
+  {%- assign day_long = day_name | append: " " | append: day_num | append: ". " | append: T_months[mo] -%}
+{%- else -%}
+  {%- assign day_long = day_name | append: " " | append: day_num | append: " " | append: T_months[mo] -%}
+{%- endif -%}

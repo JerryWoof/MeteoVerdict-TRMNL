@@ -1,0 +1,237 @@
+{%- comment -%} MeteoVerdict for TRMNL, quadrant: https://github.com/JerryWoof/MeteoVerdict-TRMNL (built from src/, edit there) {%- endcomment -%}
+
+{%- assign settings = trmnl.plugin_settings.custom_fields_values -%}
+{%- assign lang = settings.language | default: "en" -%}
+{%- assign view = settings.view | default: "today_tomorrow" -%}
+{%- assign place = settings.place | default: "" | strip -%}
+{%- if place == "" -%}{%- assign place = okres.name -%}{%- endif -%}
+{%- if lang == "cs" -%}
+  {%- assign T_today = "Dnes" -%}{%- assign T_tomorrow = "Zítra" -%}
+  {%- assign T_next24 = "Příštích 24 hodin" -%}{%- assign T_days5 = "Předpověď na 5 dní" -%}
+  {%- assign T_rain = "Srážky" -%}{%- assign T_chance = "šance" -%}
+  {%- assign T_sunshine = "Slunce" -%}{%- assign T_of = "z" -%}
+  {%- assign T_clouds = "Oblačnost" -%}{%- assign T_daytime = "přes den" -%}
+  {%- assign T_wind = "Vítr" -%}{%- assign T_max = "nejvíc" -%}
+  {%- assign T_parts = "Noc,Ráno,Odpoledne,Večer" | split: "," -%}
+  {%- assign T_now = "Teď" -%}{%- assign T_high = "max" -%}{%- assign T_low = "min" -%}
+  {%- assign T_dry = "Příštích 24 hodin bez srážek" -%}
+  {%- assign T_rain_from = "Srážky od" -%}{%- assign T_rain_until = "Srážky do" -%}{%- assign T_rain_all = "Srážky celý den" -%}
+  {%- assign T_warmest = "Nejtepleji" -%}{%- assign T_wettest = "Nejvíc srážek" -%}{%- assign T_sunniest = "Nejvíc slunce" -%}
+  {%- assign T_updated = "aktualizace" -%}{%- assign T_models = "modelů" -%}
+  {%- assign T_symbols = "Jasno,Polojasno,Zataženo,Přeháňky,Déšť,Déšť se sněhem,Sněžení" | split: "," -%}
+  {%- assign T_days = "neděle,pondělí,úterý,středa,čtvrtek,pátek,sobota" | split: "," -%}
+  {%- assign T_days_short = "Ne,Po,Út,St,Čt,Pá,So" | split: "," -%}
+  {%- assign T_months = "ledna,února,března,dubna,května,června,července,srpna,září,října,listopadu,prosince" | split: "," -%}
+  {%- assign T_dec = "," -%}
+{%- else -%}
+  {%- assign T_today = "Today" -%}{%- assign T_tomorrow = "Tomorrow" -%}
+  {%- assign T_next24 = "Next 24 hours" -%}{%- assign T_days5 = "5-day forecast" -%}
+  {%- assign T_rain = "Rain" -%}{%- assign T_chance = "chance" -%}
+  {%- assign T_sunshine = "Sunshine" -%}{%- assign T_of = "of" -%}
+  {%- assign T_clouds = "Clouds" -%}{%- assign T_daytime = "daytime" -%}
+  {%- assign T_wind = "Wind" -%}{%- assign T_max = "max" -%}
+  {%- assign T_parts = "Night,Morning,Afternoon,Evening" | split: "," -%}
+  {%- assign T_now = "Now" -%}{%- assign T_high = "high" -%}{%- assign T_low = "low" -%}
+  {%- assign T_dry = "Dry for the next 24 hours" -%}
+  {%- assign T_rain_from = "Rain from" -%}{%- assign T_rain_until = "Rain until" -%}{%- assign T_rain_all = "Rain all day" -%}
+  {%- assign T_warmest = "Warmest" -%}{%- assign T_wettest = "Wettest" -%}{%- assign T_sunniest = "Sunniest" -%}
+  {%- assign T_updated = "updated" -%}{%- assign T_models = "models" -%}
+  {%- assign T_symbols = "Sunny,Partly cloudy,Cloudy,Showers,Rain,Sleet,Snow" | split: "," -%}
+  {%- assign T_days = "Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday" | split: "," -%}
+  {%- assign T_days_short = "Sun,Mon,Tue,Wed,Thu,Fri,Sat" | split: "," -%}
+  {%- assign T_months = "January,February,March,April,May,June,July,August,September,October,November,December" | split: "," -%}
+  {%- assign T_dec = "." -%}
+{%- endif -%}
+{%- assign SYMBOLS = "clear,partly,cloudy,showers,rain,sleet,snow" | split: "," -%}
+{%- assign offset = trmnl.user.utc_offset | default: 0 -%}
+{%- assign now_utc = "now" | date: "%s" | plus: 0 -%}
+{%- assign now_local = now_utc | plus: offset -%}
+{%- assign today = now_local | date: "%Y-%m-%d" -%}
+{%- assign all_days = forecast.parts | map: "day" | uniq -%}
+{%- unless all_days contains today -%}
+  {%- assign today = all_days.first -%}
+{%- endunless -%}
+{%- assign days = "" -%}
+{%- for d in all_days -%}{%- if d >= today -%}{%- assign days = days | append: d | append: "," -%}{%- endif -%}{%- endfor -%}
+{%- assign days = days | split: "," -%}
+{%- assign H = forecast.hourly -%}
+{%- assign models_used = models.variables.temperature_2m.lead_days["1"].size | default: 0 -%}
+{%- capture sun -%}<g stroke="#000" stroke-width="4" stroke-linecap="round"><circle cx="32" cy="32" r="11"/><path d="M32 6v7M32 51v7M6 32h7M51 32h7M13.6 13.6l5 5M45.4 45.4l5 5M13.6 50.4l5-5M45.4 18.6l5-5"/></g>{%- endcapture -%}
+{%- capture moon -%}<path d="M38 8a24 24 0 1 0 18 36A19 19 0 0 1 38 8z"/>{%- endcapture -%}
+{%- capture cloud_svg -%}<path d="M18 50H46A9 9 0 0 0 46 32A13 13 0 0 0 21 30A10 10 0 0 0 18 50Z" fill="#fff" stroke="#000" stroke-width="3.5" stroke-linejoin="round"/>{%- endcapture -%}
+{%- capture drops -%}<path d="M24 48l-3 8M33 48l-3 8M42 48l-3 8" stroke="#000" stroke-width="3.5" stroke-linecap="round"/>{%- endcapture -%}
+{%- capture drop1 -%}<path d="M30 48l-3 8M40 48l-3 8" stroke="#000" stroke-width="3.5" stroke-linecap="round"/>{%- endcapture -%}
+{%- capture flakes -%}<g stroke="#000" stroke-width="2.5" stroke-linecap="round"><path d="M22 47v10M17.7 49.5l8.6 5M17.7 54.5l8.6-5M42 47v10M37.7 49.5l8.6 5M37.7 54.5l8.6-5"/></g>{%- endcapture -%}
+{%- capture sleet -%}<path d="M24 47l-3 8" stroke="#000" stroke-width="3.5" stroke-linecap="round"/><g stroke="#000" stroke-width="2.5" stroke-linecap="round"><path d="M40 47v10M35.7 49.5l8.6 5M35.7 54.5l8.6-5"/></g>{%- endcapture -%}
+{%- capture rise_svg -%}<svg class="mv-glyph" viewBox="0 0 24 24"><path d="M2 19h20M6.5 19a5.5 5.5 0 0 1 11 0M12 3v7M8.5 6.5 12 3l3.5 3.5" fill="none" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>{%- endcapture -%}
+{%- capture sun_glyph -%}<svg class="mv-glyph" viewBox="0 0 24 24"><g stroke="#000" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="4.5" fill="#000"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/></g></svg>{%- endcapture -%}
+{%- capture drop_glyph -%}<svg class="mv-glyph" viewBox="0 0 24 24"><path d="M12 2.5C9 7.5 6 10.5 6 15a6 6 0 0 0 12 0c0-4.5-3-7.5-6-12.5z" fill="#000"/></svg>{%- endcapture -%}
+{%- capture set_svg -%}<svg class="mv-glyph" viewBox="0 0 24 24"><path d="M2 19h20M6.5 19a5.5 5.5 0 0 1 11 0M12 3v7M8.5 6.5 12 10l3.5-3.5" fill="none" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>{%- endcapture -%}
+<style>
+  .mv { width: 100%; height: 100%; font-family: "Inter", "Helvetica Neue", Arial, sans-serif; color: #000; }
+  .mv svg { overflow: visible; }
+  .mv-head { display: flex; justify-content: space-between; align-items: center; background: #000; color: #fff; border-radius: 8px; padding: 3px 12px; white-space: nowrap; }
+  .mv-head .when { font-size: 21px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
+  .mv-head .date { font-size: 17px; font-weight: 600; }
+  .mv-max { font-weight: 800; letter-spacing: -2px; line-height: 1; }
+  .mv-glyph { width: 22px; height: 22px; vertical-align: -5px; }
+  .mv-sun { font-weight: 700; white-space: nowrap; }
+  .mv-facts { display: grid; grid-template-columns: repeat(4, 1fr); border: 2px solid #000; border-radius: 8px; padding: 3px 0; text-align: center; }
+  .mv-fact + .mv-fact { border-left: 1px solid #000; }
+  .mv-fact span { display: block; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .mv-fact b { display: block; font-size: 20px; font-weight: 800; line-height: 1.15; }
+  .mv-fact i { display: block; font-size: 11px; font-style: normal; }
+  .mv-chart { width: 100%; display: block; }
+</style>
+<svg width="0" height="0" style="position:absolute">
+  <defs><pattern id="mv-night" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="1.3" height="6" fill="#000"/></pattern></defs>
+</svg>
+<style>
+  .mv-q { display: flex; flex-direction: column; justify-content: space-between; }
+  .mv-q .top { display: flex; justify-content: space-between; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #000; }
+  .mv-q .top span + span { font-weight: 600; text-transform: none; letter-spacing: 0; }
+  .mv-q .hero { display: flex; align-items: center; gap: 6px; }
+  .mv-q .hero > svg { width: 84px; height: 84px; flex: none; }
+  .mv-q .mv-max { font-size: 64px; }
+  .mv-q .side { margin-left: auto; text-align: right; font-size: 16px; line-height: 1.35; }
+  .mv-q .side b { font-size: 17px; font-weight: 800; }
+  .mv-q .line { display: flex; justify-content: space-between; font-size: 15px; }
+  .mv-q .line b { font-weight: 800; }
+  .mv-q .mv-glyph { width: 16px; height: 16px; vertical-align: -3px; }
+  .mv-q .tomorrow { display: flex; align-items: center; gap: 6px; border-top: 1px solid #000; padding-top: 3px; font-size: 16px; }
+  .mv-q .tomorrow svg { width: 32px; height: 32px; }
+  .mv-q .tomorrow b { font-weight: 800; }
+</style>
+<div class="view view--quadrant">
+  <div class="layout">
+    <div class="mv mv-q">
+      {%- assign day = days[0] -%}
+{%- assign rows = forecast.parts | where: "day", day -%}
+{%- assign whole = rows | where: "part", "day" | first -%}
+{%- assign tmin = 999 -%}{%- assign tmax = -999 -%}{%- assign rain = 0 -%}{%- assign chance = 0 -%}{%- assign wind = 0 -%}{%- assign cloud = nil -%}{%- assign shine = nil -%}
+{%- for r in rows -%}
+  {%- if r.part == "day" -%}{%- continue -%}{%- endif -%}
+  {%- if r.tmin != nil and r.tmin < tmin -%}{%- assign tmin = r.tmin -%}{%- endif -%}
+  {%- if r.tmax != nil and r.tmax > tmax -%}{%- assign tmax = r.tmax -%}{%- endif -%}
+  {%- assign rain = rain | plus: r.precipitation -%}
+  {%- if r.rain_probability > chance -%}{%- assign chance = r.rain_probability -%}{%- endif -%}
+  {%- if r.wind > wind -%}{%- assign wind = r.wind -%}{%- endif -%}
+  {%- if r.sunshine != nil -%}{%- assign shine = shine | plus: r.sunshine -%}{%- endif -%}
+{%- endfor -%}
+{%- if whole -%}
+  {%- assign tmin = whole.tmin -%}{%- assign tmax = whole.tmax -%}{%- assign rain = whole.precipitation -%}
+  {%- assign chance = whole.rain_probability -%}{%- assign wind = whole.wind -%}{%- assign cloud = whole.cloud -%}
+  {%- assign sym = whole.symbol -%}
+  {%- if whole.sunshine != nil -%}{%- assign shine = whole.sunshine -%}{%- endif -%}
+{%- else -%}
+  {%- assign pm = rows | where: "part", "afternoon" | first | default: rows.last -%}
+  {%- assign sym = pm.symbol -%}{%- assign cloud = pm.cloud -%}
+{%- endif -%}
+{%- assign rise = rows.first.sunrise -%}{%- assign set = rows.first.sunset -%}{%- assign light = nil -%}
+{%- if rise -%}
+  {%- assign rise_min = rise | slice: 0, 2 | times: 60 -%}{%- assign rise_min = rise | slice: 3, 2 | plus: rise_min -%}
+  {%- assign set_min = set | slice: 0, 2 | times: 60 -%}{%- assign set_min = set | slice: 3, 2 | plus: set_min -%}
+  {%- assign light = set_min | minus: rise_min -%}
+{%- endif -%}
+{%- assign noon = day | append: "T12:00:00Z" -%}
+{%- assign wd = noon | date: "%w" | plus: 0 -%}
+{%- assign mo = noon | date: "%m" | plus: 0 | minus: 1 -%}
+{%- assign day_num = noon | date: "%d" | plus: 0 -%}
+{%- assign day_name = T_days[wd] -%}{%- assign day_short = T_days_short[wd] -%}
+{%- if lang == "cs" -%}
+  {%- assign day_long = day_name | append: " " | append: day_num | append: ". " | append: T_months[mo] -%}
+{%- else -%}
+  {%- assign day_long = day_name | append: " " | append: day_num | append: " " | append: T_months[mo] -%}
+{%- endif -%}
+      <div class="top"><span>{{ T_today }}</span><span>{{ day_short }} {{ day_num }}{% if lang == "cs" %}.{% endif %} {{ T_months[mo] | slice: 0, 3 }}</span></div>
+      <div class="hero">
+        {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
+{%- if night -%}{%- assign orb = moon -%}{%- else -%}{%- assign orb = sun -%}{%- endif -%}
+<svg class="{{ icon_class }}" viewBox="0 0 64 64">
+  {%- case icon -%}
+  {%- when "clear" -%}{{ orb }}
+  {%- when "partly" -%}<g transform="translate(2 0) scale(.62)">{{ orb }}</g>{{ cloud_svg }}
+  {%- when "cloudy" -%}<g transform="translate(-8 -12)">{{ cloud_svg | replace: '#fff', '#000' }}</g>{{ cloud_svg }}
+  {%- when "showers" -%}<g transform="translate(2 -6) scale(.62)">{{ orb }}</g><g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ drop1 }}
+  {%- when "rain" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ drops }}
+  {%- when "sleet" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ sleet }}
+  {%- when "snow" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ flakes }}
+  {%- endcase -%}
+</svg>
+        <span class="mv-max">{{ tmax | round }}°</span>
+        <div class="side"><b>
+{%- for s in SYMBOLS -%}{%- if s == icon -%}{{ T_symbols[forloop.index0] }}{%- endif -%}{%- endfor -%}</b><br>{{ T_low }} {{ tmin | round }}°</div>
+      </div>
+      <div class="line">
+        <span>{{ drop_glyph }}<b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b> {{ chance | times: 100 | round }} %</span>
+        {%- if shine != nil -%}<span>{{ sun_glyph }}<b>{{ shine | round: 1 | replace: ".", T_dec }} h</b></span>{%- endif -%}
+        {%- if rise -%}<span>{{ rise_svg }}{{ rise }} {{ set_svg }}{{ set }}</span>{%- endif -%}
+      </div>
+      {%- assign day = days[1] -%}
+{%- assign rows = forecast.parts | where: "day", day -%}
+{%- assign whole = rows | where: "part", "day" | first -%}
+{%- assign tmin = 999 -%}{%- assign tmax = -999 -%}{%- assign rain = 0 -%}{%- assign chance = 0 -%}{%- assign wind = 0 -%}{%- assign cloud = nil -%}{%- assign shine = nil -%}
+{%- for r in rows -%}
+  {%- if r.part == "day" -%}{%- continue -%}{%- endif -%}
+  {%- if r.tmin != nil and r.tmin < tmin -%}{%- assign tmin = r.tmin -%}{%- endif -%}
+  {%- if r.tmax != nil and r.tmax > tmax -%}{%- assign tmax = r.tmax -%}{%- endif -%}
+  {%- assign rain = rain | plus: r.precipitation -%}
+  {%- if r.rain_probability > chance -%}{%- assign chance = r.rain_probability -%}{%- endif -%}
+  {%- if r.wind > wind -%}{%- assign wind = r.wind -%}{%- endif -%}
+  {%- if r.sunshine != nil -%}{%- assign shine = shine | plus: r.sunshine -%}{%- endif -%}
+{%- endfor -%}
+{%- if whole -%}
+  {%- assign tmin = whole.tmin -%}{%- assign tmax = whole.tmax -%}{%- assign rain = whole.precipitation -%}
+  {%- assign chance = whole.rain_probability -%}{%- assign wind = whole.wind -%}{%- assign cloud = whole.cloud -%}
+  {%- assign sym = whole.symbol -%}
+  {%- if whole.sunshine != nil -%}{%- assign shine = whole.sunshine -%}{%- endif -%}
+{%- else -%}
+  {%- assign pm = rows | where: "part", "afternoon" | first | default: rows.last -%}
+  {%- assign sym = pm.symbol -%}{%- assign cloud = pm.cloud -%}
+{%- endif -%}
+{%- assign rise = rows.first.sunrise -%}{%- assign set = rows.first.sunset -%}{%- assign light = nil -%}
+{%- if rise -%}
+  {%- assign rise_min = rise | slice: 0, 2 | times: 60 -%}{%- assign rise_min = rise | slice: 3, 2 | plus: rise_min -%}
+  {%- assign set_min = set | slice: 0, 2 | times: 60 -%}{%- assign set_min = set | slice: 3, 2 | plus: set_min -%}
+  {%- assign light = set_min | minus: rise_min -%}
+{%- endif -%}
+{%- assign noon = day | append: "T12:00:00Z" -%}
+{%- assign wd = noon | date: "%w" | plus: 0 -%}
+{%- assign mo = noon | date: "%m" | plus: 0 | minus: 1 -%}
+{%- assign day_num = noon | date: "%d" | plus: 0 -%}
+{%- assign day_name = T_days[wd] -%}{%- assign day_short = T_days_short[wd] -%}
+{%- if lang == "cs" -%}
+  {%- assign day_long = day_name | append: " " | append: day_num | append: ". " | append: T_months[mo] -%}
+{%- else -%}
+  {%- assign day_long = day_name | append: " " | append: day_num | append: " " | append: T_months[mo] -%}
+{%- endif -%}
+      <div class="tomorrow">
+        <b>{{ T_tomorrow }}</b>
+        {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
+{%- if night -%}{%- assign orb = moon -%}{%- else -%}{%- assign orb = sun -%}{%- endif -%}
+<svg class="{{ icon_class }}" viewBox="0 0 64 64">
+  {%- case icon -%}
+  {%- when "clear" -%}{{ orb }}
+  {%- when "partly" -%}<g transform="translate(2 0) scale(.62)">{{ orb }}</g>{{ cloud_svg }}
+  {%- when "cloudy" -%}<g transform="translate(-8 -12)">{{ cloud_svg | replace: '#fff', '#000' }}</g>{{ cloud_svg }}
+  {%- when "showers" -%}<g transform="translate(2 -6) scale(.62)">{{ orb }}</g><g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ drop1 }}
+  {%- when "rain" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ drops }}
+  {%- when "sleet" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ sleet }}
+  {%- when "snow" -%}<g transform="translate(0 -8)">{{ cloud_svg }}</g>{{ flakes }}
+  {%- endcase -%}
+</svg>
+        <span><b>{{ tmax | round }}°</b> / {{ tmin | round }}°{% if rain >= 0.1 %} · {{ rain | round: 1 | replace: ".", T_dec }} mm{% endif %}</span>
+      </div>
+    </div>
+  </div>
+  {%- assign compact = true -%}
+<div class="title_bar">
+  <span class="title">{{ place }}</span>
+  {%- assign updated = forecast.generated | date: "%s" | plus: offset -%}
+  {%- if compact -%}
+  <span class="instance">MeteoVerdict · {{ updated | date: "%H:%M" }}</span>
+  {%- else -%}
+  <span class="instance">MeteoVerdict{% if models_used > 0 %} · {{ models_used }} {{ T_models }}{% endif %} · {{ T_updated }} {{ updated | date: "%-d.%-m. %H:%M" }}</span>
+  {%- endif -%}
+</div>
+</div>
