@@ -11,6 +11,7 @@
 {%- if lang == "cs" -%}
   {%- assign T_today = "Dnes" -%}{%- assign T_tomorrow = "Zítra" -%}
   {%- assign T_next24 = "Příštích 24 hodin" -%}{%- assign T_days5 = "Předpověď na 5 dní" -%}
+  {%- assign T_beyond = "# je mimo předpověď" -%}{%- assign T_weekend_beyond = "Víkend je mimo předpověď" -%}
   {%- assign T_rain = "Srážky" -%}{%- assign T_chance = "šance" -%}
   {%- assign T_sunshine = "Slunce" -%}{%- assign T_of = "z" -%}
   {%- assign T_clouds = "Oblačnost" -%}{%- assign T_daytime = "přes den" -%}
@@ -35,6 +36,7 @@
 {%- else -%}
   {%- assign T_today = "Today" -%}{%- assign T_tomorrow = "Tomorrow" -%}
   {%- assign T_next24 = "Next 24 hours" -%}{%- assign T_days5 = "5-day forecast" -%}
+  {%- assign T_beyond = "# is beyond the forecast" -%}{%- assign T_weekend_beyond = "The weekend is beyond the forecast" -%}
   {%- assign T_rain = "Rain" -%}{%- assign T_chance = "chance" -%}
   {%- assign T_sunshine = "Sunshine" -%}{%- assign T_of = "of" -%}
   {%- assign T_clouds = "Clouds" -%}{%- assign T_daytime = "daytime" -%}
@@ -169,15 +171,28 @@
   {%- assign light = set_min | minus: rise_min -%}
 {%- endif -%}
 {%- assign noon = day | append: "T12:00:00Z" -%}
+{%- assign light_diff = nil -%}
+{%- if light -%}
+  {%- assign ld_e = noon | date: "%s" | minus: 86400 -%}
+  {%- assign ld_day = ld_e | date: "%Y-%m-%d" -%}
+  {%- assign ld_row = forecast.parts | where: "day", ld_day | first -%}
+  {%- if ld_row.sunrise -%}
+    {%- assign ld_rise = ld_row.sunrise | slice: 0, 2 | times: 60 -%}{%- assign ld_rise = ld_row.sunrise | slice: 3, 2 | plus: ld_rise -%}
+    {%- assign ld_set = ld_row.sunset | slice: 0, 2 | times: 60 -%}{%- assign ld_set = ld_row.sunset | slice: 3, 2 | plus: ld_set -%}
+    {%- assign ld_light = ld_set | minus: ld_rise -%}{%- assign light_diff = light | minus: ld_light -%}
+  {%- endif -%}
+{%- endif -%}
 {%- assign wd = noon | date: "%w" | plus: 0 -%}
 {%- assign mo = noon | date: "%m" | plus: 0 | minus: 1 -%}
 {%- assign day_num = noon | date: "%d" | plus: 0 -%}
 {%- assign day_name = T_days[wd] -%}{%- assign day_short = T_days_short[wd] -%}
 {%- if lang == "cs" -%}
-  {%- assign day_long = day_name | append: " " | append: day_num | append: ". " | append: T_months[mo] -%}
+  {%- assign day_dm = day_num | append: ". " | append: T_months[mo] -%}
+  {%- assign day_long = day_name | append: " " | append: day_dm -%}
   {%- assign day_date = mo | plus: 1 | prepend: ". " | prepend: day_num | append: "." -%}
 {%- else -%}
-  {%- assign day_long = day_name | append: " " | append: day_num | append: " " | append: T_months[mo] -%}
+  {%- assign day_dm = day_num | append: " " | append: T_months[mo] -%}
+  {%- assign day_long = day_name | append: " " | append: day_dm -%}
   {%- assign day_date = T_months[mo] | slice: 0, 3 | prepend: " " | prepend: day_num -%}
 {%- endif -%}
 {%- assign alerts = "" -%}{%- assign n_alerts = 0 -%}
@@ -261,15 +276,28 @@
   {%- assign light = set_min | minus: rise_min -%}
 {%- endif -%}
 {%- assign noon = day | append: "T12:00:00Z" -%}
+{%- assign light_diff = nil -%}
+{%- if light -%}
+  {%- assign ld_e = noon | date: "%s" | minus: 86400 -%}
+  {%- assign ld_day = ld_e | date: "%Y-%m-%d" -%}
+  {%- assign ld_row = forecast.parts | where: "day", ld_day | first -%}
+  {%- if ld_row.sunrise -%}
+    {%- assign ld_rise = ld_row.sunrise | slice: 0, 2 | times: 60 -%}{%- assign ld_rise = ld_row.sunrise | slice: 3, 2 | plus: ld_rise -%}
+    {%- assign ld_set = ld_row.sunset | slice: 0, 2 | times: 60 -%}{%- assign ld_set = ld_row.sunset | slice: 3, 2 | plus: ld_set -%}
+    {%- assign ld_light = ld_set | minus: ld_rise -%}{%- assign light_diff = light | minus: ld_light -%}
+  {%- endif -%}
+{%- endif -%}
 {%- assign wd = noon | date: "%w" | plus: 0 -%}
 {%- assign mo = noon | date: "%m" | plus: 0 | minus: 1 -%}
 {%- assign day_num = noon | date: "%d" | plus: 0 -%}
 {%- assign day_name = T_days[wd] -%}{%- assign day_short = T_days_short[wd] -%}
 {%- if lang == "cs" -%}
-  {%- assign day_long = day_name | append: " " | append: day_num | append: ". " | append: T_months[mo] -%}
+  {%- assign day_dm = day_num | append: ". " | append: T_months[mo] -%}
+  {%- assign day_long = day_name | append: " " | append: day_dm -%}
   {%- assign day_date = mo | plus: 1 | prepend: ". " | prepend: day_num | append: "." -%}
 {%- else -%}
-  {%- assign day_long = day_name | append: " " | append: day_num | append: " " | append: T_months[mo] -%}
+  {%- assign day_dm = day_num | append: " " | append: T_months[mo] -%}
+  {%- assign day_long = day_name | append: " " | append: day_dm -%}
   {%- assign day_date = T_months[mo] | slice: 0, 3 | prepend: " " | prepend: day_num -%}
 {%- endif -%}
       <div class="tomorrow">

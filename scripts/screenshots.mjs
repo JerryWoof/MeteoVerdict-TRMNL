@@ -38,6 +38,7 @@ const SHOTS = {
   "today-tomorrow": one("full", "CZ0100", { view: "today_tomorrow", place: "Praha" }),
   "next-24-hours": one("full", "CZ0100", { view: "next_24h", place: "Praha" }),
   "five-days": one("full", "CZ0100", { view: "five_days", place: "Praha" }),
+  weekend: one("full", "CZ0100", { view: "weekend", place: "Praha" }),
   "today-tomorrow-cs": one("full", "CZ0642", { view: "today_tomorrow", place: "Brno", lang: "cs" }),
   "warnings-simulated": winter({ view: "five_days", place: "Praha (simulated winter)" }),
   "mashup-half-horizontal": mashup("1Tx1B", [

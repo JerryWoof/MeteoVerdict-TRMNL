@@ -1,6 +1,6 @@
 {%- comment -%}
   MeteoVerdict for TRMNL: full screen (800x480). Pick the view in the plugin's settings:
-  today_tomorrow, next_24h or five_days. https://github.com/JerryWoof/MeteoVerdict-TRMNL
+  today_tomorrow, next_24h, five_days or weekend. https://github.com/JerryWoof/MeteoVerdict-TRMNL
 {%- endcomment -%}
 {% include "shared" %}
 <div class="view view--full">
@@ -11,6 +11,7 @@
     {%- case view -%}
     {%- when "next_24h" -%}{% include "views/next_24h" %}
     {%- when "five_days" -%}{% include "views/five_days" %}
+    {%- when "weekend" -%}{% include "views/weekend" %}
     {%- else -%}{% include "views/today_tomorrow" %}
     {%- endcase -%}
     {%- endif -%}
