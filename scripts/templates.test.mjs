@@ -213,10 +213,14 @@ test("weekend: on Saturday evening Sunday and Monday", async () => {
 
 test("weekend: on Sunday evening the next weekend", async () => {
   freezeTime("2026-10-18T17:30:00Z"); // Sunday 19:30 in Prague
-  // a forecast from Sunday reaches Friday: the next weekend is all beyond it
+  // a forecast from Sunday reaches Friday: the next weekend is all beyond it, so a note
+  // and the next two days from tomorrow
   const sunday = shifted(6);
-  assert.match(text(await renderLayout("full", sunday, { view: "weekend" })), /The weekend is beyond the forecast/);
-  assert.match(text(await renderLayout("full", sunday, { view: "weekend", lang: "cs" })), /Víkend je mimo předpověď/);
+  const en = text(await renderLayout("full", sunday, { view: "weekend" }));
+  assert.match(en, /^ ?Weekend not in the forecast yet Monday 19 October .* Tuesday 20 October/);
+  assert.doesNotMatch(en, /beyond the forecast|Sunday|Today|Tomorrow/);
+  const cs = text(await renderLayout("full", sunday, { view: "weekend", lang: "cs" }));
+  assert.match(cs, /Víkend zatím mimo předpověď pondělí 19\. října .* úterý 20\. října/);
   // one more day of data: Saturday, and a note for Sunday
   const words = text(await renderLayout("full", shifted(6, 1), { view: "weekend" }));
   assert.match(words, /Saturday 24 October .* Sunday 25 October Sunday is beyond the forecast/);
@@ -234,13 +238,18 @@ test("weekend: with the evening switch off, the evening is like the day", async 
   assert.match(text(await renderLayout("full", later, { view: "weekend" })), /Saturday 17 October .* Sunday 18 October/);
 });
 
-test("weekend: a day beyond the forecast gets a note; no weekend at all says so", async () => {
+test("weekend: a day beyond the forecast gets a note; no weekend at all, the next days", async () => {
   freezeTime("2026-10-12T10:00:00Z"); // Monday: the data ends on Saturday
   const words = text(await renderLayout("full", PRAHA, { view: "weekend" }));
   assert.match(words, /Saturday 17 October .* Sunday 18 October Sunday is beyond the forecast/);
   assert.match(text(await renderLayout("full", PRAHA, { view: "weekend", lang: "cs" })), /Neděle je mimo předpověď/);
   const short = variant((f) => { f.parts = f.parts.filter((p) => p.day < "2026-10-17"); });
-  assert.match(text(await renderLayout("full", short, { view: "weekend" })), /The weekend is beyond the forecast/);
+  const none = text(await renderLayout("full", short, { view: "weekend" }));
+  assert.match(none, /Weekend not in the forecast yet Monday 12 October .* Tuesday 13 October/);
+  assert.doesNotMatch(none, /Saturday|beyond the forecast/);
+  freezeTime("2026-10-12T17:30:00Z"); // 19:30: from tomorrow, unless the switch is off
+  assert.match(text(await renderLayout("full", short, { view: "weekend" })), /Weekend not in the forecast yet Tuesday 13 October .* Wednesday 14 October/);
+  assert.match(text(await renderLayout("full", short, { view: "weekend", evening: false })), /Weekend not in the forecast yet Monday 12 October .* Tuesday 13 October/);
 });
 
 test("daylight says how much shorter it is than the day before", async () => {

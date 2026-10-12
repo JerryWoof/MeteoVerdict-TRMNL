@@ -30,11 +30,16 @@ for (const p of LATER.forecast.parts) p.day = next(`${p.day}T00:00:00Z`).slice(0
 LATER.forecast.hourly.time = LATER.forecast.hourly.time.map((t) => `${next(t).slice(0, 16)}Z`);
 LATER.forecast.generated = `${next(LATER.forecast.generated).slice(0, 16)}+00:00`;
 const WEEKEND = [["full", { view: "weekend" }], ["full", { view: "weekend", lang: "cs" }, LATER]];
+// no weekend in the data at all: the next two days under a note
+const SHORT = structuredClone(PRAHA);
+SHORT.forecast.parts = SHORT.forecast.parts.filter((p) => p.day < "2026-10-17");
+const NO_WEEKEND = [["full", { view: "weekend" }, SHORT], ["full", { view: "weekend", lang: "cs" }, SHORT]];
 for (const [now, cases] of [["2026-10-12T15:40:00Z", CASES], ["2026-10-12T20:10:00Z", CASES], ["2026-10-13T05:30:00Z", CASES],
   ["2026-10-16T09:00:00Z", WEEKEND], ["2026-10-17T09:00:00Z", WEEKEND], ["2026-10-18T09:00:00Z", WEEKEND.slice(1)],
-  ["2026-10-17T17:30:00Z", WEEKEND.slice(1)], ["2026-10-18T17:30:00Z", WEEKEND.slice(1)]]) {
+  ["2026-10-17T17:30:00Z", WEEKEND.slice(1)], ["2026-10-18T17:30:00Z", WEEKEND.slice(1)],
+  ["2026-10-12T10:00:00Z", NO_WEEKEND], ["2026-10-12T17:30:00Z", NO_WEEKEND]]) {
   for (const [layout, opts, data = PRAHA] of cases) {
-    test(`ruby = liquidjs: ${layout} ${JSON.stringify(opts)}${data === PRAHA ? "" : " (a day later)"} at ${now}`, { skip }, async () => {
+    test(`ruby = liquidjs: ${layout} ${JSON.stringify(opts)}${data === PRAHA ? "" : data === LATER ? " (a day later)" : " (no weekend)"} at ${now}`, { skip }, async () => {
       const settings = { view: opts.view, language: opts.lang, wind_unit: opts.wind, place: "Praha" };
       const file = join(dir, "context.json");
       writeFileSync(file, JSON.stringify({ ...data, trmnl: { user: { utc_offset: 7200 }, plugin_settings: { custom_fields_values: settings } } }));
