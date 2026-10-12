@@ -28,15 +28,18 @@
 </style>
 <div class="view view--half_horizontal">
   <div class="layout">
+    {%- if days.size == 0 -%}
+    <div class="mv"><p class="mv-empty">{{ T_none }} {{ generated_local | date: "%d.%m. %H:%M" }}.</p></div>
+    {%- else -%}
     <div class="mv mv-hh">
-      {%- assign day = days[0] -%}{% include "partials/day" %}
+      {%- assign day = days[start] -%}{% include "partials/day" %}{% include "partials/alerts" %}
       <div class="today">
-        <div class="mv-head"><span class="when">{{ T_today }}</span><span class="date">{{ day_long }}</span></div>
+        <div class="mv-head"><span class="when">{% if start == 0 %}{{ T_today }}{% else %}{{ T_tomorrow }}{% endif %}{{ alerts }}</span><span class="date">{{ day_date }}</span></div>
         <div class="hero">
           {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
           {% include "partials/icon" %}
           <span class="mv-max">{{ tmax | round }}°</span>
-          <div class="side"><b>{% include "partials/word" %}</b><br>{{ T_low }} {{ tmin | round }}°<br>{{ T_wind }} {{ wind | round }} m/s</div>
+          <div class="side"><b>{% include "partials/word" %}</b><br>{{ T_low }} {{ tmin | round }}°<br>{{ T_wind }} {{ wind | times: wind_k | round }} {{ wind_unit }}</div>
         </div>
         <div class="line">
           <span>{{ drop_glyph }} <b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b> {{ chance | times: 100 | round }} %</span>
@@ -45,10 +48,11 @@
         </div>
       </div>
       <div class="next">
-        {%- for day in days offset: 1 limit: 4 -%}
+        {%- assign next_start = start | plus: 1 -%}
+        {%- for day in days offset: next_start limit: 4 -%}
           {% include "partials/day" %}
           <div class="card">
-            <div class="d">{% if forloop.first %}{{ T_tomorrow }}{% else %}{{ day_short }}{% endif %}</div>
+            <div class="d">{% if forloop.first and start == 0 %}{{ T_tomorrow }}{% else %}{{ day_short }}{% endif %}</div>
             {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
             {% include "partials/icon" %}
             <div class="hi">{{ tmax | round }}°</div>
@@ -58,6 +62,7 @@
         {%- endfor -%}
       </div>
     </div>
+    {%- endif -%}
   </div>
   {%- assign compact = false -%}
   {% include "partials/title_bar" %}

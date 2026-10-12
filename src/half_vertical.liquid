@@ -26,9 +26,12 @@
 </style>
 <div class="view view--half_vertical">
   <div class="layout">
+    {%- if days.size == 0 -%}
+    <div class="mv"><p class="mv-empty">{{ T_none }} {{ generated_local | date: "%d.%m. %H:%M" }}.</p></div>
+    {%- else -%}
     <div class="mv mv-hv">
-      {%- assign day = days[0] -%}{% include "partials/day" %}
-      <div class="mv-head"><span class="when">{{ T_today }}</span><span class="date">{{ day_long }}</span></div>
+      {%- assign day = days[start] -%}{% include "partials/day" %}{% include "partials/alerts" %}
+      <div class="mv-head"><span class="when">{% if start == 0 %}{{ T_today }}{% else %}{{ T_tomorrow }}{% endif %}{{ alerts }}</span><span class="date">{{ day_date }}</span></div>
       <div class="hero">
         {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
         {% include "partials/icon" %}
@@ -43,19 +46,23 @@
         <div class="mv-fact"><span>{{ T_rain }}</span><b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b><i>{{ chance | times: 100 | round }} %</i></div>
         <div class="mv-fact"><span>{{ T_sunshine }}</span><b>{% if shine != nil %}{{ shine | round: 1 | replace: ".", T_dec }} h{% else %}–{% endif %}</b><i>&nbsp;</i></div>
         <div class="mv-fact"><span>{{ T_clouds }}</span><b>{% if cloud != nil %}{{ cloud | round }} %{% else %}–{% endif %}</b><i>&nbsp;</i></div>
-        <div class="mv-fact"><span>{{ T_wind }}</span><b>{{ wind | round }} m/s</b><i>&nbsp;</i></div>
+        <div class="mv-fact"><span>{{ T_wind }}</span><b>{{ wind | times: wind_k | round }} {{ wind_unit }}</b><i>&nbsp;</i></div>
       </div>
       {% include "partials/parts" %}
       {%- assign chart_days = day | split: "," -%}{%- assign chart_h = 74 -%}{%- assign chart_class = "" -%}
       {% include "partials/chart" %}
-      {%- assign day = days[1] -%}{% include "partials/day" %}
+      {%- assign next_start = start | plus: 1 -%}
+      {%- if days.size > next_start -%}
+      {%- assign day = days[next_start] -%}{% include "partials/day" %}
       <div class="tomorrow">
-        <span class="lbl">{{ T_tomorrow }}</span>
+        <span class="lbl">{% if start == 0 %}{{ T_tomorrow }}{% else %}{{ day_name }}{% endif %}</span>
         {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
         {% include "partials/icon" %}
         <span><b>{{ tmax | round }}°</b> / {{ tmin | round }}°{% if rain >= 0.1 %} · {{ rain | round: 1 | replace: ".", T_dec }} mm{% endif %}</span>
       </div>
+      {%- endif -%}
     </div>
+    {%- endif -%}
   </div>
   {%- assign compact = true -%}
   {% include "partials/title_bar" %}

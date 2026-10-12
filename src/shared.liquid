@@ -1,6 +1,6 @@
 {%- comment -%}
   Shared by every layout: settings, labels in English and Czech, today and tomorrow in
-  your time zone, the weather symbols and the styles. scripts/build.mjs inlines it (and
+  Czech time, the weather symbols and the styles. scripts/build.mjs inlines it (and
   every other include) into the files in dist/, which are what you paste into TRMNL.
 {%- endcomment -%}
 
@@ -8,7 +8,11 @@
 {%- assign lang = settings.language | default: "en" -%}
 {%- assign view = settings.view | default: "today_tomorrow" -%}
 {%- assign place = settings.place | default: "" | strip -%}
-{%- if place == "" -%}{%- assign place = okres.name -%}{%- endif -%}
+{%- if place == "" -%}{%- if okres.code == "CZ0100" -%}{%- assign place = "Praha" -%}{%- else -%}{%- assign place = okres.name -%}{%- endif -%}{%- endif -%}
+{%- comment -%} after 18:00 the day views move on to tomorrow, unless switched off {%- endcomment -%}
+{%- assign evening_switch = true -%}
+{%- if settings.evening_switch == false or settings.evening_switch == "false" or settings.evening_switch == "no" -%}{%- assign evening_switch = false -%}{%- endif -%}
+{%- if settings.wind_unit == "kmh" -%}{%- assign wind_k = 3.6 -%}{%- assign wind_unit = "km/h" -%}{%- else -%}{%- assign wind_k = 1 -%}{%- assign wind_unit = "m/s" -%}{%- endif -%}
 
 {%- if lang == "cs" -%}
   {%- assign T_today = "Dnes" -%}{%- assign T_tomorrow = "Zítra" -%}
@@ -19,10 +23,16 @@
   {%- assign T_wind = "Vítr" -%}{%- assign T_max = "nejvíc" -%}
   {%- assign T_parts = "Noc,Ráno,Odpoledne,Večer" | split: "," -%}
   {%- assign T_now = "Teď" -%}{%- assign T_high = "max" -%}{%- assign T_low = "min" -%}
+  {%- assign T_feels = "pocitově" -%}
   {%- assign T_dry = "Příštích 24 hodin bez srážek" -%}
   {%- assign T_rain_from = "Srážky od" -%}{%- assign T_rain_until = "Srážky do" -%}{%- assign T_rain_all = "Srážky celý den" -%}
+  {%- assign T_outside = "Ven nejlépe" -%}
+  {%- assign T_warmer = "o # ° tepleji" -%}{%- assign T_colder = "o # ° chladněji" -%}
   {%- assign T_warmest = "Nejtepleji" -%}{%- assign T_wettest = "Nejvíc srážek" -%}{%- assign T_sunniest = "Nejvíc slunce" -%}
+  {%- assign T_frost = "Mráz" -%}{%- assign T_ice = "Náledí" -%}{%- assign T_heat = "Vedro" -%}
+  {%- assign T_storm = "Silný vítr" -%}{%- assign T_downpour = "Vydatně prší" -%}
   {%- assign T_updated = "aktualizace" -%}{%- assign T_models = "modelů" -%}
+  {%- assign T_stale = "stará předpověď" -%}{%- assign T_none = "Předpověď na dnešek zatím není. Poslední je z" -%}
   {%- assign T_symbols = "Jasno,Polojasno,Zataženo,Přeháňky,Déšť,Déšť se sněhem,Sněžení" | split: "," -%}
   {%- assign T_days = "neděle,pondělí,úterý,středa,čtvrtek,pátek,sobota" | split: "," -%}
   {%- assign T_days_short = "Ne,Po,Út,St,Čt,Pá,So" | split: "," -%}
@@ -37,10 +47,16 @@
   {%- assign T_wind = "Wind" -%}{%- assign T_max = "max" -%}
   {%- assign T_parts = "Night,Morning,Afternoon,Evening" | split: "," -%}
   {%- assign T_now = "Now" -%}{%- assign T_high = "high" -%}{%- assign T_low = "low" -%}
+  {%- assign T_feels = "feels" -%}
   {%- assign T_dry = "Dry for the next 24 hours" -%}
   {%- assign T_rain_from = "Rain from" -%}{%- assign T_rain_until = "Rain until" -%}{%- assign T_rain_all = "Rain all day" -%}
+  {%- assign T_outside = "Best outside" -%}
+  {%- assign T_warmer = "# ° warmer" -%}{%- assign T_colder = "# ° colder" -%}
   {%- assign T_warmest = "Warmest" -%}{%- assign T_wettest = "Wettest" -%}{%- assign T_sunniest = "Sunniest" -%}
+  {%- assign T_frost = "Frost" -%}{%- assign T_ice = "Black ice" -%}{%- assign T_heat = "Hot" -%}
+  {%- assign T_storm = "Strong wind" -%}{%- assign T_downpour = "Heavy rain" -%}
   {%- assign T_updated = "updated" -%}{%- assign T_models = "models" -%}
+  {%- assign T_stale = "old forecast" -%}{%- assign T_none = "No forecast for today yet. The latest is from" -%}
   {%- assign T_symbols = "Sunny,Partly cloudy,Cloudy,Showers,Rain,Sleet,Snow" | split: "," -%}
   {%- assign T_days = "Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday" | split: "," -%}
   {%- assign T_days_short = "Sun,Mon,Tue,Wed,Thu,Fri,Sat" | split: "," -%}
@@ -49,20 +65,39 @@
 {%- endif -%}
 {%- assign SYMBOLS = "clear,partly,cloudy,showers,rain,sleet,snow" | split: "," -%}
 
-{%- comment -%} today in your TRMNL time zone; the forecast's days in order {%- endcomment -%}
-{%- assign offset = trmnl.user.utc_offset | default: 0 -%}
+{%- comment -%}
+  Czech time for every hour: the forecast is for Czechia and its days are Prague days, so
+  times follow CET/CEST (summer time from the last Sunday of March to the last Sunday of
+  October, 01:00 UTC), whatever the TRMNL account's time zone. partials/local turns a UTC
+  epoch `e` into `le`, an epoch that reads as Prague time when formatted as UTC.
+{%- endcomment -%}
 {%- assign now_utc = "now" | date: "%s" | plus: 0 -%}
-{%- assign now_local = now_utc | plus: offset -%}
-{%- assign today = now_local | date: "%Y-%m-%d" -%}
+{%- assign year = now_utc | date: "%Y" -%}
+{%- assign mar31 = year | append: "-03-31T01:00:00Z" -%}{%- assign back = mar31 | date: "%w" | times: 86400 -%}
+{%- assign dst_start = mar31 | date: "%s" | minus: back -%}
+{%- assign oct31 = year | append: "-10-31T01:00:00Z" -%}{%- assign back = oct31 | date: "%w" | times: 86400 -%}
+{%- assign dst_end = oct31 | date: "%s" | minus: back -%}
+{%- assign e = now_utc -%}{% include "partials/local" %}{%- assign now_local = le -%}
+{%- assign now_hour = now_local | date: "%H" | plus: 0 -%}
+{%- assign real_today = now_local | date: "%Y-%m-%d" -%}
+
+{%- comment -%}
+  The forecast's days from today on. Clock behind the data: start at its first day. Data
+  behind the clock (the forecast stopped updating) and nothing left for today: no days,
+  and the layouts say so. `stale`: generated more than 30 hours ago.
+{%- endcomment -%}
 {%- assign all_days = forecast.parts | map: "day" | uniq -%}
-{%- unless all_days contains today -%}
-  {%- comment -%} the clock and the data disagree (no forecast for today yet): start at its first day {%- endcomment -%}
-  {%- assign today = all_days.first -%}
-{%- endunless -%}
+{%- assign today = real_today -%}
+{%- if all_days.first > today -%}{%- assign today = all_days.first -%}{%- endif -%}
 {%- assign days = "" -%}
 {%- for d in all_days -%}{%- if d >= today -%}{%- assign days = days | append: d | append: "," -%}{%- endif -%}{%- endfor -%}
 {%- assign days = days | split: "," -%}
+{%- assign e = forecast.generated | date: "%s" | plus: 0 -%}{% include "partials/local" %}{%- assign generated_local = le -%}
+{%- assign age = now_utc | minus: e -%}
+{%- assign stale = false -%}{%- if age > 108000 -%}{%- assign stale = true -%}{%- endif -%}
+{%- assign start = 0 -%}{%- if evening_switch and now_hour >= 18 and days.size > 2 -%}{%- assign start = 1 -%}{%- endif -%}
 {%- assign H = forecast.hourly -%}
+{%- assign n_hours = H.time.size -%}
 {%- assign models_used = models.variables.temperature_2m.lead_days["1"].size | default: 0 -%}
 
 {%- comment -%} weather symbols as inline SVG (64x64), black on white for e-ink {%- endcomment -%}
@@ -93,6 +128,11 @@
   .mv-fact b { display: block; font-size: 20px; font-weight: 800; line-height: 1.15; }
   .mv-fact i { display: block; font-size: 11px; font-style: normal; }
   .mv-chart { width: 100%; display: block; }
+  .mv-badge { display: inline-block; background: #000; color: #fff; border-radius: 4px; padding: 0 5px; font-size: 13px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; white-space: nowrap; line-height: 1.45; }
+  .mv-head .mv-badge { background: #fff; color: #000; margin-left: 8px; vertical-align: 2px; }
+  .mv-empty { font-size: 20px; font-weight: 700; padding: 30px 10px; text-align: center; }
+  .title_bar .title { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .title_bar .instance { flex: none; margin-left: auto; padding-left: 12px; }
 </style>
 <svg width="0" height="0" style="position:absolute">
   <defs><pattern id="mv-night" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="1.3" height="6" fill="#000"/></pattern></defs>
