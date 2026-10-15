@@ -149,7 +149,7 @@
       {%- if alerts != "" -%}<div>{{ alerts }}</div>{%- endif -%}
       <div class="mv-kv">
         {%- if best >= 0 -%}<span>{{ T_outside }}</span><b>{% if b_day != real_today %}{{ T_tomorrow | downcase }} {% endif %}{{ b_from }}–{{ b_to }} h</b>{%- endif -%}
-        <span>{{ T_sunshine }}</span><b>{{ w_sun | divided_by: 3600.0 | round: 1 | replace: ".", T_dec }} h</b>
+        <span>{{ T_sunshine }}</span><b>{%- assign n = w_sun | divided_by: 3600.0 -%}{% include "partials/dec1" %} h</b>
         <span>{{ T_wind }}</span><b>{{ w_wind | times: wind_k | round }} {{ wind_unit }}</b>
       </div>
       {%- if sun_a != "" -%}<div class="mv-sun"><span>{{ sun_a }}</span><span>{{ sun_b }}</span></div>{%- endif -%}
