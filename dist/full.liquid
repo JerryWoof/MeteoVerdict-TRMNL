@@ -482,7 +482,9 @@
       {%- if alerts != "" -%}<div>{{ alerts }}</div>{%- endif -%}
       <div class="mv-kv">
         {%- if best >= 0 -%}<span>{{ T_outside }}</span><b>{% if b_day != real_today %}{{ T_tomorrow | downcase }} {% endif %}{{ b_from }}–{{ b_to }} h</b>{%- endif -%}
-        <span>{{ T_sunshine }}</span><b>{{ w_sun | divided_by: 3600.0 | round: 1 | replace: ".", T_dec }} h</b>
+        <span>{{ T_sunshine }}</span><b>{%- assign n = w_sun | divided_by: 3600.0 -%}
+{%- assign d1 = n | round: 1 -%}{%- assign d1i = d1 | floor -%}
+{%- if d1 == d1i -%}{{ d1i }}{%- else -%}{{ d1 | replace: ".", T_dec }}{%- endif -%} h</b>
         <span>{{ T_wind }}</span><b>{{ w_wind | times: wind_k | round }} {{ wind_unit }}</b>
       </div>
       {%- if sun_a != "" -%}<div class="mv-sun"><span>{{ sun_a }}</span><span>{{ sun_b }}</span></div>{%- endif -%}
@@ -901,17 +903,17 @@
   {%- assign e = t | date: "%s" | plus: 0 -%}
 {%- if e >= dst_start and e < dst_end -%}{%- assign le = e | plus: 7200 -%}{%- else -%}{%- assign le = e | plus: 3600 -%}{%- endif -%}
   {%- assign x = le | minus: base | divided_by: 360.0 -%}
-  {%- if x < 0 or x >= cw -%}{%- continue -%}{%- endif -%}
+  {%- if x < 0 or x > cw -%}{%- continue -%}{%- endif -%}
   {%- assign i = forloop.index0 -%}
   {%- assign v = H.temperature_2m[i] -%}
-  {%- if v != nil -%}
+  {%- if v != nil and x < cw -%}
     {%- assign y = c_top | minus: v | times: curve_h | divided_by: c_span | plus: 5 | round: 1 -%}
     {%- assign px = x | round: 1 -%}
     {%- capture pt -%}{{ px }},{{ y }}{%- endcapture -%}
     {%- assign pts = pts | append: " " | append: pt -%}
   {%- endif -%}
   {%- assign p = H.precipitation[i] | default: 0 -%}
-  {%- if p >= 0.1 -%}
+  {%- if p >= 0.1 and x > 0 -%}
     {%- assign bh = p | at_most: 3 | times: 0.15 | times: chart_h | plus: 2 | round: 1 -%}
     {%- assign by = floor_y | minus: bh -%}
     {%- capture bar -%}<rect x="{{ x | minus: 8.5 | round: 1 }}" y="{{ by }}" width="7" height="{{ bh }}"/>{%- endcapture -%}
@@ -1115,8 +1117,12 @@
         </div>
       </div>
       <div class="mv-facts">
-        <div class="mv-fact"><span>{{ T_rain }}</span><b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b><i>{{ chance | times: 100 | round }} % {{ T_chance }}</i></div>
-        <div class="mv-fact"><span>{{ T_sunshine }}</span><b>{% if shine != nil %}{{ shine | round: 1 | replace: ".", T_dec }} h{% else %}–{% endif %}</b><i>{% if light %}{{ T_of }} {{ light | divided_by: 60 | floor }} h {{ light | modulo: 60 }} min{% if light_diff_s != "" %} ({{ light_diff_s }}){% endif %}{% endif %}</i></div>
+        <div class="mv-fact"><span>{{ T_rain }}</span><b>{%- assign n = rain -%}
+{%- assign d1 = n | round: 1 -%}{%- assign d1i = d1 | floor -%}
+{%- if d1 == d1i -%}{{ d1i }}{%- else -%}{{ d1 | replace: ".", T_dec }}{%- endif -%} mm</b><i>{{ chance | times: 100 | round }} % {{ T_chance }}</i></div>
+        <div class="mv-fact"><span>{{ T_sunshine }}</span><b>{% if shine != nil %}{%- assign n = shine -%}
+{%- assign d1 = n | round: 1 -%}{%- assign d1i = d1 | floor -%}
+{%- if d1 == d1i -%}{{ d1i }}{%- else -%}{{ d1 | replace: ".", T_dec }}{%- endif -%} h{% else %}–{% endif %}</b><i>{% if light %}{{ T_of }} {{ light | divided_by: 60 | floor }} h {{ light | modulo: 60 }} min{% if light_diff_s != "" %} ({{ light_diff_s }}){% endif %}{% endif %}</i></div>
         <div class="mv-fact"><span>{{ T_clouds }}</span><b>{% if cloud != nil %}{{ cloud | round }} %{% else %}–{% endif %}</b><i>{{ T_daytime }}</i></div>
         <div class="mv-fact"><span>{{ T_wind }}</span><b>{{ wind | times: wind_k | round }} {{ wind_unit }}</b><i>{{ T_max }}</i></div>
       </div>
@@ -1175,17 +1181,17 @@
   {%- assign e = t | date: "%s" | plus: 0 -%}
 {%- if e >= dst_start and e < dst_end -%}{%- assign le = e | plus: 7200 -%}{%- else -%}{%- assign le = e | plus: 3600 -%}{%- endif -%}
   {%- assign x = le | minus: base | divided_by: 360.0 -%}
-  {%- if x < 0 or x >= cw -%}{%- continue -%}{%- endif -%}
+  {%- if x < 0 or x > cw -%}{%- continue -%}{%- endif -%}
   {%- assign i = forloop.index0 -%}
   {%- assign v = H.temperature_2m[i] -%}
-  {%- if v != nil -%}
+  {%- if v != nil and x < cw -%}
     {%- assign y = c_top | minus: v | times: curve_h | divided_by: c_span | plus: 5 | round: 1 -%}
     {%- assign px = x | round: 1 -%}
     {%- capture pt -%}{{ px }},{{ y }}{%- endcapture -%}
     {%- assign pts = pts | append: " " | append: pt -%}
   {%- endif -%}
   {%- assign p = H.precipitation[i] | default: 0 -%}
-  {%- if p >= 0.1 -%}
+  {%- if p >= 0.1 and x > 0 -%}
     {%- assign bh = p | at_most: 3 | times: 0.15 | times: chart_h | plus: 2 | round: 1 -%}
     {%- assign by = floor_y | minus: bh -%}
     {%- capture bar -%}<rect x="{{ x | minus: 8.5 | round: 1 }}" y="{{ by }}" width="7" height="{{ bh }}"/>{%- endcapture -%}
@@ -1388,8 +1394,12 @@
         </div>
       </div>
       <div class="mv-facts">
-        <div class="mv-fact"><span>{{ T_rain }}</span><b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b><i>{{ chance | times: 100 | round }} % {{ T_chance }}</i></div>
-        <div class="mv-fact"><span>{{ T_sunshine }}</span><b>{% if shine != nil %}{{ shine | round: 1 | replace: ".", T_dec }} h{% else %}–{% endif %}</b><i>{% if light %}{{ T_of }} {{ light | divided_by: 60 | floor }} h {{ light | modulo: 60 }} min{% if light_diff_s != "" %} ({{ light_diff_s }}){% endif %}{% endif %}</i></div>
+        <div class="mv-fact"><span>{{ T_rain }}</span><b>{%- assign n = rain -%}
+{%- assign d1 = n | round: 1 -%}{%- assign d1i = d1 | floor -%}
+{%- if d1 == d1i -%}{{ d1i }}{%- else -%}{{ d1 | replace: ".", T_dec }}{%- endif -%} mm</b><i>{{ chance | times: 100 | round }} % {{ T_chance }}</i></div>
+        <div class="mv-fact"><span>{{ T_sunshine }}</span><b>{% if shine != nil %}{%- assign n = shine -%}
+{%- assign d1 = n | round: 1 -%}{%- assign d1i = d1 | floor -%}
+{%- if d1 == d1i -%}{{ d1i }}{%- else -%}{{ d1 | replace: ".", T_dec }}{%- endif -%} h{% else %}–{% endif %}</b><i>{% if light %}{{ T_of }} {{ light | divided_by: 60 | floor }} h {{ light | modulo: 60 }} min{% if light_diff_s != "" %} ({{ light_diff_s }}){% endif %}{% endif %}</i></div>
         <div class="mv-fact"><span>{{ T_clouds }}</span><b>{% if cloud != nil %}{{ cloud | round }} %{% else %}–{% endif %}</b><i>{{ T_daytime }}</i></div>
         <div class="mv-fact"><span>{{ T_wind }}</span><b>{{ wind | times: wind_k | round }} {{ wind_unit }}</b><i>{{ T_max }}</i></div>
       </div>
@@ -1448,17 +1458,17 @@
   {%- assign e = t | date: "%s" | plus: 0 -%}
 {%- if e >= dst_start and e < dst_end -%}{%- assign le = e | plus: 7200 -%}{%- else -%}{%- assign le = e | plus: 3600 -%}{%- endif -%}
   {%- assign x = le | minus: base | divided_by: 360.0 -%}
-  {%- if x < 0 or x >= cw -%}{%- continue -%}{%- endif -%}
+  {%- if x < 0 or x > cw -%}{%- continue -%}{%- endif -%}
   {%- assign i = forloop.index0 -%}
   {%- assign v = H.temperature_2m[i] -%}
-  {%- if v != nil -%}
+  {%- if v != nil and x < cw -%}
     {%- assign y = c_top | minus: v | times: curve_h | divided_by: c_span | plus: 5 | round: 1 -%}
     {%- assign px = x | round: 1 -%}
     {%- capture pt -%}{{ px }},{{ y }}{%- endcapture -%}
     {%- assign pts = pts | append: " " | append: pt -%}
   {%- endif -%}
   {%- assign p = H.precipitation[i] | default: 0 -%}
-  {%- if p >= 0.1 -%}
+  {%- if p >= 0.1 and x > 0 -%}
     {%- assign bh = p | at_most: 3 | times: 0.15 | times: chart_h | plus: 2 | round: 1 -%}
     {%- assign by = floor_y | minus: bh -%}
     {%- capture bar -%}<rect x="{{ x | minus: 8.5 | round: 1 }}" y="{{ by }}" width="7" height="{{ bh }}"/>{%- endcapture -%}
@@ -1657,8 +1667,12 @@
         </div>
       </div>
       <div class="mv-facts">
-        <div class="mv-fact"><span>{{ T_rain }}</span><b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b><i>{{ chance | times: 100 | round }} % {{ T_chance }}</i></div>
-        <div class="mv-fact"><span>{{ T_sunshine }}</span><b>{% if shine != nil %}{{ shine | round: 1 | replace: ".", T_dec }} h{% else %}–{% endif %}</b><i>{% if light %}{{ T_of }} {{ light | divided_by: 60 | floor }} h {{ light | modulo: 60 }} min{% if light_diff_s != "" %} ({{ light_diff_s }}){% endif %}{% endif %}</i></div>
+        <div class="mv-fact"><span>{{ T_rain }}</span><b>{%- assign n = rain -%}
+{%- assign d1 = n | round: 1 -%}{%- assign d1i = d1 | floor -%}
+{%- if d1 == d1i -%}{{ d1i }}{%- else -%}{{ d1 | replace: ".", T_dec }}{%- endif -%} mm</b><i>{{ chance | times: 100 | round }} % {{ T_chance }}</i></div>
+        <div class="mv-fact"><span>{{ T_sunshine }}</span><b>{% if shine != nil %}{%- assign n = shine -%}
+{%- assign d1 = n | round: 1 -%}{%- assign d1i = d1 | floor -%}
+{%- if d1 == d1i -%}{{ d1i }}{%- else -%}{{ d1 | replace: ".", T_dec }}{%- endif -%} h{% else %}–{% endif %}</b><i>{% if light %}{{ T_of }} {{ light | divided_by: 60 | floor }} h {{ light | modulo: 60 }} min{% if light_diff_s != "" %} ({{ light_diff_s }}){% endif %}{% endif %}</i></div>
         <div class="mv-fact"><span>{{ T_clouds }}</span><b>{% if cloud != nil %}{{ cloud | round }} %{% else %}–{% endif %}</b><i>{{ T_daytime }}</i></div>
         <div class="mv-fact"><span>{{ T_wind }}</span><b>{{ wind | times: wind_k | round }} {{ wind_unit }}</b><i>{{ T_max }}</i></div>
       </div>
@@ -1717,17 +1731,17 @@
   {%- assign e = t | date: "%s" | plus: 0 -%}
 {%- if e >= dst_start and e < dst_end -%}{%- assign le = e | plus: 7200 -%}{%- else -%}{%- assign le = e | plus: 3600 -%}{%- endif -%}
   {%- assign x = le | minus: base | divided_by: 360.0 -%}
-  {%- if x < 0 or x >= cw -%}{%- continue -%}{%- endif -%}
+  {%- if x < 0 or x > cw -%}{%- continue -%}{%- endif -%}
   {%- assign i = forloop.index0 -%}
   {%- assign v = H.temperature_2m[i] -%}
-  {%- if v != nil -%}
+  {%- if v != nil and x < cw -%}
     {%- assign y = c_top | minus: v | times: curve_h | divided_by: c_span | plus: 5 | round: 1 -%}
     {%- assign px = x | round: 1 -%}
     {%- capture pt -%}{{ px }},{{ y }}{%- endcapture -%}
     {%- assign pts = pts | append: " " | append: pt -%}
   {%- endif -%}
   {%- assign p = H.precipitation[i] | default: 0 -%}
-  {%- if p >= 0.1 -%}
+  {%- if p >= 0.1 and x > 0 -%}
     {%- assign bh = p | at_most: 3 | times: 0.15 | times: chart_h | plus: 2 | round: 1 -%}
     {%- assign by = floor_y | minus: bh -%}
     {%- capture bar -%}<rect x="{{ x | minus: 8.5 | round: 1 }}" y="{{ by }}" width="7" height="{{ bh }}"/>{%- endcapture -%}

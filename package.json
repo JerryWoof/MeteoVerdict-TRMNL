@@ -12,6 +12,6 @@
     "test": "node scripts/build.mjs && node --test scripts/*.test.mjs"
   },
   "devDependencies": {
-    "liquidjs": "10.21.1"
+    "liquidjs": "10.30.0"
   }
 }

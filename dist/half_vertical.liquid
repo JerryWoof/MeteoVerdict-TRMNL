@@ -315,17 +315,17 @@
   {%- assign e = t | date: "%s" | plus: 0 -%}
 {%- if e >= dst_start and e < dst_end -%}{%- assign le = e | plus: 7200 -%}{%- else -%}{%- assign le = e | plus: 3600 -%}{%- endif -%}
   {%- assign x = le | minus: base | divided_by: 360.0 -%}
-  {%- if x < 0 or x >= cw -%}{%- continue -%}{%- endif -%}
+  {%- if x < 0 or x > cw -%}{%- continue -%}{%- endif -%}
   {%- assign i = forloop.index0 -%}
   {%- assign v = H.temperature_2m[i] -%}
-  {%- if v != nil -%}
+  {%- if v != nil and x < cw -%}
     {%- assign y = c_top | minus: v | times: curve_h | divided_by: c_span | plus: 5 | round: 1 -%}
     {%- assign px = x | round: 1 -%}
     {%- capture pt -%}{{ px }},{{ y }}{%- endcapture -%}
     {%- assign pts = pts | append: " " | append: pt -%}
   {%- endif -%}
   {%- assign p = H.precipitation[i] | default: 0 -%}
-  {%- if p >= 0.1 -%}
+  {%- if p >= 0.1 and x > 0 -%}
     {%- assign bh = p | at_most: 3 | times: 0.15 | times: chart_h | plus: 2 | round: 1 -%}
     {%- assign by = floor_y | minus: bh -%}
     {%- capture bar -%}<rect x="{{ x | minus: 8.5 | round: 1 }}" y="{{ by }}" width="7" height="{{ bh }}"/>{%- endcapture -%}
