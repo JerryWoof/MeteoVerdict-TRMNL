@@ -85,6 +85,15 @@ test("rain in the 24th hour still counts", async () => {
   assert.match(text(await renderLayout("full", late, { view: "next_24h" })), /Rain from 16:00 1\.5 mm/);
 });
 
+test("rain in a day's last hour is drawn at the end of that day, not before the next", async () => {
+  freezeTime("2026-10-12T15:40:00Z");
+  // the hour 23–24 Prague time (CEST) ends at 22 UTC
+  const late = variant((f) => hourly(f, "precipitation", (_, i) => (i === idx("2026-10-12T22:00:00Z") ? 2 : 0)));
+  const html = await renderLayout("full", late, { view: "today_tomorrow" });
+  const bars = [...html.matchAll(/<rect x="([-\d.]+)" y="[\d.]+" width="7"/g)].map((m) => Number(m[1]));
+  assert.deepEqual(bars, [231.5]);
+});
+
 test("missing values show a dash, not 0°", async () => {
   freezeTime("2026-10-12T15:40:00Z");
   const gaps = variant((f) => hourly(f, "temperature_2m", (v, i) => (i >= 15 && i <= 20 ? null : v)));
