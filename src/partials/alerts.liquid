@@ -1,7 +1,8 @@
 {%- comment -%}
   `alerts`: up to two badges for the day just read by partials/day: black ice (an hour at
-  or below 0.5 °C with precipitation), frost (low at or below 0 °C), heavy rain (10 mm or
-  more), strong wind (10 m/s or more, hourly mean), heat (30 °C or more).
+  or below 0.5 °C with precipitation), frost (MeteoVerdict's corrected night minimum: air
+  frost, else ground frost at 5 cm; older data without those fields: low at or below 0 °C),
+  heavy rain (10 mm or more), strong wind (10 m/s or more, hourly mean), heat (30 °C or more).
 {%- endcomment -%}
 {%- assign alerts = "" -%}{%- assign n_alerts = 0 -%}
 {%- assign ice = false -%}
@@ -16,8 +17,16 @@
 {%- endif -%}
 {%- if ice -%}
   {%- capture a -%}<span class="mv-badge">{{ T_ice }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
-{%- elsif rows.size > 0 and tmin <= 0 -%}
-  {%- capture a -%}<span class="mv-badge">{{ T_frost }} {{ tmin | round }}°</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
+{%- else -%}
+  {%- comment -%} the night ending this morning carries the frost fields {%- endcomment -%}
+  {%- assign night = rows | where: "part", "night" | first -%}
+  {%- if night.frost == true -%}
+    {%- capture a -%}<span class="mv-badge">{{ T_frost }} {{ night.night_min | round }}°</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
+  {%- elsif night.ground_frost == true -%}
+    {%- capture a -%}<span class="mv-badge">{{ T_ground_frost }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
+  {%- elsif night.frost == nil and rows.size > 0 and tmin <= 0 -%}
+    {%- capture a -%}<span class="mv-badge">{{ T_frost }} {{ tmin | round }}°</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
+  {%- endif -%}
 {%- endif -%}
 {%- if rows.size > 0 and rain >= 10 -%}
   {%- capture a -%}<span class="mv-badge">{{ T_downpour }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
