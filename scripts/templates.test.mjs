@@ -148,6 +148,22 @@ test("frost, black ice and feels-like on a cold wet day", async () => {
   assert.match(text(await renderLayout("full", cold, { view: "five_days" })), /Frost -\d+°/);
 });
 
+test("frost badges follow MeteoVerdict's corrected night minimum when the data has it", async () => {
+  freezeTime("2026-10-12T15:40:00Z");
+  const withNights = (fields) => variant((f) => {
+    for (const p of f.parts) Object.assign(p, p.part === "night" ? fields : { frost: null, ground_frost: null });
+  });
+  const five = async (doc) => text(await renderLayout("full", doc, { view: "five_days" }));
+  assert.match(await five(withNights({ night_min: 0.6, frost: true, ground_frost: true })), /Frost 1°/);
+  const ground = await five(withNights({ night_min: 3.1, frost: false, ground_frost: true }));
+  assert.match(ground, /Ground frost/);
+  assert.doesNotMatch(ground, /Frost \d/);
+  // the corrected minimum says no frost: a raw low of -1 ° no longer raises the badge
+  const mild = withNights({ night_min: 1.8, frost: false, ground_frost: false });
+  for (const p of mild.forecast.parts) p.tmin = -1;
+  assert.doesNotMatch(await five(mild), /Frost|Ground frost/);
+});
+
 test("the best two hours outside are in daylight and dry", async () => {
   freezeTime("2026-10-12T05:00:00Z"); // 07:00 in Prague
   const words = text(await renderLayout("full", PRAHA, { view: "next_24h" }));

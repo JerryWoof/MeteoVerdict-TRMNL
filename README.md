@@ -81,7 +81,8 @@ A day gets up to two badges:
 | Badge | When |
 |---|---|
 | Black ice / Náledí | An hour at or below 0.5 °C with precipitation |
-| Frost / Mráz | The low is at or below 0 °C |
+| Frost / Mráz | MeteoVerdict's corrected night minimum warns of air frost (≤ 1 °C); shows that minimum |
+| Ground frost / Přízemní mráz | No air frost, but the ground (5 cm) is forecast to reach 0 °C or below |
 | Heavy rain / Vydatně prší | 10 mm or more |
 | Strong wind / Silný vítr | An hourly mean of 10 m/s (36 km/h) or more |
 | Hot / Vedro | 30 °C or more |
