@@ -159,10 +159,10 @@ Add it to your TRMNL as a private plugin. That takes about five minutes.
 2. **Strategy:** Polling. **Polling URL:**
 
    ```
-   https://jerrywoof.github.io/MeteoVerdict/api/v1/{{ forecast }}/{{ okres_code }}.json
+   https://jerrywoof.github.io/MeteoVerdict/api/v1/{{ forecast_model }}/{{ okres_code }}.json
    ```
 
-   `{{ forecast }}` and `{{ okres_code }}` are filled in from the form in step 3.
+   `{{ forecast_model }}` and `{{ okres_code }}` are filled in from the form in step 3.
    (Installed before October 2026 with `…/api/v1/okresy/{{ okres_code }}.json`? That
    still works and is the combined forecast; switch to the URL above for MeteoVerdict AI.)
 3. **Form fields:** paste [`src/settings.yml`](src/settings.yml), then save, fill in the

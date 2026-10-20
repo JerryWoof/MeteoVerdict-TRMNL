@@ -115,7 +115,7 @@ Mockup, today and tomorrow (800 × 480):
 
 An opus review changed the plan in these ways (they override the sections above):
 
-- **AI**: a select field in the polling URL, `api/v1/{{ forecast }}/{{ okres_code }}.json`
+- **AI**: a select field in the polling URL, `api/v1/{{ forecast_model }}/{{ okres_code }}.json`
   with `okresy` (blend, default) or `ai/okresy`, so marketplace installs can choose too.
   The AI file takes only **temperature and wind** from the AI (its verified fields; cloud,
   sunshine, gusts and the symbol stay the blend's), has no ± (the blend's range is never

@@ -15,7 +15,9 @@
   {%- assign okres = IDX_0.okres -%}{%- assign forecast = IDX_0.forecast -%}{%- assign models = IDX_0.models -%}
   {%- if IDX_1.obec and IDX_1.hourly.temperature_2m.size == IDX_0.forecast.hourly.time.size -%}{%- assign obec = IDX_1.obec -%}{%- assign OP = IDX_1.parts -%}{%- endif -%}
 {%- endif -%}
-{%- assign ai = false -%}{%- if forecast.model == "ai" -%}{%- assign ai = true -%}{%- endif -%}
+{%- comment -%} MeteoVerdict AI: the okres file says so, or an obec file from api/v1/ai/obce {%- endcomment -%}
+{%- assign ai = false -%}
+{%- if forecast.model == "ai" or IDX_0.forecast.model == "ai" or IDX_1.model == "ai" -%}{%- assign ai = true -%}{%- endif -%}
 {%- assign settings = trmnl.plugin_settings.custom_fields_values -%}
 {%- assign lang = settings.language | default: "en" -%}
 {%- assign view = settings.view | default: "today_tomorrow" -%}
