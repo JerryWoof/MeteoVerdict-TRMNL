@@ -55,13 +55,13 @@ const SHOTS = {
   ]),
   "mashup-half-vertical": mashup("1Lx1R", [
     one("half_vertical", "CZ0100", { place: "Praha" }),
-    one("half_vertical", "CZ0806", { place: "Ostrava", lang: "cs" }),
+    one("half_vertical", "CZ0806", { place: "Ostrava" }),
   ]),
   "mashup-quadrants": mashup("2x2", [
     one("quadrant", "CZ0100", { place: "Praha" }),
-    one("quadrant", "CZ0642", { place: "Brno", lang: "cs" }),
+    one("quadrant", "CZ0642", { place: "Brno" }),
     one("quadrant", "CZ0806", { place: "Ostrava" }),
-    one("quadrant", "CZ0323", { place: "Plzeň", lang: "cs" }),
+    one("quadrant", "CZ0323", { place: "Plzeň" }),
   ]),
 };
 
