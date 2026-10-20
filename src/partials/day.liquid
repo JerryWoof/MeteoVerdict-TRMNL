@@ -32,6 +32,17 @@
   {%- assign pm = rows | where: "part", "afternoon" | first | default: rows.last -%}
   {%- assign sym = pm.symbol -%}{%- assign cloud = pm.cloud -%}
 {%- endif -%}
+{%- comment -%}
+  The whole day spans its parts: in the AI's files today's whole-day row covers only the
+  hours after the AI's run, and its parts can be the blend's.
+{%- endcomment -%}
+{%- if whole -%}
+  {%- for r in rows -%}
+    {%- if r.part == "day" -%}{%- continue -%}{%- endif -%}
+    {%- if r.tmin != nil and r.tmin < tmin -%}{%- assign tmin = r.tmin -%}{%- endif -%}
+    {%- if r.tmax != nil and r.tmax > tmax -%}{%- assign tmax = r.tmax -%}{%- endif -%}
+  {%- endfor -%}
+{%- endif -%}
 {%- if orows and orows.size > 0 -%}
   {%- assign owhole = orows | where: "part", "day" | first -%}
   {%- if owhole -%}

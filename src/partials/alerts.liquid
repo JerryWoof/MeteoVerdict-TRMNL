@@ -1,7 +1,6 @@
 {%- comment -%}
   `alerts`: up to two badges for the day just read by partials/day, from MeteoVerdict's
-  threshold flags (thresholds, not ČHMÚ warnings: the footer says so whenever a badge is
-  on screen, `any_alerts`): frost (the corrected night minimum ending this morning: air
+  threshold flags (thresholds, not ČHMÚ warnings): frost (the corrected night minimum ending this morning: air
   frost, else ground frost at 5 cm; older data without those fields: low at or below
   0 °C), heavy rain (`heavy_rain` of a part of the day; older data: 10 mm or more), gusts
   (`gust_over_threshold`, with the strongest gust; older data: an hourly mean of 10 m/s
@@ -39,4 +38,3 @@
 {%- if rows.size > 0 and tmax >= 30 and n_alerts < 2 -%}
   {%- capture a -%}<span class="mv-badge">{{ T_heat }} {{ tmax | round }}°</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
 {%- endif -%}
-{%- if n_alerts > 0 -%}{%- assign any_alerts = true -%}{%- endif -%}

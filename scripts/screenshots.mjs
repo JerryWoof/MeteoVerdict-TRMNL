@@ -14,11 +14,12 @@ const tmp = join(root, ".screens");
 mkdirSync(tmp, { recursive: true });
 mkdirSync(join(root, "screenshots"), { recursive: true });
 
-const one = (layout, okres, opts, source = {}) => async () => renderLayout(layout, await load({ okres, ...source }), opts);
+// MeteoVerdict AI, the default forecast, unless `source` says otherwise (an obec is the blend's)
+const one = (layout, okres, opts, source = { ai: true }) => async () => renderLayout(layout, await load({ okres, ...source }), opts);
 const mashup = (kind, parts) => async () => `<div class="mashup mashup--${kind}">${(await Promise.all(parts.map((p) => p()))).join("")}</div>`;
 // the live Prague forecast made 14° colder, windy and with a wet night: shows the threshold badges
 const winter = (opts) => async () => {
-  const doc = await load({ okres: "CZ0100" });
+  const doc = await load({ okres: "CZ0100", ai: true });
   const f = doc.forecast;
   f.hourly.temperature_2m = f.hourly.temperature_2m.map((v) => (v == null ? v : v - 14));
   for (const k of ["temperature_2m_lo", "temperature_2m_hi"]) if (f.hourly[k]) f.hourly[k] = f.hourly[k].map((v) => (v == null ? v : v - 14));
@@ -44,7 +45,7 @@ const VIEWS = { "today-tomorrow": "today_tomorrow", "next-24-hours": "next_24h",
 const SHOTS = {
   ...Object.fromEntries(Object.entries(VIEWS).map(([name, view]) => [name, one("full", "CZ0100", { view, place: "Praha" })])),
   ...Object.fromEntries(Object.entries(VIEWS).map(([name, view]) => [`${name}-cs`, one("full", "CZ0642", { view, place: "Brno", lang: "cs" })])),
-  "today-tomorrow-ai": one("full", "CZ0100", { view: "today_tomorrow", place: "Praha" }, { ai: true }),
+  "today-tomorrow-blend": one("full", "CZ0100", { view: "today_tomorrow", place: "Praha" }, {}),
   "today-tomorrow-obec": one("full", "CZ0525", { view: "today_tomorrow" }, { obec: "CZ0525/spindleruv-mlyn" }),
   "thresholds-simulated": winter({ view: "five_days", place: "Praha (simulated winter)" }),
   "thresholds-simulated-cs": winter({ view: "five_days", place: "Praha (simulovaná zima)", lang: "cs" }),
@@ -54,13 +55,13 @@ const SHOTS = {
   ]),
   "mashup-half-vertical": mashup("1Lx1R", [
     one("half_vertical", "CZ0100", { place: "Praha" }),
-    one("half_vertical", "CZ0806", { place: "Ostrava", lang: "cs" }),
+    one("half_vertical", "CZ0806", { place: "Ostrava" }),
   ]),
   "mashup-quadrants": mashup("2x2", [
     one("quadrant", "CZ0100", { place: "Praha" }),
-    one("quadrant", "CZ0642", { place: "Brno", lang: "cs" }),
+    one("quadrant", "CZ0642", { place: "Brno" }),
     one("quadrant", "CZ0806", { place: "Ostrava" }),
-    one("quadrant", "CZ0323", { place: "Plzeň", lang: "cs" }),
+    one("quadrant", "CZ0323", { place: "Plzeň" }),
   ]),
 };
 
