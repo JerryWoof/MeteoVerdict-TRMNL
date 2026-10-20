@@ -1358,7 +1358,7 @@
           {%- if weekend -%}{{ day_name }}{%- elsif forloop.first and start == 0 -%}{{ T_today }}{%- elsif forloop.first or start == 0 -%}{{ T_tomorrow }}{%- else -%}{{ day_name }}{%- endif -%}
           {%- if alerts != "" -%}{{ alerts }}{%- endif -%}
         </span>
-        <span class="date">{% if alerts != "" %}{{ day_short }} {{ day_date }}{% elsif weekend %}{{ day_dm }}{% elsif start == 0 or forloop.first %}{{ day_long }}{% else %}{{ day_date }}{% endif %}</span>
+        <span class="date">{% if n_alerts > 1 %}{% elsif alerts != "" %}{{ day_short }} {{ day_date }}{% elsif weekend %}{{ day_dm }}{% elsif start == 0 or forloop.first %}{{ day_long }}{% else %}{{ day_date }}{% endif %}</span>
       </div>
       {%- if days contains day -%}
       <div class="hero">
@@ -1793,7 +1793,7 @@
           {%- if weekend -%}{{ day_name }}{%- elsif forloop.first and start == 0 -%}{{ T_today }}{%- elsif forloop.first or start == 0 -%}{{ T_tomorrow }}{%- else -%}{{ day_name }}{%- endif -%}
           {%- if alerts != "" -%}{{ alerts }}{%- endif -%}
         </span>
-        <span class="date">{% if alerts != "" %}{{ day_short }} {{ day_date }}{% elsif weekend %}{{ day_dm }}{% elsif start == 0 or forloop.first %}{{ day_long }}{% else %}{{ day_date }}{% endif %}</span>
+        <span class="date">{% if n_alerts > 1 %}{% elsif alerts != "" %}{{ day_short }} {{ day_date }}{% elsif weekend %}{{ day_dm }}{% elsif start == 0 or forloop.first %}{{ day_long }}{% else %}{{ day_date }}{% endif %}</span>
       </div>
       {%- if days contains day -%}
       <div class="hero">
@@ -2224,7 +2224,7 @@
           {%- if weekend -%}{{ day_name }}{%- elsif forloop.first and start == 0 -%}{{ T_today }}{%- elsif forloop.first or start == 0 -%}{{ T_tomorrow }}{%- else -%}{{ day_name }}{%- endif -%}
           {%- if alerts != "" -%}{{ alerts }}{%- endif -%}
         </span>
-        <span class="date">{% if alerts != "" %}{{ day_short }} {{ day_date }}{% elsif weekend %}{{ day_dm }}{% elsif start == 0 or forloop.first %}{{ day_long }}{% else %}{{ day_date }}{% endif %}</span>
+        <span class="date">{% if n_alerts > 1 %}{% elsif alerts != "" %}{{ day_short }} {{ day_date }}{% elsif weekend %}{{ day_dm }}{% elsif start == 0 or forloop.first %}{{ day_long }}{% else %}{{ day_date }}{% endif %}</span>
       </div>
       {%- if days contains day -%}
       <div class="hero">
