@@ -26,6 +26,23 @@
   .mv-tt .mv-chart { margin-top: auto; }
   .mv-tt .beyond { flex: 1; display: flex; align-items: center; justify-content: center; border: 2px dashed #000; border-radius: 8px; padding: 20px; font-size: 20px; font-weight: 700; text-align: center; }
 </style>
+{%- comment -%}
+  One temperature scale for both curves, and the curves reach into the gap between the
+  columns (22 px) when the second day follows the first, so they meet in the middle.
+{%- endcomment -%}
+{%- assign pair_lo = 99 -%}{%- assign pair_hi = -99 -%}{%- assign pair_both = 0 -%}
+{%- assign pair_base = pair.first | append: "T00:00:00Z" | date: "%s" | plus: 0 -%}
+{%- assign pair_end = pair_base | plus: 172800 -%}
+{%- for d in pair -%}{%- if days contains d -%}{%- assign pair_both = pair_both | plus: 1 -%}{%- endif -%}{%- endfor -%}
+{%- for t in HS.time -%}
+  {%- assign e = t | date: "%s" | plus: 0 -%}{% include "partials/local" %}
+  {%- if le < pair_base or le > pair_end -%}{%- continue -%}{%- endif -%}
+  {%- assign v = H.temperature_2m[forloop.index0] -%}
+  {%- if v != nil -%}
+    {%- if v < pair_lo -%}{%- assign pair_lo = v -%}{%- endif -%}
+    {%- if v > pair_hi -%}{%- assign pair_hi = v -%}{%- endif -%}
+  {%- endif -%}
+{%- endfor -%}
 <div class="mv mv-tt">
   {%- assign prev_max = nil -%}
   {%- for day in pair -%}
@@ -68,7 +85,13 @@
       </div>
       {% include "partials/parts" %}
       {%- assign chart_days = day | split: "," -%}{%- assign chart_w = 379 -%}{%- assign chart_h = 132 -%}{%- assign chart_axis = true -%}{%- assign chart_labels = false -%}{%- assign chart_class = "" -%}
+      {%- assign chart_lo = nil -%}{%- assign chart_hi = nil -%}{%- assign chart_join_left = nil -%}{%- assign chart_join_right = nil -%}
+      {%- if pair_both == 2 and pair_hi > -99 -%}
+        {%- assign chart_lo = pair_lo -%}{%- assign chart_hi = pair_hi -%}
+        {%- if forloop.first -%}{%- assign chart_join_right = 11 -%}{%- else -%}{%- assign chart_join_left = 11 -%}{%- endif -%}
+      {%- endif -%}
       {% include "partials/chart" %}
+      {%- assign chart_lo = nil -%}{%- assign chart_hi = nil -%}{%- assign chart_join_left = nil -%}{%- assign chart_join_right = nil -%}
       {%- assign prev_max = tmax | round -%}
       {%- else -%}
       {%- assign beyond_name = day_name | capitalize -%}

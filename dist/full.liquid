@@ -1074,13 +1074,14 @@
   {%- assign e = t | date: "%s" | plus: 0 -%}
 {%- if e >= dst_start and e < dst_end -%}{%- assign le = e | plus: 7200 -%}{%- else -%}{%- assign le = e | plus: 3600 -%}{%- endif -%}
   {%- assign x = le | minus: base | divided_by: 360.0 -%}
-  {%- if x < 0 or x >= cw -%}{%- continue -%}{%- endif -%}
+  {%- if x < 0 or x > cw -%}{%- continue -%}{%- endif -%}
   {%- assign v = H.temperature_2m[forloop.index0] -%}
   {%- if v != nil -%}
     {%- if v < c_lo -%}{%- assign c_lo = v -%}{%- assign x_lo = x -%}{%- endif -%}
     {%- if v > c_hi -%}{%- assign c_hi = v -%}{%- assign x_hi = x -%}{%- endif -%}
   {%- endif -%}
 {%- endfor -%}
+{%- if chart_lo != nil -%}{%- assign c_lo = chart_lo -%}{%- assign c_hi = chart_hi -%}{%- endif -%}
 {%- assign c_range = c_hi | minus: c_lo -%}
 {%- assign c_span = c_range | at_least: 4 -%}
 {%- assign c_top = c_span | minus: c_range | divided_by: 2.0 | plus: c_hi -%}
@@ -1093,11 +1094,16 @@
   {%- if x < 0 or x > cw -%}{%- continue -%}{%- endif -%}
   {%- assign i = forloop.index0 -%}
   {%- assign v = H.temperature_2m[i] -%}
-  {%- if v != nil and x < cw -%}
+  {%- if v != nil -%}
     {%- assign y = c_top | minus: v | times: curve_h | divided_by: c_span | plus: top_y | round: 1 -%}
     {%- assign px = x | times: k | round: 1 -%}
+    {%- if pts == "" -%}
+      {%- assign x0 = 0 -%}{%- if chart_join_left -%}{%- assign x0 = 0 | minus: chart_join_left -%}{%- endif -%}
+      {%- if px > x0 -%}{%- capture pt -%}{{ x0 }},{{ y }}{%- endcapture -%}{%- assign pts = pt -%}{%- endif -%}
+    {%- endif -%}
     {%- capture pt -%}{{ px }},{{ y }}{%- endcapture -%}
     {%- assign pts = pts | append: " " | append: pt -%}
+    {%- assign last_y = y -%}{%- assign last_px = px -%}
   {%- endif -%}
   {%- assign p = H.precipitation[i] | default: 0 -%}
   {%- if p >= 0.1 and x > 0 -%}
@@ -1107,6 +1113,10 @@
     {%- assign bars = bars | append: bar -%}
   {%- endif -%}
 {%- endfor -%}
+{%- if chart_join_right and pts != "" -%}
+  {%- assign x1 = chart_w | plus: chart_join_right -%}
+  {%- if last_px < x1 -%}{%- capture pt -%}{{ x1 }},{{ last_y }}{%- endcapture -%}{%- assign pts = pts | append: " " | append: pt -%}{%- endif -%}
+{%- endif -%}
 <svg class="mv-chart {{ chart_class }}" width="{{ chart_w }}" height="{{ chart_h }}" viewBox="0 0 {{ chart_w }} {{ chart_h }}">
   {%- for cd in chart_days -%}
     {%- assign x0 = forloop.index0 | times: 240 -%}
@@ -1130,8 +1140,9 @@
     {%- endif -%}
   {%- endfor -%}
   <g fill="#000" shape-rendering="crispEdges">{{ bars }}</g>
-  <polyline points="{{ pts | strip }}" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
-  <polyline points="{{ pts | strip }}" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
+  {%- if chart_join_left -%}{%- assign cap = "butt" -%}{%- else -%}{%- assign cap = "round" -%}{%- endif -%}
+  <polyline points="{{ pts | strip }}" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round" stroke-linecap="{{ cap }}"/>
+  <polyline points="{{ pts | strip }}" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="{{ cap }}"/>
   {%- if chart_labels and c_hi > -99 -%}
     {%- assign lx_max = chart_w | minus: 16 -%}{%- assign lx = x_hi | times: k | at_least: 16 | at_most: lx_max | round -%}
     {%- assign ly = c_top | minus: c_hi | times: curve_h | divided_by: c_span | plus: top_y | minus: 7 | round -%}
@@ -1189,6 +1200,20 @@
   .mv-tt .mv-chart { margin-top: auto; }
   .mv-tt .beyond { flex: 1; display: flex; align-items: center; justify-content: center; border: 2px dashed #000; border-radius: 8px; padding: 20px; font-size: 20px; font-weight: 700; text-align: center; }
 </style>
+{%- assign pair_lo = 99 -%}{%- assign pair_hi = -99 -%}{%- assign pair_both = 0 -%}
+{%- assign pair_base = pair.first | append: "T00:00:00Z" | date: "%s" | plus: 0 -%}
+{%- assign pair_end = pair_base | plus: 172800 -%}
+{%- for d in pair -%}{%- if days contains d -%}{%- assign pair_both = pair_both | plus: 1 -%}{%- endif -%}{%- endfor -%}
+{%- for t in HS.time -%}
+  {%- assign e = t | date: "%s" | plus: 0 -%}
+{%- if e >= dst_start and e < dst_end -%}{%- assign le = e | plus: 7200 -%}{%- else -%}{%- assign le = e | plus: 3600 -%}{%- endif -%}
+  {%- if le < pair_base or le > pair_end -%}{%- continue -%}{%- endif -%}
+  {%- assign v = H.temperature_2m[forloop.index0] -%}
+  {%- if v != nil -%}
+    {%- if v < pair_lo -%}{%- assign pair_lo = v -%}{%- endif -%}
+    {%- if v > pair_hi -%}{%- assign pair_hi = v -%}{%- endif -%}
+  {%- endif -%}
+{%- endfor -%}
 <div class="mv mv-tt">
   {%- assign prev_max = nil -%}
   {%- for day in pair -%}
@@ -1394,6 +1419,11 @@
   {%- endfor -%}
 </div>
       {%- assign chart_days = day | split: "," -%}{%- assign chart_w = 379 -%}{%- assign chart_h = 132 -%}{%- assign chart_axis = true -%}{%- assign chart_labels = false -%}{%- assign chart_class = "" -%}
+      {%- assign chart_lo = nil -%}{%- assign chart_hi = nil -%}{%- assign chart_join_left = nil -%}{%- assign chart_join_right = nil -%}
+      {%- if pair_both == 2 and pair_hi > -99 -%}
+        {%- assign chart_lo = pair_lo -%}{%- assign chart_hi = pair_hi -%}
+        {%- if forloop.first -%}{%- assign chart_join_right = 11 -%}{%- else -%}{%- assign chart_join_left = 11 -%}{%- endif -%}
+      {%- endif -%}
 {%- assign cw = chart_days.size | times: 240 -%}
 {%- assign k = chart_w | times: 1.0 | divided_by: cw -%}
 {%- assign base = chart_days.first | append: "T00:00:00Z" | date: "%s" | plus: 0 -%}
@@ -1407,13 +1437,14 @@
   {%- assign e = t | date: "%s" | plus: 0 -%}
 {%- if e >= dst_start and e < dst_end -%}{%- assign le = e | plus: 7200 -%}{%- else -%}{%- assign le = e | plus: 3600 -%}{%- endif -%}
   {%- assign x = le | minus: base | divided_by: 360.0 -%}
-  {%- if x < 0 or x >= cw -%}{%- continue -%}{%- endif -%}
+  {%- if x < 0 or x > cw -%}{%- continue -%}{%- endif -%}
   {%- assign v = H.temperature_2m[forloop.index0] -%}
   {%- if v != nil -%}
     {%- if v < c_lo -%}{%- assign c_lo = v -%}{%- assign x_lo = x -%}{%- endif -%}
     {%- if v > c_hi -%}{%- assign c_hi = v -%}{%- assign x_hi = x -%}{%- endif -%}
   {%- endif -%}
 {%- endfor -%}
+{%- if chart_lo != nil -%}{%- assign c_lo = chart_lo -%}{%- assign c_hi = chart_hi -%}{%- endif -%}
 {%- assign c_range = c_hi | minus: c_lo -%}
 {%- assign c_span = c_range | at_least: 4 -%}
 {%- assign c_top = c_span | minus: c_range | divided_by: 2.0 | plus: c_hi -%}
@@ -1426,11 +1457,16 @@
   {%- if x < 0 or x > cw -%}{%- continue -%}{%- endif -%}
   {%- assign i = forloop.index0 -%}
   {%- assign v = H.temperature_2m[i] -%}
-  {%- if v != nil and x < cw -%}
+  {%- if v != nil -%}
     {%- assign y = c_top | minus: v | times: curve_h | divided_by: c_span | plus: top_y | round: 1 -%}
     {%- assign px = x | times: k | round: 1 -%}
+    {%- if pts == "" -%}
+      {%- assign x0 = 0 -%}{%- if chart_join_left -%}{%- assign x0 = 0 | minus: chart_join_left -%}{%- endif -%}
+      {%- if px > x0 -%}{%- capture pt -%}{{ x0 }},{{ y }}{%- endcapture -%}{%- assign pts = pt -%}{%- endif -%}
+    {%- endif -%}
     {%- capture pt -%}{{ px }},{{ y }}{%- endcapture -%}
     {%- assign pts = pts | append: " " | append: pt -%}
+    {%- assign last_y = y -%}{%- assign last_px = px -%}
   {%- endif -%}
   {%- assign p = H.precipitation[i] | default: 0 -%}
   {%- if p >= 0.1 and x > 0 -%}
@@ -1440,6 +1476,10 @@
     {%- assign bars = bars | append: bar -%}
   {%- endif -%}
 {%- endfor -%}
+{%- if chart_join_right and pts != "" -%}
+  {%- assign x1 = chart_w | plus: chart_join_right -%}
+  {%- if last_px < x1 -%}{%- capture pt -%}{{ x1 }},{{ last_y }}{%- endcapture -%}{%- assign pts = pts | append: " " | append: pt -%}{%- endif -%}
+{%- endif -%}
 <svg class="mv-chart {{ chart_class }}" width="{{ chart_w }}" height="{{ chart_h }}" viewBox="0 0 {{ chart_w }} {{ chart_h }}">
   {%- for cd in chart_days -%}
     {%- assign x0 = forloop.index0 | times: 240 -%}
@@ -1463,8 +1503,9 @@
     {%- endif -%}
   {%- endfor -%}
   <g fill="#000" shape-rendering="crispEdges">{{ bars }}</g>
-  <polyline points="{{ pts | strip }}" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
-  <polyline points="{{ pts | strip }}" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
+  {%- if chart_join_left -%}{%- assign cap = "butt" -%}{%- else -%}{%- assign cap = "round" -%}{%- endif -%}
+  <polyline points="{{ pts | strip }}" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round" stroke-linecap="{{ cap }}"/>
+  <polyline points="{{ pts | strip }}" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="{{ cap }}"/>
   {%- if chart_labels and c_hi > -99 -%}
     {%- assign lx_max = chart_w | minus: 16 -%}{%- assign lx = x_hi | times: k | at_least: 16 | at_most: lx_max | round -%}
     {%- assign ly = c_top | minus: c_hi | times: curve_h | divided_by: c_span | plus: top_y | minus: 7 | round -%}
@@ -1479,6 +1520,7 @@
   {%- endif -%}
   <path d="M0 {{ floor_y | plus: 1 }}H{{ chart_w }}" stroke="#000" stroke-width="2" shape-rendering="crispEdges"/>
 </svg>
+      {%- assign chart_lo = nil -%}{%- assign chart_hi = nil -%}{%- assign chart_join_left = nil -%}{%- assign chart_join_right = nil -%}
       {%- assign prev_max = tmax | round -%}
       {%- else -%}
       {%- assign beyond_name = day_name | capitalize -%}
@@ -1521,6 +1563,20 @@
   .mv-tt .mv-chart { margin-top: auto; }
   .mv-tt .beyond { flex: 1; display: flex; align-items: center; justify-content: center; border: 2px dashed #000; border-radius: 8px; padding: 20px; font-size: 20px; font-weight: 700; text-align: center; }
 </style>
+{%- assign pair_lo = 99 -%}{%- assign pair_hi = -99 -%}{%- assign pair_both = 0 -%}
+{%- assign pair_base = pair.first | append: "T00:00:00Z" | date: "%s" | plus: 0 -%}
+{%- assign pair_end = pair_base | plus: 172800 -%}
+{%- for d in pair -%}{%- if days contains d -%}{%- assign pair_both = pair_both | plus: 1 -%}{%- endif -%}{%- endfor -%}
+{%- for t in HS.time -%}
+  {%- assign e = t | date: "%s" | plus: 0 -%}
+{%- if e >= dst_start and e < dst_end -%}{%- assign le = e | plus: 7200 -%}{%- else -%}{%- assign le = e | plus: 3600 -%}{%- endif -%}
+  {%- if le < pair_base or le > pair_end -%}{%- continue -%}{%- endif -%}
+  {%- assign v = H.temperature_2m[forloop.index0] -%}
+  {%- if v != nil -%}
+    {%- if v < pair_lo -%}{%- assign pair_lo = v -%}{%- endif -%}
+    {%- if v > pair_hi -%}{%- assign pair_hi = v -%}{%- endif -%}
+  {%- endif -%}
+{%- endfor -%}
 <div class="mv mv-tt">
   {%- assign prev_max = nil -%}
   {%- for day in pair -%}
@@ -1726,6 +1782,11 @@
   {%- endfor -%}
 </div>
       {%- assign chart_days = day | split: "," -%}{%- assign chart_w = 379 -%}{%- assign chart_h = 132 -%}{%- assign chart_axis = true -%}{%- assign chart_labels = false -%}{%- assign chart_class = "" -%}
+      {%- assign chart_lo = nil -%}{%- assign chart_hi = nil -%}{%- assign chart_join_left = nil -%}{%- assign chart_join_right = nil -%}
+      {%- if pair_both == 2 and pair_hi > -99 -%}
+        {%- assign chart_lo = pair_lo -%}{%- assign chart_hi = pair_hi -%}
+        {%- if forloop.first -%}{%- assign chart_join_right = 11 -%}{%- else -%}{%- assign chart_join_left = 11 -%}{%- endif -%}
+      {%- endif -%}
 {%- assign cw = chart_days.size | times: 240 -%}
 {%- assign k = chart_w | times: 1.0 | divided_by: cw -%}
 {%- assign base = chart_days.first | append: "T00:00:00Z" | date: "%s" | plus: 0 -%}
@@ -1739,13 +1800,14 @@
   {%- assign e = t | date: "%s" | plus: 0 -%}
 {%- if e >= dst_start and e < dst_end -%}{%- assign le = e | plus: 7200 -%}{%- else -%}{%- assign le = e | plus: 3600 -%}{%- endif -%}
   {%- assign x = le | minus: base | divided_by: 360.0 -%}
-  {%- if x < 0 or x >= cw -%}{%- continue -%}{%- endif -%}
+  {%- if x < 0 or x > cw -%}{%- continue -%}{%- endif -%}
   {%- assign v = H.temperature_2m[forloop.index0] -%}
   {%- if v != nil -%}
     {%- if v < c_lo -%}{%- assign c_lo = v -%}{%- assign x_lo = x -%}{%- endif -%}
     {%- if v > c_hi -%}{%- assign c_hi = v -%}{%- assign x_hi = x -%}{%- endif -%}
   {%- endif -%}
 {%- endfor -%}
+{%- if chart_lo != nil -%}{%- assign c_lo = chart_lo -%}{%- assign c_hi = chart_hi -%}{%- endif -%}
 {%- assign c_range = c_hi | minus: c_lo -%}
 {%- assign c_span = c_range | at_least: 4 -%}
 {%- assign c_top = c_span | minus: c_range | divided_by: 2.0 | plus: c_hi -%}
@@ -1758,11 +1820,16 @@
   {%- if x < 0 or x > cw -%}{%- continue -%}{%- endif -%}
   {%- assign i = forloop.index0 -%}
   {%- assign v = H.temperature_2m[i] -%}
-  {%- if v != nil and x < cw -%}
+  {%- if v != nil -%}
     {%- assign y = c_top | minus: v | times: curve_h | divided_by: c_span | plus: top_y | round: 1 -%}
     {%- assign px = x | times: k | round: 1 -%}
+    {%- if pts == "" -%}
+      {%- assign x0 = 0 -%}{%- if chart_join_left -%}{%- assign x0 = 0 | minus: chart_join_left -%}{%- endif -%}
+      {%- if px > x0 -%}{%- capture pt -%}{{ x0 }},{{ y }}{%- endcapture -%}{%- assign pts = pt -%}{%- endif -%}
+    {%- endif -%}
     {%- capture pt -%}{{ px }},{{ y }}{%- endcapture -%}
     {%- assign pts = pts | append: " " | append: pt -%}
+    {%- assign last_y = y -%}{%- assign last_px = px -%}
   {%- endif -%}
   {%- assign p = H.precipitation[i] | default: 0 -%}
   {%- if p >= 0.1 and x > 0 -%}
@@ -1772,6 +1839,10 @@
     {%- assign bars = bars | append: bar -%}
   {%- endif -%}
 {%- endfor -%}
+{%- if chart_join_right and pts != "" -%}
+  {%- assign x1 = chart_w | plus: chart_join_right -%}
+  {%- if last_px < x1 -%}{%- capture pt -%}{{ x1 }},{{ last_y }}{%- endcapture -%}{%- assign pts = pts | append: " " | append: pt -%}{%- endif -%}
+{%- endif -%}
 <svg class="mv-chart {{ chart_class }}" width="{{ chart_w }}" height="{{ chart_h }}" viewBox="0 0 {{ chart_w }} {{ chart_h }}">
   {%- for cd in chart_days -%}
     {%- assign x0 = forloop.index0 | times: 240 -%}
@@ -1795,8 +1866,9 @@
     {%- endif -%}
   {%- endfor -%}
   <g fill="#000" shape-rendering="crispEdges">{{ bars }}</g>
-  <polyline points="{{ pts | strip }}" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
-  <polyline points="{{ pts | strip }}" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
+  {%- if chart_join_left -%}{%- assign cap = "butt" -%}{%- else -%}{%- assign cap = "round" -%}{%- endif -%}
+  <polyline points="{{ pts | strip }}" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round" stroke-linecap="{{ cap }}"/>
+  <polyline points="{{ pts | strip }}" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="{{ cap }}"/>
   {%- if chart_labels and c_hi > -99 -%}
     {%- assign lx_max = chart_w | minus: 16 -%}{%- assign lx = x_hi | times: k | at_least: 16 | at_most: lx_max | round -%}
     {%- assign ly = c_top | minus: c_hi | times: curve_h | divided_by: c_span | plus: top_y | minus: 7 | round -%}
@@ -1811,6 +1883,7 @@
   {%- endif -%}
   <path d="M0 {{ floor_y | plus: 1 }}H{{ chart_w }}" stroke="#000" stroke-width="2" shape-rendering="crispEdges"/>
 </svg>
+      {%- assign chart_lo = nil -%}{%- assign chart_hi = nil -%}{%- assign chart_join_left = nil -%}{%- assign chart_join_right = nil -%}
       {%- assign prev_max = tmax | round -%}
       {%- else -%}
       {%- assign beyond_name = day_name | capitalize -%}
@@ -1849,6 +1922,20 @@
   .mv-tt .mv-chart { margin-top: auto; }
   .mv-tt .beyond { flex: 1; display: flex; align-items: center; justify-content: center; border: 2px dashed #000; border-radius: 8px; padding: 20px; font-size: 20px; font-weight: 700; text-align: center; }
 </style>
+{%- assign pair_lo = 99 -%}{%- assign pair_hi = -99 -%}{%- assign pair_both = 0 -%}
+{%- assign pair_base = pair.first | append: "T00:00:00Z" | date: "%s" | plus: 0 -%}
+{%- assign pair_end = pair_base | plus: 172800 -%}
+{%- for d in pair -%}{%- if days contains d -%}{%- assign pair_both = pair_both | plus: 1 -%}{%- endif -%}{%- endfor -%}
+{%- for t in HS.time -%}
+  {%- assign e = t | date: "%s" | plus: 0 -%}
+{%- if e >= dst_start and e < dst_end -%}{%- assign le = e | plus: 7200 -%}{%- else -%}{%- assign le = e | plus: 3600 -%}{%- endif -%}
+  {%- if le < pair_base or le > pair_end -%}{%- continue -%}{%- endif -%}
+  {%- assign v = H.temperature_2m[forloop.index0] -%}
+  {%- if v != nil -%}
+    {%- if v < pair_lo -%}{%- assign pair_lo = v -%}{%- endif -%}
+    {%- if v > pair_hi -%}{%- assign pair_hi = v -%}{%- endif -%}
+  {%- endif -%}
+{%- endfor -%}
 <div class="mv mv-tt">
   {%- assign prev_max = nil -%}
   {%- for day in pair -%}
@@ -2054,6 +2141,11 @@
   {%- endfor -%}
 </div>
       {%- assign chart_days = day | split: "," -%}{%- assign chart_w = 379 -%}{%- assign chart_h = 132 -%}{%- assign chart_axis = true -%}{%- assign chart_labels = false -%}{%- assign chart_class = "" -%}
+      {%- assign chart_lo = nil -%}{%- assign chart_hi = nil -%}{%- assign chart_join_left = nil -%}{%- assign chart_join_right = nil -%}
+      {%- if pair_both == 2 and pair_hi > -99 -%}
+        {%- assign chart_lo = pair_lo -%}{%- assign chart_hi = pair_hi -%}
+        {%- if forloop.first -%}{%- assign chart_join_right = 11 -%}{%- else -%}{%- assign chart_join_left = 11 -%}{%- endif -%}
+      {%- endif -%}
 {%- assign cw = chart_days.size | times: 240 -%}
 {%- assign k = chart_w | times: 1.0 | divided_by: cw -%}
 {%- assign base = chart_days.first | append: "T00:00:00Z" | date: "%s" | plus: 0 -%}
@@ -2067,13 +2159,14 @@
   {%- assign e = t | date: "%s" | plus: 0 -%}
 {%- if e >= dst_start and e < dst_end -%}{%- assign le = e | plus: 7200 -%}{%- else -%}{%- assign le = e | plus: 3600 -%}{%- endif -%}
   {%- assign x = le | minus: base | divided_by: 360.0 -%}
-  {%- if x < 0 or x >= cw -%}{%- continue -%}{%- endif -%}
+  {%- if x < 0 or x > cw -%}{%- continue -%}{%- endif -%}
   {%- assign v = H.temperature_2m[forloop.index0] -%}
   {%- if v != nil -%}
     {%- if v < c_lo -%}{%- assign c_lo = v -%}{%- assign x_lo = x -%}{%- endif -%}
     {%- if v > c_hi -%}{%- assign c_hi = v -%}{%- assign x_hi = x -%}{%- endif -%}
   {%- endif -%}
 {%- endfor -%}
+{%- if chart_lo != nil -%}{%- assign c_lo = chart_lo -%}{%- assign c_hi = chart_hi -%}{%- endif -%}
 {%- assign c_range = c_hi | minus: c_lo -%}
 {%- assign c_span = c_range | at_least: 4 -%}
 {%- assign c_top = c_span | minus: c_range | divided_by: 2.0 | plus: c_hi -%}
@@ -2086,11 +2179,16 @@
   {%- if x < 0 or x > cw -%}{%- continue -%}{%- endif -%}
   {%- assign i = forloop.index0 -%}
   {%- assign v = H.temperature_2m[i] -%}
-  {%- if v != nil and x < cw -%}
+  {%- if v != nil -%}
     {%- assign y = c_top | minus: v | times: curve_h | divided_by: c_span | plus: top_y | round: 1 -%}
     {%- assign px = x | times: k | round: 1 -%}
+    {%- if pts == "" -%}
+      {%- assign x0 = 0 -%}{%- if chart_join_left -%}{%- assign x0 = 0 | minus: chart_join_left -%}{%- endif -%}
+      {%- if px > x0 -%}{%- capture pt -%}{{ x0 }},{{ y }}{%- endcapture -%}{%- assign pts = pt -%}{%- endif -%}
+    {%- endif -%}
     {%- capture pt -%}{{ px }},{{ y }}{%- endcapture -%}
     {%- assign pts = pts | append: " " | append: pt -%}
+    {%- assign last_y = y -%}{%- assign last_px = px -%}
   {%- endif -%}
   {%- assign p = H.precipitation[i] | default: 0 -%}
   {%- if p >= 0.1 and x > 0 -%}
@@ -2100,6 +2198,10 @@
     {%- assign bars = bars | append: bar -%}
   {%- endif -%}
 {%- endfor -%}
+{%- if chart_join_right and pts != "" -%}
+  {%- assign x1 = chart_w | plus: chart_join_right -%}
+  {%- if last_px < x1 -%}{%- capture pt -%}{{ x1 }},{{ last_y }}{%- endcapture -%}{%- assign pts = pts | append: " " | append: pt -%}{%- endif -%}
+{%- endif -%}
 <svg class="mv-chart {{ chart_class }}" width="{{ chart_w }}" height="{{ chart_h }}" viewBox="0 0 {{ chart_w }} {{ chart_h }}">
   {%- for cd in chart_days -%}
     {%- assign x0 = forloop.index0 | times: 240 -%}
@@ -2123,8 +2225,9 @@
     {%- endif -%}
   {%- endfor -%}
   <g fill="#000" shape-rendering="crispEdges">{{ bars }}</g>
-  <polyline points="{{ pts | strip }}" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
-  <polyline points="{{ pts | strip }}" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
+  {%- if chart_join_left -%}{%- assign cap = "butt" -%}{%- else -%}{%- assign cap = "round" -%}{%- endif -%}
+  <polyline points="{{ pts | strip }}" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round" stroke-linecap="{{ cap }}"/>
+  <polyline points="{{ pts | strip }}" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="{{ cap }}"/>
   {%- if chart_labels and c_hi > -99 -%}
     {%- assign lx_max = chart_w | minus: 16 -%}{%- assign lx = x_hi | times: k | at_least: 16 | at_most: lx_max | round -%}
     {%- assign ly = c_top | minus: c_hi | times: curve_h | divided_by: c_span | plus: top_y | minus: 7 | round -%}
@@ -2139,6 +2242,7 @@
   {%- endif -%}
   <path d="M0 {{ floor_y | plus: 1 }}H{{ chart_w }}" stroke="#000" stroke-width="2" shape-rendering="crispEdges"/>
 </svg>
+      {%- assign chart_lo = nil -%}{%- assign chart_hi = nil -%}{%- assign chart_join_left = nil -%}{%- assign chart_join_right = nil -%}
       {%- assign prev_max = tmax | round -%}
       {%- else -%}
       {%- assign beyond_name = day_name | capitalize -%}

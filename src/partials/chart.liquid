@@ -5,6 +5,11 @@
   the hour before the value's time, full height at 3 mm) in the bottom 40 %, a dashed line
   at the current time and a solid one between days. `chart_axis`: hour labels 06 12 18
   under a one-day chart. `chart_labels`: the curve's highest and lowest value written on it.
+  The curve runs from edge to edge: to the next midnight's value on the right, and held
+  level to the left edge where the forecast starts later (today, from 01:00 or 02:00).
+  Two charts side by side share a scale (`chart_lo`, `chart_hi`; nil: the chart's own)
+  and reach into the gap between them (`chart_join_left`, `chart_join_right`: px), so
+  their curves meet in its middle.
   Inside, x runs 240 units per day (`k` px per unit).
 {%- endcomment -%}
 {%- assign cw = chart_days.size | times: 240 -%}
@@ -19,13 +24,14 @@
 {%- for t in HS.time -%}
   {%- assign e = t | date: "%s" | plus: 0 -%}{% include "partials/local" %}
   {%- assign x = le | minus: base | divided_by: 360.0 -%}
-  {%- if x < 0 or x >= cw -%}{%- continue -%}{%- endif -%}
+  {%- if x < 0 or x > cw -%}{%- continue -%}{%- endif -%}
   {%- assign v = H.temperature_2m[forloop.index0] -%}
   {%- if v != nil -%}
     {%- if v < c_lo -%}{%- assign c_lo = v -%}{%- assign x_lo = x -%}{%- endif -%}
     {%- if v > c_hi -%}{%- assign c_hi = v -%}{%- assign x_hi = x -%}{%- endif -%}
   {%- endif -%}
 {%- endfor -%}
+{%- if chart_lo != nil -%}{%- assign c_lo = chart_lo -%}{%- assign c_hi = chart_hi -%}{%- endif -%}
 {%- comment -%} a range under 4° is drawn as 4°, centred, so a flat day sits in the middle {%- endcomment -%}
 {%- assign c_range = c_hi | minus: c_lo -%}
 {%- assign c_span = c_range | at_least: 4 -%}
@@ -39,11 +45,17 @@
   {%- if x < 0 or x > cw -%}{%- continue -%}{%- endif -%}
   {%- assign i = forloop.index0 -%}
   {%- assign v = H.temperature_2m[i] -%}
-  {%- if v != nil and x < cw -%}
+  {%- if v != nil -%}
     {%- assign y = c_top | minus: v | times: curve_h | divided_by: c_span | plus: top_y | round: 1 -%}
     {%- assign px = x | times: k | round: 1 -%}
+    {%- if pts == "" -%}
+      {%- comment -%} the first value: held level back to the left edge, or into the gap {%- endcomment -%}
+      {%- assign x0 = 0 -%}{%- if chart_join_left -%}{%- assign x0 = 0 | minus: chart_join_left -%}{%- endif -%}
+      {%- if px > x0 -%}{%- capture pt -%}{{ x0 }},{{ y }}{%- endcapture -%}{%- assign pts = pt -%}{%- endif -%}
+    {%- endif -%}
     {%- capture pt -%}{{ px }},{{ y }}{%- endcapture -%}
     {%- assign pts = pts | append: " " | append: pt -%}
+    {%- assign last_y = y -%}{%- assign last_px = px -%}
   {%- endif -%}
   {%- assign p = H.precipitation[i] | default: 0 -%}
   {%- if p >= 0.1 and x > 0 -%}
@@ -53,6 +65,10 @@
     {%- assign bars = bars | append: bar -%}
   {%- endif -%}
 {%- endfor -%}
+{%- if chart_join_right and pts != "" -%}
+  {%- assign x1 = chart_w | plus: chart_join_right -%}
+  {%- if last_px < x1 -%}{%- capture pt -%}{{ x1 }},{{ last_y }}{%- endcapture -%}{%- assign pts = pts | append: " " | append: pt -%}{%- endif -%}
+{%- endif -%}
 <svg class="mv-chart {{ chart_class }}" width="{{ chart_w }}" height="{{ chart_h }}" viewBox="0 0 {{ chart_w }} {{ chart_h }}">
   {%- for cd in chart_days -%}
     {%- assign x0 = forloop.index0 | times: 240 -%}
@@ -76,8 +92,10 @@
     {%- endif -%}
   {%- endfor -%}
   <g fill="#000" shape-rendering="crispEdges">{{ bars }}</g>
-  <polyline points="{{ pts | strip }}" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
-  <polyline points="{{ pts | strip }}" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
+  {%- comment -%} a curve joining the one on its left starts flat, so its white halo does not cut into that one {%- endcomment -%}
+  {%- if chart_join_left -%}{%- assign cap = "butt" -%}{%- else -%}{%- assign cap = "round" -%}{%- endif -%}
+  <polyline points="{{ pts | strip }}" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round" stroke-linecap="{{ cap }}"/>
+  <polyline points="{{ pts | strip }}" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="{{ cap }}"/>
   {%- if chart_labels and c_hi > -99 -%}
     {%- assign lx_max = chart_w | minus: 16 -%}{%- assign lx = x_hi | times: k | at_least: 16 | at_most: lx_max | round -%}
     {%- assign ly = c_top | minus: c_hi | times: curve_h | divided_by: c_span | plus: top_y | minus: 7 | round -%}
