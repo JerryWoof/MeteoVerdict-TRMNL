@@ -16,10 +16,10 @@
 <div class="title_bar">
   <span class="title">{{ place }}</span>
   {%- if stale -%}
-  <span class="instance"><span class="mv-badge">{{ T_stale }}</span> {{ gdate }} {{ gtime }}</span>
+  <span class="instance"><span class="mv-badge">{{ T_stale }}</span> {{ T_updated }} {{ gdate }} {{ gtime }}</span>
   {%- elsif compact -%}
-  <span class="instance">{% if ai %}MeteoVerdict AI{% else %}MeteoVerdict{% endif %} · {% if gday != real_today %}{{ gdate }} {% endif %}{{ gtime }}</span>
+  <span class="instance">{% if ai %}MeteoVerdict AI{% else %}MeteoVerdict{% endif %} · {{ T_updated }} {% if gday != real_today %}{{ gdate }} {% endif %}{{ gtime }}</span>
   {%- else -%}
-  <span class="instance">{% if ai %}{{ T_ai }}{% else %}MeteoVerdict{% if models_used > 0 %} · {{ models_used }} {{ T_models }}{% endif %}{% endif %} · {% if gday != real_today %}{{ gdate }} {% endif %}{{ gtime }}</span>
+  <span class="instance">{% if ai %}{{ T_ai }}{% else %}MeteoVerdict{% if models_used > 0 %} · {{ models_used }} {{ T_models }}{% endif %}{% endif %} · {{ T_updated }} {% if gday != real_today %}{{ gdate }} {% endif %}{{ gtime }}</span>
   {%- endif -%}
 </div>

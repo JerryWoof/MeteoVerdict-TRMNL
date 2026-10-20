@@ -111,7 +111,7 @@ test("missing values show a dash, not 0°", async () => {
 
 test("an old forecast says so, and one with nothing left for today says that instead", async () => {
   freezeTime("2026-10-14T09:00:00Z"); // 42 hours after it was made
-  assert.match(text(await renderLayout("quadrant", PRAHA, {})), /old forecast 12 Oct 17:20/);
+  assert.match(text(await renderLayout("quadrant", PRAHA, {})), /old forecast updated 12 Oct 17:20/);
   freezeTime("2026-10-19T09:00:00Z"); // after its last day
   const words = text(await renderLayout("full", PRAHA, {}));
   assert.match(words, /No forecast for today yet\. The latest is from 12\.10\. 17:20/);
@@ -341,13 +341,13 @@ for (const [name, data] of [["blend", BENESOV], ["AI", BENESOV_AI], ["obec", { I
 
 test("the footer names the forecast: the blend and its models, or the AI", async () => {
   freezeTime("2026-10-12T15:40:00Z");
-  assert.match(text(await renderLayout("full", PRAHA, {})), /MeteoVerdict · 11 models · 17:20 $/);
+  assert.match(text(await renderLayout("full", PRAHA, {})), /MeteoVerdict · 11 models · updated 17:20 $/);
   freezeTime(NOW20);
   const ai = text(await renderLayout("full", BENESOV_AI, {}));
-  assert.match(ai, /MeteoVerdict AI · 22:12/);
+  assert.match(ai, /MeteoVerdict AI · updated 22:12/);
   assert.doesNotMatch(ai, /CC BY-SA/);
   assert.doesNotMatch(ai, /models/);
-  assert.match(text(await renderLayout("quadrant", BENESOV_AI, {})), /MeteoVerdict AI · 22:12/);
+  assert.match(text(await renderLayout("quadrant", BENESOV_AI, {})), /MeteoVerdict AI · updated 22:12/);
 });
 
 test("the ± of the high, from tomorrow on, only with the blend's range", async () => {
@@ -417,6 +417,6 @@ test("a day's high and low span its parts (the AI's whole day can cover fewer ho
 test("an obec file from the AI says MeteoVerdict AI, whatever the okres file", async () => {
   freezeTime(NOW20);
   const words = text(await renderLayout("full", { IDX_0: BENESOV, IDX_1: { ...MILICIN, model: "ai" } }, {}));
-  assert.match(words, /MeteoVerdict AI · 22:12/);
+  assert.match(words, /MeteoVerdict AI · updated 22:12/);
   assert.match(text(await renderLayout("full", { IDX_0: BENESOV_AI, IDX_1: MILICIN }, {})), /MeteoVerdict AI/);
 });
