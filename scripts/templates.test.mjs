@@ -413,3 +413,10 @@ test("a day's high and low span its parts (the AI's whole day can cover fewer ho
   assert.match(words, /^ ?Today \S+ \d+ October 16°/);
   assert.match(words, new RegExp(`low ${Math.round(Math.min(...rows.filter((p) => p.part !== "day").map((p) => p.tmin)))}°`));
 });
+
+test("an obec file from the AI says MeteoVerdict AI, whatever the okres file", async () => {
+  freezeTime(NOW20);
+  const words = text(await renderLayout("full", { IDX_0: BENESOV, IDX_1: { ...MILICIN, model: "ai" } }, {}));
+  assert.match(words, /MeteoVerdict AI · 22:12/);
+  assert.match(text(await renderLayout("full", { IDX_0: BENESOV_AI, IDX_1: MILICIN }, {})), /MeteoVerdict AI/);
+});

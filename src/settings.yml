@@ -105,7 +105,7 @@
   - "Zlín": CZ0724
   - "Znojmo": CZ0647
   - "Žďár nad Sázavou": CZ0635
-- keyname: forecast
+- keyname: forecast_model
   field_type: select
   name: Forecast
   description: MeteoVerdict AI (temperature and wind from MeteoVerdict's AI model, the rest from the combined forecast), or MeteoVerdict's combined forecast of all models, with the range of the temperature.
