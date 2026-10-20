@@ -194,13 +194,16 @@ Add it to your TRMNL as a private plugin. That takes about five minutes.
 
 ### An obec (private plugins)
 
-Add the obec's file as a **second line** of the polling URL; TRMNL then passes both files
-to the layouts, which use the obec's temperature, rain and wind:
+Write the two URLs out in full as the polling URL, one per line: the okres file, then the
+obec's. TRMNL passes both files to the layouts, which use the obec's temperature, rain and
+wind and show its name. With MeteoVerdict AI (both files from `ai/`):
 
 ```
-https://jerrywoof.github.io/MeteoVerdict/api/v1/{{ forecast }}/{{ okres_code }}.json
-https://jerrywoof.github.io/MeteoVerdict/api/v1/obce/CZ0525/spindleruv-mlyn.json
+https://jerrywoof.github.io/MeteoVerdict/api/v1/ai/okresy/CZ0525.json
+https://jerrywoof.github.io/MeteoVerdict/api/v1/ai/obce/CZ0525/spindleruv-mlyn.json
 ```
+
+With the combined forecast, the same without `ai/`.
 
 The okres in the form must be the obec's okres. The obec's address is its okres code and
 its name in lower case without diacritics, with `-` for spaces (`CZ0201/benesov`,
