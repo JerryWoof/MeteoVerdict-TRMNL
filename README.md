@@ -3,7 +3,7 @@
 Weather for your Czech district on a [TRMNL](https://trmnl.com) e-ink display: today and
 tomorrow, the next 24 hours, five days or the weekend, with temperature and its range,
 rain with its timing and chance, sunshine, clouds, wind, sunrise and sunset, and badges
-for frost, ground frost, heavy rain, gusts and heat. In English or Czech.
+for frost, rain, gusts and heat. In English or Czech.
 
 ![Today and tomorrow in Prague](screenshots/today-tomorrow.png)
 
@@ -20,7 +20,8 @@ model's opinion. Free, no API key.
 - **The range of the temperature:** with the combined forecast, from tomorrow on, the
   high comes with its "±", half of MeteoVerdict's 80 % range (*16° ±2*).
 - **Thresholds from MeteoVerdict itself:** the badges use the same flags as the website
-  (frost from the corrected night minimum, ground frost, heavy rain, gusts over 13.5 m/s).
+  (*Frost* from the corrected night minimum or the ground, *Rain* when heavy rain is likely,
+  gusts over 13.5 m/s).
 - **An obec instead of the okres** (a test): the temperature, rain and wind of any of
   6,258 municipalities, corrected for its elevation.
 - **Rain with its chance and day:** *Rain from tomorrow 16:00 · 1.5 mm · 23 % chance*.
@@ -101,9 +102,8 @@ A day gets up to two badges, from MeteoVerdict's own threshold flags:
 
 | Badge | When |
 |---|---|
-| Frost / Mráz | MeteoVerdict's corrected night minimum (the night ending that morning) is 1 °C or less; shows that minimum |
-| Ground frost / Přízemní mráz | No air frost, but the ground (5 cm) is forecast to reach 0 °C or below |
-| Heavy rain / Vydatně prší | MeteoVerdict's calibrated chance of at least 5 mm in a part of the day is high enough to flag it |
+| Frost / Mráz | MeteoVerdict's corrected night minimum (the night ending that morning) is 1 °C or less, or the ground (5 cm) is forecast to reach 0 °C or below |
+| Rain / Déšť | MeteoVerdict's calibrated chance of at least 5 mm in a part of the day is high enough to flag it |
 | Gusts / Nárazy | The strongest gust of the day is 13.5 m/s or more; shows it, in your wind unit |
 | Hot / Vedro | 30 °C or more |
 

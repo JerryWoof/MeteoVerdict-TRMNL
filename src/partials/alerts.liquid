@@ -11,11 +11,11 @@
 {%- assign night = rows | where: "part", "night" | first -%}
 {%- if orows -%}{%- assign onight = orows | where: "part", "night" | first -%}{%- if onight.frost != nil -%}{%- assign night = onight -%}{%- endif -%}{%- endif -%}
 {%- if night.frost == true -%}
-  {%- capture a -%}<span class="mv-badge">{{ T_frost }} {{ night.night_min | round }}°</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
+  {%- capture a -%}<span class="mv-badge">{{ T_frost }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
 {%- elsif night.ground_frost == true -%}
   {%- capture a -%}<span class="mv-badge">{{ T_ground_frost }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
 {%- elsif night.frost == nil and rows.size > 0 and tmin <= 0 -%}
-  {%- capture a -%}<span class="mv-badge">{{ T_frost }} {{ tmin | round }}°</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
+  {%- capture a -%}<span class="mv-badge">{{ T_frost }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
 {%- endif -%}
 {%- assign heavy = false -%}{%- assign flagged = false -%}{%- assign gusty = false -%}{%- assign gust_flags = false -%}{%- assign gust_max = 0 -%}
 {%- for r in rows -%}

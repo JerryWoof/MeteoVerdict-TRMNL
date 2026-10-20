@@ -41,8 +41,8 @@ written in English with one Czech line:
 
 > Weather for your Czech district (okres) on your TRMNL: today and tomorrow, the next 24
 > hours, five days or the weekend, with temperature and its range, rain with its timing
-> and chance, sunshine, clouds, wind, sunrise and sunset, and badges for frost, ground
-> frost, heavy rain, gusts and heat. Compact layouts for half and quarter screens let you
+> and chance, sunshine, clouds, wind, sunrise and sunset, and badges for frost, rain,
+> gusts and heat. Compact layouts for half and quarter screens let you
 > show two or four places at once, or the weather next to your calendar.
 >
 > The forecast is MeteoVerdict's. Every day it checks how well about 20 weather models
