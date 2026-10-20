@@ -3,6 +3,7 @@
   {%- assign part_names = "night,morning,afternoon,evening" | split: "," -%}
   {%- for part in part_names -%}
     {%- assign p = rows | where: "part", part | first -%}
+    {%- assign tp = p -%}{%- if orows -%}{%- assign op = orows | where: "part", part | first -%}{%- if op -%}{%- assign tp = op -%}{%- endif -%}{%- endif -%}
     <div class="mv-part">
       <div class="n">{{ T_parts[forloop.index0] }}</div>
       {%- if p -%}
@@ -12,7 +13,7 @@
         {%- if part == "night" -%}{%- assign night = true -%}{%- endif -%}
         {%- if part == "evening" and set_min != nil and set_min < 1200 -%}{%- assign night = true -%}{%- endif -%}
         {% include "partials/icon" %}
-        <div class="t">{% if part == "night" %}{{ p.tmin | round }}{% else %}{{ p.tmax | round }}{% endif %}°</div>
+        <div class="t">{% if part == "night" %}{{ tp.tmin | round }}{% else %}{{ tp.tmax | round }}{% endif %}°</div>
       {%- else -%}
         <svg viewBox="0 0 64 64"></svg><div class="t">–</div>
       {%- endif -%}

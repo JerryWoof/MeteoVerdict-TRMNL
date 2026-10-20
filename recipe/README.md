@@ -40,25 +40,27 @@ under 100 words the recipe page is left out of Google and other search engines. 
 written in English with one Czech line:
 
 > Weather for your Czech district (okres) on your TRMNL: today and tomorrow, the next 24
-> hours, five days or the weekend, with temperature, rain and its chance, sunshine,
-> clouds, wind, sunrise and sunset, and badges for frost, black ice, heavy rain, strong
-> wind and heat. Compact layouts for half and quarter screens let you show two or four
-> places at once, or the weather next to your calendar.
+> hours, five days or the weekend, with temperature and its range, rain with its timing
+> and chance, sunshine, clouds, wind, sunrise and sunset, and badges for frost, ground
+> frost, heavy rain, gusts and heat. Compact layouts for half and quarter screens let you
+> show two or four places at once, or the weather next to your calendar.
 >
-> The forecast is MeteoVerdict's. Every day it checks how well 11 weather models forecast
-> what ČHMÚ stations then measured, and blends them, weighting each model by how accurate
-> it has been in your okres over the last 90 days. Free, no API key, no account.
+> The forecast is MeteoVerdict's. Every day it checks how well about 20 weather models
+> forecast what ČHMÚ stations then measured, and blends them, weighting each model by how
+> accurate it has been in your okres over the last 90 days. You can also pick MeteoVerdict
+> AI (experimental) for temperature and wind. Free, no API key, no account.
 >
 > Počasí pro váš okres podle MeteoVerdictu, česky i anglicky.
 >
-> Pick your okres (all 77), the view and the language below. Questions and bugs: GitHub
-> issues. Forecast data © MeteoVerdict, CC BY-SA 4.0, built from Open-Meteo.com and ČHMÚ
-> data. Not affiliated with TRMNL, ČHMÚ or Open-Meteo.
+> The badges are MeteoVerdict's thresholds, not official ČHMÚ warnings (chmi.cz). Questions
+> and bugs: GitHub issues. Forecast data © MeteoVerdict, CC BY-SA 4.0, built from
+> Open-Meteo.com, ČHMÚ and the weather services' model data. Not affiliated with TRMNL,
+> ČHMÚ or Open-Meteo.
 
 **Short description**, if a form asks for one-liner text:
 
 ```
-Weather for your Czech okres: MeteoVerdict's blend of 11 models, tuned per district. English or Czech.
+Weather for your Czech okres: MeteoVerdict's blend of about 20 models, tuned per district. English or Czech.
 ```
 
 **Categories:** `environment,life`, set in the `about` field. TRMNL allows up to two from
@@ -86,7 +88,7 @@ the public preview.
 2. **Create the master.** In TRMNL go to **Plugins → Private Plugin → Add new**. Name it
    `MeteoVerdict`. Make a new one rather than forking a recipe, because Chef rejects forks.
    - **Strategy:** Polling. **Polling URL:**
-     `https://jerrywoof.github.io/MeteoVerdict/api/v1/okresy/{{ okres_code }}.json`
+     `https://jerrywoof.github.io/MeteoVerdict/api/v1/{{ forecast }}/{{ okres_code }}.json`
    - **Fastest refresh rate:** hourly is enough. The forecast changes twice a day, and the
      24-hour view's "now" line moves by the hour.
 3. **Form fields:** paste [`src/settings.yml`](../src/settings.yml) and save. Then fill in

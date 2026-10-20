@@ -1,3 +1,3 @@
 {%- comment -%} n with one decimal, a whole number without ",0", the same in Ruby Liquid and liquidjs {%- endcomment -%}
 {%- assign d1 = n | round: 1 -%}{%- assign d1i = d1 | floor -%}
-{%- if d1 == d1i -%}{{ d1i }}{%- else -%}{{ d1 | replace: ".", T_dec }}{%- endif -%}
+{%- if d1 == d1i -%}{{ d1i }}{%- else -%}{{ d1 | replace: ".", T_dec }}{%- endif %}

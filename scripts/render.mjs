@@ -2,7 +2,7 @@
 // at the device's size, with TRMNL's framework CSS and its view wrapper.
 //   node scripts/render.mjs out.html [--layout full] [--view next_24h] [--okres CZ0100]
 //     [--place Praha] [--lang cs] [--data file.json] [--now 2026-10-12T15:30:00Z]
-//     [--offset 7200] [--mashup "half_horizontal:CZ0100,half_horizontal:CZ0642"]
+//     [--offset 7200] [--ai 1] [--obec CZ0525/spindleruv-mlyn] [--mashup "half_horizontal:CZ0100,half_horizontal:CZ0642"]
 // --data: a saved okres file instead of the live one; --now: pretend it is that time.
 // TRMNL renders on UTC servers; liquidjs's epoch seconds ("%s") follow the machine's time
 // zone, so render in UTC too or every time is off by your UTC offset.
@@ -26,9 +26,17 @@ export function freezeTime(iso) {
   };
 }
 
-export async function load({ okres = "CZ0100", data } = {}) {
+// `ai`: the AI's okres file (api/v1/ai/okresy) instead of the blend's; `obec` ("CZ0525/spindleruv-mlyn"):
+// polled as a second URL, so the layouts get IDX_0 (the okres file) and IDX_1 (the obec's)
+export async function load({ okres = "CZ0100", data, ai, obec } = {}) {
   if (data) return JSON.parse(readFileSync(data, "utf-8"));
-  return (await fetch(`${API}/${okres}.json`)).json();
+  const get = async (url) => {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`${url}: ${res.status}`);
+    return res.json();
+  };
+  const doc = await get(`${API.replace("/okresy", ai ? "/ai/okresy" : "/okresy")}/${okres}.json`);
+  return obec ? { IDX_0: doc, IDX_1: await get(`${API.replace("/okresy", "/obce")}/${obec}.json`) } : doc;
 }
 
 export async function renderLayout(layout, json, { view, place, lang, offset = 7200, evening, wind } = {}) {
@@ -73,7 +81,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     html = page(`<div class="mashup mashup--${kind}">${views.join("")}</div>`);
   } else {
     const layout = a.layout ?? "full";
-    html = page(await renderLayout(layout, await load(a), opts), SIZES[layout]);
+    html = page(await renderLayout(layout, await load({ ...a, okres: a.okres ?? (a.obec ? a.obec.split("/")[0] : undefined) }), opts), SIZES[layout]);
   }
   writeFileSync(a._[0] ?? "preview.html", html);
 }

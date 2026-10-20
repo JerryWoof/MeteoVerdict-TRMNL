@@ -5,7 +5,7 @@
   sunrise.
 {%- endcomment -%}
 {%- assign hp = H.precipitation[i] | default: 0 -%}
-{%- assign hc = H.cloud_cover[i] -%}
+{%- assign hc = HS.cloud_cover[i] -%}
 {%- assign ht = H.temperature_2m[i] | default: 10 -%}
 {%- if hp >= 0.5 -%}
   {%- if ht <= 0.5 -%}{%- assign icon = "snow" -%}{%- elsif ht <= 2 -%}{%- assign icon = "sleet" -%}{%- else -%}{%- assign icon = "rain" -%}{%- endif -%}
@@ -15,8 +15,8 @@
 {%- elsif hc < 70 -%}{%- assign icon = "partly" -%}
 {%- else -%}{%- assign icon = "cloudy" -%}{%- endif -%}
 {%- assign night = false -%}
-{%- if H.time[i] -%}
-  {%- assign e = H.time[i] | date: "%s" | plus: 0 -%}{% include "partials/local" %}
+{%- if HS.time[i] -%}
+  {%- assign e = HS.time[i] | date: "%s" | plus: 0 -%}{% include "partials/local" %}
   {%- assign hday = le | date: "%Y-%m-%d" -%}
   {%- assign hmin = le | date: "%H" | times: 60 -%}
   {%- assign hrow = forecast.parts | where: "day", hday | first -%}

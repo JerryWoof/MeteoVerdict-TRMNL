@@ -49,7 +49,7 @@
       <div class="mv-fact"><span>{{ T_wind }}</span><b>{{ wind | times: wind_k | round }} {{ wind_unit }}</b><i>&nbsp;</i></div>
     </div>
     {% include "partials/parts" %}
-    {%- assign chart_days = day | split: "," -%}{%- assign chart_h = 74 -%}{%- assign chart_class = "" -%}
+    {%- assign chart_days = day | split: "," -%}{%- assign chart_w = 360 -%}{%- assign chart_h = 94 -%}{%- assign chart_axis = true -%}{%- assign chart_labels = false -%}{%- assign chart_class = "" -%}
     {% include "partials/chart" %}
     {%- assign next_start = start | plus: 1 -%}
     {%- if days.size > next_start -%}

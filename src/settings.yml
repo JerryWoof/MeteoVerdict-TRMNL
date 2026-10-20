@@ -4,19 +4,22 @@
   name: About This Plugin
   description: >-
     Weather for your Czech district (okres) on your TRMNL: today and tomorrow, the next
-    24 hours, five days or the weekend, with temperature, rain and its chance, sunshine,
-    clouds, wind, sunrise and sunset, and badges for frost, black ice, heavy rain, strong
-    wind and heat. Compact layouts for half and quarter screens let you show two or four
-    places at once, or the weather next to your calendar.<br/><br/>
+    24 hours, five days or the weekend, with temperature and its range, rain with its
+    timing and chance, sunshine, clouds, wind, sunrise and sunset, and badges for frost,
+    ground frost, heavy rain, gusts and heat. Compact layouts for half and quarter
+    screens let you show two or four places at once, or the weather next to your
+    calendar.<br/><br/>
     The forecast is <a href="https://jerrywoof.github.io/MeteoVerdict/" class="underline">MeteoVerdict</a>'s.
-    Every day it checks how well 11 weather models forecast what ČHMÚ stations then
+    Every day it checks how well about 20 weather models forecast what ČHMÚ stations then
     measured, and blends them, weighting each model by how accurate it has been in your
-    okres over the last 90 days. Free, no API key, no account.<br/><br/>
+    okres over the last 90 days. You can also pick MeteoVerdict AI (experimental) for
+    temperature and wind. Free, no API key, no account.<br/><br/>
     Počasí pro váš okres podle MeteoVerdictu, česky i anglicky.<br/><br/>
-    Pick your okres (all 77), the view and the language below. Questions and bugs:
+    The badges are MeteoVerdict's thresholds, not official ČHMÚ warnings
+    (<a href="https://www.chmi.cz/" class="underline">chmi.cz</a>). Questions and bugs:
     <a href="https://github.com/JerryWoof/MeteoVerdict-TRMNL/issues" class="underline">GitHub issues</a>. Forecast data ©
-    MeteoVerdict, CC BY-SA 4.0, built from Open-Meteo.com and ČHMÚ data. Not affiliated
-    with TRMNL, ČHMÚ or Open-Meteo.
+    MeteoVerdict, CC BY-SA 4.0, built from Open-Meteo.com, ČHMÚ and the weather services'
+    model data. Not affiliated with TRMNL, ČHMÚ or Open-Meteo.
   github_url: https://github.com/JerryWoof/MeteoVerdict-TRMNL
   learn_more_url: https://jerrywoof.github.io/MeteoVerdict/
   category: environment,life
@@ -102,6 +105,14 @@
   - "Zlín": CZ0724
   - "Znojmo": CZ0647
   - "Žďár nad Sázavou": CZ0635
+- keyname: forecast
+  field_type: select
+  name: Forecast
+  description: MeteoVerdict's combined forecast (all models, with the range of the temperature), or MeteoVerdict AI, experimental, for temperature and wind (the rest stays the combined forecast).
+  options:
+  - "MeteoVerdict (all models combined)": okresy
+  - "MeteoVerdict AI (experimental)": ai/okresy
+  default: okresy
 - keyname: view
   field_type: select
   name: View (full screen)

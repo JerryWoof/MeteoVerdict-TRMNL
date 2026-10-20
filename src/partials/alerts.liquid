@@ -1,39 +1,42 @@
 {%- comment -%}
-  `alerts`: up to two badges for the day just read by partials/day: black ice (an hour at
-  or below 0.5 °C with precipitation), frost (MeteoVerdict's corrected night minimum: air
-  frost, else ground frost at 5 cm; older data without those fields: low at or below 0 °C),
-  heavy rain (10 mm or more), strong wind (10 m/s or more, hourly mean), heat (30 °C or more).
+  `alerts`: up to two badges for the day just read by partials/day, from MeteoVerdict's
+  threshold flags (thresholds, not ČHMÚ warnings: the footer says so whenever a badge is
+  on screen, `any_alerts`): frost (the corrected night minimum ending this morning: air
+  frost, else ground frost at 5 cm; older data without those fields: low at or below
+  0 °C), heavy rain (`heavy_rain` of a part of the day; older data: 10 mm or more), gusts
+  (`gust_over_threshold`, with the strongest gust; older data: an hourly mean of 10 m/s
+  or more), heat (30 °C or more).
 {%- endcomment -%}
 {%- assign alerts = "" -%}{%- assign n_alerts = 0 -%}
-{%- assign ice = false -%}
-{%- if day and tmin <= 1 -%}
-  {%- for t in H.time -%}
-    {%- assign e = t | date: "%s" | plus: 0 -%}{% include "partials/local" %}
-    {%- assign hd = le | date: "%Y-%m-%d" -%}
-    {%- if hd != day -%}{%- continue -%}{%- endif -%}
-    {%- assign ht = H.temperature_2m[forloop.index0] -%}{%- assign hp = H.precipitation[forloop.index0] | default: 0 -%}
-    {%- if ht != nil and ht <= 0.5 and hp >= 0.1 -%}{%- assign ice = true -%}{%- break -%}{%- endif -%}
-  {%- endfor -%}
+{%- comment -%} the night ending this morning carries the frost fields; an obec's are its own {%- endcomment -%}
+{%- assign night = rows | where: "part", "night" | first -%}
+{%- if orows -%}{%- assign onight = orows | where: "part", "night" | first -%}{%- if onight.frost != nil -%}{%- assign night = onight -%}{%- endif -%}{%- endif -%}
+{%- if night.frost == true -%}
+  {%- capture a -%}<span class="mv-badge">{{ T_frost }} {{ night.night_min | round }}°</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
+{%- elsif night.ground_frost == true -%}
+  {%- capture a -%}<span class="mv-badge">{{ T_ground_frost }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
+{%- elsif night.frost == nil and rows.size > 0 and tmin <= 0 -%}
+  {%- capture a -%}<span class="mv-badge">{{ T_frost }} {{ tmin | round }}°</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
 {%- endif -%}
-{%- if ice -%}
-  {%- capture a -%}<span class="mv-badge">{{ T_ice }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
-{%- else -%}
-  {%- comment -%} the night ending this morning carries the frost fields {%- endcomment -%}
-  {%- assign night = rows | where: "part", "night" | first -%}
-  {%- if night.frost == true -%}
-    {%- capture a -%}<span class="mv-badge">{{ T_frost }} {{ night.night_min | round }}°</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
-  {%- elsif night.ground_frost == true -%}
-    {%- capture a -%}<span class="mv-badge">{{ T_ground_frost }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
-  {%- elsif night.frost == nil and rows.size > 0 and tmin <= 0 -%}
-    {%- capture a -%}<span class="mv-badge">{{ T_frost }} {{ tmin | round }}°</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
+{%- assign heavy = false -%}{%- assign flagged = false -%}{%- assign gusty = false -%}{%- assign gust_flags = false -%}{%- assign gust_max = 0 -%}
+{%- for r in rows -%}
+  {%- if r.heavy_rain != nil -%}{%- assign flagged = true -%}{%- if r.heavy_rain == true -%}{%- assign heavy = true -%}{%- endif -%}{%- endif -%}
+  {%- if r.gust_over_threshold != nil -%}{%- assign gust_flags = true -%}
+    {%- if r.gust_over_threshold == true -%}{%- assign gusty = true -%}{%- if r.gust > gust_max -%}{%- assign gust_max = r.gust -%}{%- endif -%}{%- endif -%}
   {%- endif -%}
-{%- endif -%}
-{%- if rows.size > 0 and rain >= 10 -%}
+{%- endfor -%}
+{%- if flagged == false and rows.size > 0 and rain >= 10 -%}{%- assign heavy = true -%}{%- endif -%}
+{%- if heavy -%}
   {%- capture a -%}<span class="mv-badge">{{ T_downpour }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
 {%- endif -%}
-{%- if rows.size > 0 and wind >= 10 and n_alerts < 2 -%}
-  {%- capture a -%}<span class="mv-badge">{{ T_storm }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
+{%- if n_alerts < 2 -%}
+  {%- if gusty -%}
+    {%- capture a -%}<span class="mv-badge">{{ T_gusts }} {{ gust_max | times: wind_k | round }} {{ wind_unit }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
+  {%- elsif gust_flags == false and rows.size > 0 and wind >= 10 -%}
+    {%- capture a -%}<span class="mv-badge">{{ T_storm }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
+  {%- endif -%}
 {%- endif -%}
 {%- if rows.size > 0 and tmax >= 30 and n_alerts < 2 -%}
   {%- capture a -%}<span class="mv-badge">{{ T_heat }} {{ tmax | round }}°</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
 {%- endif -%}
+{%- if n_alerts > 0 -%}{%- assign any_alerts = true -%}{%- endif -%}

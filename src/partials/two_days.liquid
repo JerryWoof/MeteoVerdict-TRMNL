@@ -1,5 +1,5 @@
 {%- comment -%}
-  Two days side by side, the days of `pair`, each with warnings, its parts of day and hourly
+  Two days side by side, the days of `pair`, each with its threshold badges, its parts of day and hourly
   curve; the second says how much warmer or colder it gets. Heads: `weekend` false (today
   and tomorrow) names them Today / Tomorrow by `start`; `weekend` true by day name and
   date. A day of `pair` that is not in the forecast gets a note instead.
@@ -12,6 +12,7 @@
   .mv-tt .temps { display: flex; flex-direction: column; flex: none; }
   .mv-tt .mv-max { font-size: 72px; }
   .mv-tt .min { font-size: 20px; font-weight: 600; margin-top: 2px; }
+  .mv-tt .mv-head .when { overflow: hidden; text-overflow: clip; }
   .mv-tt .side { margin-left: auto; text-align: right; line-height: 1.3; min-width: 0; }
   .mv-tt .what { font-size: 18px; font-weight: 800; white-space: nowrap; }
   .mv-tt .diff { font-size: 15px; font-weight: 600; white-space: nowrap; }
@@ -22,7 +23,7 @@
   .mv-part .n { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
   .mv-part svg { width: 38px; height: 38px; display: block; margin: 0 auto; }
   .mv-part .t { font-size: 19px; font-weight: 800; line-height: 1; }
-  .mv-tt .mv-chart { flex: 1; min-height: 60px; }
+  .mv-tt .mv-chart { margin-top: auto; }
   .mv-tt .beyond { flex: 1; display: flex; align-items: center; justify-content: center; border: 2px dashed #000; border-radius: 8px; padding: 20px; font-size: 20px; font-weight: 700; text-align: center; }
 </style>
 <div class="mv mv-tt">
@@ -36,14 +37,14 @@
           {%- if weekend -%}{{ day_name }}{%- elsif forloop.first and start == 0 -%}{{ T_today }}{%- elsif forloop.first or start == 0 -%}{{ T_tomorrow }}{%- else -%}{{ day_name }}{%- endif -%}
           {%- if alerts != "" -%}{{ alerts }}{%- endif -%}
         </span>
-        <span class="date">{% if weekend %}{{ day_dm }}{% elsif start == 0 or forloop.first %}{{ day_long }}{% else %}{{ day_date }}{% endif %}</span>
+        <span class="date">{% if alerts != "" %}{{ day_short }} {{ day_date }}{% elsif weekend %}{{ day_dm }}{% elsif start == 0 or forloop.first %}{{ day_long }}{% else %}{{ day_date }}{% endif %}</span>
       </div>
       {%- if days contains day -%}
       <div class="hero">
         {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
         {% include "partials/icon" %}
         <div class="temps">
-          <span class="mv-max">{{ tmax | round }}°</span>
+          <span class="mv-max">{{ tmax | round }}°{% if pm != nil and pm >= 1 and day != real_today %}<small class="mv-pm">±{{ pm }}</small>{% endif %}</span>
           <span class="min">{{ T_low }} {{ tmin | round }}°</span>
         </div>
         <div class="side">
@@ -66,7 +67,7 @@
         <div class="mv-fact"><span>{{ T_wind }}</span><b>{{ wind | times: wind_k | round }} {{ wind_unit }}</b><i>{{ T_max }}</i></div>
       </div>
       {% include "partials/parts" %}
-      {%- assign chart_days = day | split: "," -%}{%- assign chart_h = 74 -%}{%- assign chart_class = "" -%}
+      {%- assign chart_days = day | split: "," -%}{%- assign chart_w = 379 -%}{%- assign chart_h = 132 -%}{%- assign chart_axis = true -%}{%- assign chart_labels = false -%}{%- assign chart_class = "" -%}
       {% include "partials/chart" %}
       {%- assign prev_max = tmax | round -%}
       {%- else -%}
