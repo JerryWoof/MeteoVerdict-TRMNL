@@ -36,7 +36,7 @@ export async function load({ okres = "CZ0100", data, ai, obec } = {}) {
     return res.json();
   };
   const doc = await get(`${API.replace("/okresy", ai ? "/ai/okresy" : "/okresy")}/${okres}.json`);
-  return obec ? { IDX_0: doc, IDX_1: await get(`${API.replace("/okresy", "/obce")}/${obec}.json`) } : doc;
+  return obec ? { IDX_0: doc, IDX_1: await get(`${API.replace("/okresy", ai ? "/ai/obce" : "/obce")}/${obec}.json`) } : doc;
 }
 
 export async function renderLayout(layout, json, { view, place, lang, offset = 7200, evening, wind } = {}) {
