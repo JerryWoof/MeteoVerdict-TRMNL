@@ -354,7 +354,7 @@
   {%- assign e = t | date: "%s" | plus: 0 -%}
 {%- if e >= dst_start and e < dst_end -%}{%- assign le = e | plus: 7200 -%}{%- else -%}{%- assign le = e | plus: 3600 -%}{%- endif -%}
   {%- assign x = le | minus: base | divided_by: 360.0 -%}
-  {%- if x < 0 or x >= cw -%}{%- continue -%}{%- endif -%}
+  {%- if x < 0 or x > cw -%}{%- continue -%}{%- endif -%}
   {%- assign v = H.temperature_2m[forloop.index0] -%}
   {%- if v != nil -%}
     {%- if v < c_lo -%}{%- assign c_lo = v -%}{%- assign x_lo = x -%}{%- endif -%}
@@ -373,11 +373,13 @@
   {%- if x < 0 or x > cw -%}{%- continue -%}{%- endif -%}
   {%- assign i = forloop.index0 -%}
   {%- assign v = H.temperature_2m[i] -%}
-  {%- if v != nil and x < cw -%}
+  {%- if v != nil -%}
     {%- assign y = c_top | minus: v | times: curve_h | divided_by: c_span | plus: top_y | round: 1 -%}
     {%- assign px = x | times: k | round: 1 -%}
+    {%- if pts == "" and px > 0 -%}{%- capture pt -%}0,{{ y }}{%- endcapture -%}{%- assign pts = pt -%}{%- endif -%}
     {%- capture pt -%}{{ px }},{{ y }}{%- endcapture -%}
     {%- assign pts = pts | append: " " | append: pt -%}
+    {%- assign last_y = y -%}{%- assign last_px = px -%}
   {%- endif -%}
   {%- assign p = H.precipitation[i] | default: 0 -%}
   {%- if p >= 0.1 and x > 0 -%}
@@ -387,6 +389,7 @@
     {%- assign bars = bars | append: bar -%}
   {%- endif -%}
 {%- endfor -%}
+{%- if pts != "" and last_px < chart_w -%}{%- capture pt -%}{{ chart_w }},{{ last_y }}{%- endcapture -%}{%- assign pts = pts | append: " " | append: pt -%}{%- endif -%}
 <svg class="mv-chart {{ chart_class }}" width="{{ chart_w }}" height="{{ chart_h }}" viewBox="0 0 {{ chart_w }} {{ chart_h }}">
   {%- for cd in chart_days -%}
     {%- assign x0 = forloop.index0 | times: 240 -%}
@@ -399,9 +402,9 @@
       <rect x="{{ nx0 }}" y="0" width="{{ nx1 | minus: nx0 }}" height="{{ floor_y }}" fill="url(#mv-night)"/>
       <rect x="{{ nx2 }}" y="0" width="{{ nx3 | minus: nx2 }}" height="{{ floor_y }}" fill="url(#mv-night)"/>
     {%- endif -%}
-    {%- if chart_days.size == 1 -%}
+    {%- if chart_axis or chart_days.size == 1 -%}
       {%- for hh in (1..3) -%}
-        {%- assign gx = hh | times: 60 | times: k | round | plus: 0.5 -%}
+        {%- assign gx = hh | times: 60 | plus: x0 | times: k | round | plus: 0.5 -%}
         <path d="M{{ gx }} {{ floor_y | minus: 5 }}V{{ floor_y }}" stroke="#000" stroke-width="1"/>
         {%- if chart_axis -%}<text x="{{ gx }}" y="{{ chart_h | minus: 2 }}" text-anchor="middle" class="mv-tick">{{ hh | times: 6 | prepend: "0" | slice: -2, 2 }}</text>{%- endif -%}
       {%- endfor -%}

@@ -91,9 +91,14 @@ test("rain in a day's last hour is drawn at the end of that day, not before the 
   // the hour 23–24 Prague time (CEST) ends at 22 UTC
   const late = variant((f) => hourly(f, "precipitation", (_, i) => (i === idx("2026-10-12T22:00:00Z") ? 2 : 0)));
   const html = await renderLayout("full", late, { view: "today_tomorrow" });
-  // the chart is 379 px wide, 15.8 px an hour: the bar of the hour 23–24 ends at the day's edge
-  const bars = [...html.matchAll(/<rect x="([-\d.]+)" y="[\d.]+" width="14.8"/g)].map((m) => Number(m[1]));
-  assert.deepEqual(bars, [364]);
+  // one chart over both days, 780 px, 16.25 px an hour: the bar of the hour 23–24 ends at
+  // the midnight line (390 px), not after it
+  const bars = [...html.matchAll(/<rect x="([-\d.]+)" y="([\d.]+)" width="([\d.]+)"/g)]
+    .filter((m) => m[2] !== "0") // the night's rectangles start at the top
+    .map((m) => [Number(m[1]), Number(m[3])]);
+  assert.equal(bars.length, 1);
+  const [[x, w]] = bars;
+  assert.ok(x > 370 && x + w <= 390, `${x} + ${w}`);
 });
 
 test("missing values show a dash, not 0°", async () => {

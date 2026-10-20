@@ -1,11 +1,14 @@
 {%- comment -%}
-  Two days side by side, the days of `pair`, each with its threshold badges, its parts of day and hourly
-  curve; the second says how much warmer or colder it gets. Heads: `weekend` false (today
+  Two days side by side, the days of `pair`, each with its threshold badges and its parts
+  of day, and under both one hourly curve over the two days, as in the 5-day view (a day
+  beyond the forecast: the other day's curve in its own column); the second day says how
+  much warmer or colder it gets. Heads: `weekend` false (today
   and tomorrow) names them Today / Tomorrow by `start`; `weekend` true by day name and
   date. A day of `pair` that is not in the forecast gets a note instead.
 {%- endcomment -%}
 <style>
-  .mv-tt { display: flex; gap: 22px; }
+  .mv-tt { display: flex; flex-direction: column; gap: 5px; }
+  .mv-tt .cols { flex: 1; min-height: 0; display: flex; gap: 22px; }
   .mv-tt .col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
   .mv-tt .hero { display: flex; align-items: center; gap: 6px; height: 96px; }
   .mv-tt .hero > svg { width: 92px; height: 92px; flex: none; }
@@ -26,7 +29,10 @@
   .mv-tt .mv-chart { margin-top: auto; }
   .mv-tt .beyond { flex: 1; display: flex; align-items: center; justify-content: center; border: 2px dashed #000; border-radius: 8px; padding: 20px; font-size: 20px; font-weight: 700; text-align: center; }
 </style>
+{%- assign pair_both = 0 -%}
+{%- for d in pair -%}{%- if days contains d -%}{%- assign pair_both = pair_both | plus: 1 -%}{%- endif -%}{%- endfor -%}
 <div class="mv mv-tt">
+  <div class="cols">
   {%- assign prev_max = nil -%}
   {%- for day in pair -%}
     {% include "partials/day" %}
@@ -67,8 +73,10 @@
         <div class="mv-fact"><span>{{ T_wind }}</span><b>{{ wind | times: wind_k | round }} {{ wind_unit }}</b><i>{{ T_max }}</i></div>
       </div>
       {% include "partials/parts" %}
+      {%- if pair_both < 2 -%}
       {%- assign chart_days = day | split: "," -%}{%- assign chart_w = 379 -%}{%- assign chart_h = 132 -%}{%- assign chart_axis = true -%}{%- assign chart_labels = false -%}{%- assign chart_class = "" -%}
       {% include "partials/chart" %}
+      {%- endif -%}
       {%- assign prev_max = tmax | round -%}
       {%- else -%}
       {%- assign beyond_name = day_name | capitalize -%}
@@ -77,4 +85,9 @@
       {%- endif -%}
     </div>
   {%- endfor -%}
+  </div>
+  {%- if pair_both == 2 -%}
+  {%- assign chart_days = pair -%}{%- assign chart_w = 780 -%}{%- assign chart_h = 132 -%}{%- assign chart_axis = true -%}{%- assign chart_labels = false -%}{%- assign chart_class = "" -%}
+  {% include "partials/chart" %}
+  {%- endif -%}
 </div>
