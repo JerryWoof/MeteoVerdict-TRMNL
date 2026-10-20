@@ -48,7 +48,6 @@ const SHOTS = {
   "today-tomorrow-blend": one("full", "CZ0100", { view: "today_tomorrow", place: "Praha" }, {}),
   "today-tomorrow-obec": one("full", "CZ0525", { view: "today_tomorrow" }, { obec: "CZ0525/spindleruv-mlyn" }),
   "thresholds-simulated": winter({ view: "five_days", place: "Praha (simulated winter)" }),
-  "thresholds-simulated-cs": winter({ view: "five_days", place: "Praha (simulovaná zima)", lang: "cs" }),
   "mashup-half-horizontal": mashup("1Tx1B", [
     one("half_horizontal", "CZ0100", { place: "Praha" }),
     one("half_horizontal", "CZ0642", { place: "Brno" }),

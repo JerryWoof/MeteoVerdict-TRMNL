@@ -86,14 +86,10 @@ Monday's forecast arrives), it shows the next two days instead, under a small no
 
 ### Czech
 
-| Dnes a zítra | Příštích 24 hodin |
-|---|---|
-| ![Dnes a zítra v Brně](screenshots/today-tomorrow-cs.png) | ![Příštích 24 hodin v Brně](screenshots/next-24-hours-cs.png) |
-| **Předpověď na 5 dní** | **Víkend** |
-| ![Pět dní v Brně](screenshots/five-days-cs.png) | ![Víkend v Brně](screenshots/weekend-cs.png) |
-
-Every view also comes in Czech (*Jazyk: Čeština*), with Czech day and month names and
-decimal commas.
+Every view also comes in Czech (*Language: Čeština*), with Czech day and month names and
+decimal commas. Screenshots: [today and tomorrow](screenshots/today-tomorrow-cs.png),
+[next 24 hours](screenshots/next-24-hours-cs.png), [5 days](screenshots/five-days-cs.png),
+[weekend](screenshots/weekend-cs.png).
 
 ### Thresholds
 
@@ -247,8 +243,8 @@ show only the time, plus the date if the forecast isn't from today. A forecast o
 30 hours gets an *old forecast* badge. If the data has nothing left for today, the screen
 says so instead of showing an old day.
 
-Today's curve starts at 01:00 (02:00 in summer), because the forecast starts at
-midnight UTC.
+The forecast starts at midnight UTC, so today's first hour is 01:00 (02:00 in summer);
+the curve is held level from the left edge to that hour.
 
 ## Develop
 
