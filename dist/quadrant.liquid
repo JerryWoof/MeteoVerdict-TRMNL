@@ -33,7 +33,7 @@
   {%- assign T_warmest = "Nejtepleji" -%}{%- assign T_wettest = "Nejvíc srážek" -%}{%- assign T_sunniest = "Nejvíc slunce" -%}
   {%- assign T_frost = "Mráz" -%}{%- assign T_ground_frost = "Přízemní mráz" -%}{%- assign T_heat = "Vedro" -%}
   {%- assign T_storm = "Silný vítr" -%}{%- assign T_gusts = "Nárazy" -%}{%- assign T_downpour = "Vydatně prší" -%}
-  {%- assign T_updated = "aktualizace" -%}{%- assign T_models = "modelů" -%}{%- assign T_ai = "MeteoVerdict AI" -%}{%- assign T_obec = "obec (test)" -%}
+  {%- assign T_updated = "aktualizace" -%}{%- assign T_models = "modelů" -%}{%- assign T_ai = "MeteoVerdict AI" -%}
   {%- assign T_stale = "stará předpověď" -%}{%- assign T_none = "Předpověď na dnešek zatím není. Poslední je z" -%}
   {%- assign T_symbols = "Jasno,Polojasno,Zataženo,Přeháňky,Déšť,Déšť se sněhem,Sněžení" | split: "," -%}
   {%- assign T_days = "neděle,pondělí,úterý,středa,čtvrtek,pátek,sobota" | split: "," -%}
@@ -58,7 +58,7 @@
   {%- assign T_warmest = "Warmest" -%}{%- assign T_wettest = "Wettest" -%}{%- assign T_sunniest = "Sunniest" -%}
   {%- assign T_frost = "Frost" -%}{%- assign T_ground_frost = "Ground frost" -%}{%- assign T_heat = "Hot" -%}
   {%- assign T_storm = "Strong wind" -%}{%- assign T_gusts = "Gusts" -%}{%- assign T_downpour = "Heavy rain" -%}
-  {%- assign T_updated = "updated" -%}{%- assign T_models = "models" -%}{%- assign T_ai = "MeteoVerdict AI" -%}{%- assign T_obec = "obec (test)" -%}
+  {%- assign T_updated = "updated" -%}{%- assign T_models = "models" -%}{%- assign T_ai = "MeteoVerdict AI" -%}
   {%- assign T_stale = "old forecast" -%}{%- assign T_none = "No forecast for today yet. The latest is from" -%}
   {%- assign T_symbols = "Sunny,Partly cloudy,Cloudy,Showers,Rain,Sleet,Snow" | split: "," -%}
   {%- assign T_days = "Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday" | split: "," -%}
@@ -432,7 +432,7 @@
 {%- assign gtime = generated_local | date: "%H:%M" -%}
 {%- assign gday = generated_local | date: "%Y-%m-%d" -%}
 <div class="title_bar">
-  <span class="title">{{ place }}{% if obec %} <span class="mv-note">{{ T_obec }}</span>{% endif %}</span>
+  <span class="title">{{ place }}</span>
   {%- if stale -%}
   <span class="instance"><span class="mv-badge">{{ T_stale }}</span> {{ gdate }} {{ gtime }}</span>
   {%- elsif compact -%}

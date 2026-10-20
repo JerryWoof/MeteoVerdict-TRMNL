@@ -131,7 +131,7 @@ models* (above).
 For a hilly okres the okres's one forecast point can be far from your village. MeteoVerdict
 also forecasts every obec (a test, with the combined forecast), corrected for its elevation. With an obec, the
 temperature, rain and wind (and the frost badges) are the obec's; the sky, sunshine and
-chance of rain stay the okres's. The footer shows the obec's name and *obec (test)*. See
+chance of rain stay the okres's. The footer shows the obec's name. See
 [Install](#an-obec-private-plugins) for how to set it up.
 
 ## Sharing the screen

@@ -386,16 +386,17 @@ test("an obec: its name, its temperatures and rain, the okres's sky", async () =
   const day = (doc, d) => doc.find((p) => p.day === d && p.part === "day");
   assert.match(words, /^ ?Today/);
   assert.match(words, new RegExp(`${Math.round(day(MILICIN.parts, "2026-10-20").tmax)}°`));
-  assert.match(words, /Miličín obec \(test\)/);
+  assert.match(words, /Miličín MeteoVerdict/);
+  assert.doesNotMatch(words, /test/);
   assert.notEqual(Math.round(day(MILICIN.parts, "2026-10-21").tmax), Math.round(day(BENESOV.forecast.parts, "2026-10-21").tmax));
   assert.match(words, new RegExp(`Tomorrow .*${Math.round(day(MILICIN.parts, "2026-10-21").tmax)}°`));
   // the place name setting still wins
-  assert.match(text(await renderLayout("full", both, { place: "Chata" })), /Chata obec \(test\)/);
+  assert.match(text(await renderLayout("full", both, { place: "Chata" })), /Chata MeteoVerdict/);
   // an obec file that does not fit the okres file's hours is left out
   const short = structuredClone(MILICIN);
   short.hourly.temperature_2m = short.hourly.temperature_2m.slice(0, 100);
   const okres = text(await renderLayout("full", { IDX_0: BENESOV, IDX_1: short }, {}));
-  assert.doesNotMatch(okres, /obec \(test\)|Miličín/);
+  assert.doesNotMatch(okres, /Miličín/);
   assert.match(okres, /Benešov/);
 });
 
