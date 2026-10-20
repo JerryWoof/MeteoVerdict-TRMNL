@@ -14,13 +14,13 @@ over the last 90 days. So you get a forecast tuned for where you live rather tha
 model's opinion. Free, no API key.
 
 **New in October 2026**
-- **Which forecast:** MeteoVerdict's combined forecast (the default) or **MeteoVerdict AI**
-  (experimental) for temperature and wind. The footer says which one you are looking at.
-- **The range of the temperature:** from tomorrow on, the high comes with its "±", half
-  of MeteoVerdict's 80 % range (*16° ±2*).
+- **MeteoVerdict AI:** temperature and wind come from MeteoVerdict's own AI model (the
+  default), everything else from the combined forecast; or pick the combined forecast of
+  all models. The footer says which one you are looking at.
+- **The range of the temperature:** with the combined forecast, from tomorrow on, the
+  high comes with its "±", half of MeteoVerdict's 80 % range (*16° ±2*).
 - **Thresholds from MeteoVerdict itself:** the badges use the same flags as the website
-  (frost from the corrected night minimum, ground frost, heavy rain, gusts over 13.5 m/s),
-  and the footer says that they are thresholds, not ČHMÚ warnings.
+  (frost from the corrected night minimum, ground frost, heavy rain, gusts over 13.5 m/s).
 - **An obec instead of the okres** (a test): the temperature, rain and wind of any of
   6,258 municipalities, corrected for its elevation.
 - **Rain with its chance and day:** *Rain from tomorrow 16:00 · 1.5 mm · 23 % chance*.
@@ -36,14 +36,14 @@ A weather display gets a glance on your way out, so each view answers one questi
 ### Today and tomorrow
 
 Two days side by side. For each:
-- the symbol, high and low (tomorrow's high with its ±), and a one-word summary;
+- the symbol, high and low (with the combined forecast, tomorrow's high with its ±), and a one-word summary;
 - rain with its chance, hours of sunshine out of the day's daylight (and how many minutes
   longer or shorter the day is than the day before: *of 10 h 26 min (−3)*), cloud cover
   and wind;
 - sunrise and sunset, and for the second day how much warmer or colder it gets;
 - night, morning, afternoon and evening, each with its own symbol;
-- the hourly temperature curve, with rain bars, the night dotted, a dashed line at the
-  current time and the hours 06, 12 and 18 under it;
+- under both days, one hourly temperature curve from edge to edge, with rain bars, the
+  night dotted, a dashed line at the current time and the hours 06, 12 and 18 under each day;
 - up to two threshold badges in the day's head.
 
 After 18:00 the screen moves on to tomorrow and the day after, since by then that's what
@@ -66,7 +66,7 @@ For "do I need an umbrella?":
 ![Five days in Prague](screenshots/five-days.png)
 
 For planning the week:
-- each day's symbol, high (with its ± from tomorrow on) and low, rain, sunshine and wind;
+- each day's symbol, high (with the combined forecast, its ± from tomorrow on) and low, rain, sunshine and wind;
 - one continuous temperature curve over the five days, rain bars under it;
 - a closing line naming the warmest, wettest and sunniest day.
 
@@ -111,27 +111,29 @@ A day gets up to two badges, from MeteoVerdict's own threshold flags:
 | Gusts / Nárazy | The strongest gust of the day is 13.5 m/s or more; shows it, in your wind unit |
 | Hot / Vedro | 30 °C or more |
 
-These are MeteoVerdict's thresholds on its forecast, **not official ČHMÚ warnings**; the
-footer says so whenever a badge is on screen. Official warnings: [chmi.cz](https://www.chmi.cz/).
+These are MeteoVerdict's thresholds on its forecast, **not official ČHMÚ warnings**.
+Official warnings: [chmi.cz](https://www.chmi.cz/).
 (Older data without the flags falls back to the previous rules: a low of 0 °C, 10 mm of
 rain, an hourly mean wind of 10 m/s.)
 
-### MeteoVerdict AI
+### MeteoVerdict AI or the combined forecast
 
-![Today and tomorrow in Prague with MeteoVerdict AI](screenshots/today-tomorrow-ai.png)
+![Today and tomorrow in Prague with the combined forecast](screenshots/today-tomorrow-blend.png)
 
-With *Forecast: MeteoVerdict AI (experimental)*, temperature and wind come from
-MeteoVerdict's own AI model; everything else (rain, clouds, sunshine, symbols, gusts,
-frost) stays the combined forecast. The AI has no "±" yet, so the highs come without it,
-and the footer says *MeteoVerdict AI (exp.)*. It is experimental: the combined forecast,
-which is checked against the stations every day, stays the default.
+By default (*Forecast: MeteoVerdict AI*), temperature and wind come from MeteoVerdict's
+own AI model, as on the website, and everything else (rain, clouds, sunshine, symbols,
+gusts, frost) from the combined forecast; the footer says *MeteoVerdict AI*. The AI is
+still experimental and has no "±". With *Forecast: MeteoVerdict (all models combined)*
+everything is the combined forecast, which is checked against the stations every day,
+the highs from tomorrow on come with their ±, and the footer says *MeteoVerdict · 19
+models* (above).
 
 ### An obec
 
 ![Špindlerův Mlýn, an obec in the okres Trutnov](screenshots/today-tomorrow-obec.png)
 
 For a hilly okres the okres's one forecast point can be far from your village. MeteoVerdict
-also forecasts every obec (a test), corrected for its elevation. With an obec, the
+also forecasts every obec (a test, with the combined forecast), corrected for its elevation. With an obec, the
 temperature, rain and wind (and the frost badges) are the obec's; the sky, sunshine and
 chance of rain stay the okres's. The footer shows the obec's name and *obec (test)*. See
 [Install](#an-obec-private-plugins) for how to set it up.
@@ -166,7 +168,7 @@ Add it to your TRMNL as a private plugin. That takes about five minutes.
 
    `{{ forecast }}` and `{{ okres_code }}` are filled in from the form in step 3.
    (Installed before October 2026 with `…/api/v1/okresy/{{ okres_code }}.json`? That
-   still works and is the combined forecast; switch to the URL above to choose.)
+   still works and is the combined forecast; switch to the URL above for MeteoVerdict AI.)
 3. **Form fields:** paste [`src/settings.yml`](src/settings.yml), then save, fill in the
    form and save again. It creates these fields:
 
@@ -174,7 +176,7 @@ Add it to your TRMNL as a private plugin. That takes about five minutes.
    |---|---|
    | About This Plugin | The description and links. Nothing to fill in |
    | Okres | A dropdown of all 77. Required |
-   | Forecast | MeteoVerdict (all models combined), the default, or MeteoVerdict AI (experimental) |
+   | Forecast | MeteoVerdict AI, the default, or MeteoVerdict (all models combined) |
    | View | What the full screen shows: today and tomorrow, next 24 hours, 5 days, or the weekend |
    | Place name | Shown in the footer instead of the okres (or obec) name. Optional |
    | Move on to tomorrow in the evening | After 18:00 the day layouts show tomorrow and the day after, and the weekend view looks a day ahead. On by default |
@@ -227,7 +229,8 @@ requirements (its own styles exceed the linter's limit on inline layout styles).
 
 | Value | Where it comes from |
 |---|---|
-| Temperature, rain, wind | MeteoVerdict's blend of about 20 models, weighted and bias-corrected per okres and lead day ([methodology](https://github.com/JerryWoof/MeteoVerdict/blob/main/docs/methodology.md)); or, with *MeteoVerdict AI*, temperature and wind from the AI |
+| Temperature, wind | MeteoVerdict AI (experimental), by default; with the combined forecast, MeteoVerdict's blend of about 20 models, weighted and bias-corrected per okres and lead day ([methodology](https://github.com/JerryWoof/MeteoVerdict/blob/main/docs/methodology.md)) |
+| Rain | MeteoVerdict's blend, as above |
 | ± of the high | Half of the 80 % range of the blend's temperature at the day's warmest hour: the true high falls inside the range about 8 times in 10 |
 | Chance of rain | MeteoVerdict's chance of rain for each part of the day; the 24-hour sentence takes the highest of the parts it covers |
 | Clouds, sunshine | The mean of the models, corrected against ČHMÚ observations |
@@ -238,8 +241,8 @@ requirements (its own styles exceed the linter's limit on inline layout styles).
 | Hourly symbols (next 24 hours) | The plugin's own, per hour: rain, sleet or snow from 0.5 mm, showers from 0.1 mm, otherwise clear under 25 % cloud, partly cloudy under 70 % |
 | Feels like | Wind chill (Environment Canada formula), at 10 °C or below with wind over 4.8 km/h |
 
-The full-screen footer shows which forecast it is (*MeteoVerdict · 19 models* or
-*MeteoVerdict AI (exp.)*), its licence and when it was made. The half and quarter footers
+The full-screen footer shows which forecast it is (*MeteoVerdict AI*, or *MeteoVerdict ·
+19 models* for the combined forecast) and when it was made. The half and quarter footers
 show only the time, plus the date if the forecast isn't from today. A forecast older than
 30 hours gets an *old forecast* badge. If the data has nothing left for today, the screen
 says so instead of showing an old day.
@@ -291,11 +294,10 @@ npm run settings              # regenerate src/settings.yml from MeteoVerdict's 
   DMI, ČHMÚ, Environment and Climate Change Canada, the Japan Meteorological Agency, the
   China Meteorological Administration and the UK Met Office (CC BY-SA 4.0), and from ČHMÚ
   observations (CC BY 4.0). Boundaries: ČÚZK (CC BY 4.0). Obec elevations: Copernicus DEM
-  GLO-90. The footer of every layout credits MeteoVerdict, and the full-screen footer its
-  licence.
+  GLO-90. The footer of every layout credits MeteoVerdict.
 - **Non-commercial.** MeteoVerdict uses Open-Meteo's free, non-commercial API, so this
   plugin is free and without ads, and stays that way.
 - **Thresholds, not warnings.** Only ČHMÚ issues weather warnings in Czechia (Act 262/2024
-  Sb.); the badges are MeteoVerdict's thresholds and the screen says so.
+  Sb.); the badges are MeteoVerdict's thresholds.
 
 A non-commercial, independent project, not affiliated with TRMNL, ČHMÚ or Open-Meteo.

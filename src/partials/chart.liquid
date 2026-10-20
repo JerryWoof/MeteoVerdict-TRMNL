@@ -3,8 +3,8 @@
   `chart_w` × `chart_h` px, so the night's dot screen and the lines land on whole pixels
   of the e-ink panel: night as a light dot screen from sunset to sunrise, rain bars (mm in
   the hour before the value's time, full height at 3 mm) in the bottom 40 %, a dashed line
-  at the current time and, without `chart_axis`, a solid one between days. `chart_axis`:
-  hour ticks and labels 06 12 18 under every day, no line at midnight. `chart_labels`: the curve's highest and lowest value written on it.
+  at the current time, and no line at midnight. `chart_axis`: hour ticks and labels
+  06 12 18 under every day. `chart_labels`: the curve's highest and lowest value written on it.
   Inside, x runs 240 units per day (`k` px per unit).
 {%- endcomment -%}
 {%- assign cw = chart_days.size | times: 240 -%}
@@ -76,8 +76,6 @@
         <path d="M{{ gx }} {{ floor_y | minus: 5 }}V{{ floor_y }}" stroke="#000" stroke-width="1"/>
         {%- if chart_axis -%}<text x="{{ gx }}" y="{{ chart_h | minus: 2 }}" text-anchor="middle" class="mv-tick">{{ hh | times: 6 | prepend: "0" | slice: -2, 2 }}</text>{%- endif -%}
       {%- endfor -%}
-    {%- elsif forloop.index0 > 0 -%}
-      <path d="M{{ x0 | times: k | round }} 0V{{ floor_y }}" stroke="#000" stroke-width="2"/>
     {%- endif -%}
   {%- endfor -%}
   <g fill="#000" shape-rendering="crispEdges">{{ bars }}</g>

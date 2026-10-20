@@ -33,8 +33,7 @@
   {%- assign T_warmest = "Nejtepleji" -%}{%- assign T_wettest = "Nejvíc srážek" -%}{%- assign T_sunniest = "Nejvíc slunce" -%}
   {%- assign T_frost = "Mráz" -%}{%- assign T_ground_frost = "Přízemní mráz" -%}{%- assign T_heat = "Vedro" -%}
   {%- assign T_storm = "Silný vítr" -%}{%- assign T_gusts = "Nárazy" -%}{%- assign T_downpour = "Vydatně prší" -%}
-  {%- assign T_thresholds = "Prahy, ne výstrahy ČHMÚ" -%}{%- assign T_thresholds_short = "nejde o výstrahy ČHMÚ" -%}
-  {%- assign T_updated = "aktualizace" -%}{%- assign T_models = "modelů" -%}{%- assign T_ai = "MeteoVerdict AI (exp.)" -%}{%- assign T_obec = "obec (test)" -%}
+  {%- assign T_updated = "aktualizace" -%}{%- assign T_models = "modelů" -%}{%- assign T_ai = "MeteoVerdict AI" -%}{%- assign T_obec = "obec (test)" -%}
   {%- assign T_stale = "stará předpověď" -%}{%- assign T_none = "Předpověď na dnešek zatím není. Poslední je z" -%}
   {%- assign T_symbols = "Jasno,Polojasno,Zataženo,Přeháňky,Déšť,Déšť se sněhem,Sněžení" | split: "," -%}
   {%- assign T_days = "neděle,pondělí,úterý,středa,čtvrtek,pátek,sobota" | split: "," -%}
@@ -59,8 +58,7 @@
   {%- assign T_warmest = "Warmest" -%}{%- assign T_wettest = "Wettest" -%}{%- assign T_sunniest = "Sunniest" -%}
   {%- assign T_frost = "Frost" -%}{%- assign T_ground_frost = "Ground frost" -%}{%- assign T_heat = "Hot" -%}
   {%- assign T_storm = "Strong wind" -%}{%- assign T_gusts = "Gusts" -%}{%- assign T_downpour = "Heavy rain" -%}
-  {%- assign T_thresholds = "Thresholds, not ČHMÚ warnings" -%}{%- assign T_thresholds_short = "not ČHMÚ warnings" -%}
-  {%- assign T_updated = "updated" -%}{%- assign T_models = "models" -%}{%- assign T_ai = "MeteoVerdict AI (exp.)" -%}{%- assign T_obec = "obec (test)" -%}
+  {%- assign T_updated = "updated" -%}{%- assign T_models = "models" -%}{%- assign T_ai = "MeteoVerdict AI" -%}{%- assign T_obec = "obec (test)" -%}
   {%- assign T_stale = "old forecast" -%}{%- assign T_none = "No forecast for today yet. The latest is from" -%}
   {%- assign T_symbols = "Sunny,Partly cloudy,Cloudy,Showers,Rain,Sleet,Snow" | split: "," -%}
   {%- assign T_days = "Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday" | split: "," -%}
@@ -68,7 +66,6 @@
   {%- assign T_months = "January,February,March,April,May,June,July,August,September,October,November,December" | split: "," -%}
   {%- assign T_dec = "." -%}
 {%- endif -%}
-{%- assign any_alerts = false -%}
 {%- assign SYMBOLS = "clear,partly,cloudy,showers,rain,sleet,snow" | split: "," -%}
 {%- assign now_utc = "now" | date: "%s" | plus: 0 -%}
 {%- assign year = now_utc | date: "%Y" -%}
@@ -184,6 +181,13 @@
   {%- assign pm = rows | where: "part", "afternoon" | first | default: rows.last -%}
   {%- assign sym = pm.symbol -%}{%- assign cloud = pm.cloud -%}
 {%- endif -%}
+{%- if whole -%}
+  {%- for r in rows -%}
+    {%- if r.part == "day" -%}{%- continue -%}{%- endif -%}
+    {%- if r.tmin != nil and r.tmin < tmin -%}{%- assign tmin = r.tmin -%}{%- endif -%}
+    {%- if r.tmax != nil and r.tmax > tmax -%}{%- assign tmax = r.tmax -%}{%- endif -%}
+  {%- endfor -%}
+{%- endif -%}
 {%- if orows and orows.size > 0 -%}
   {%- assign owhole = orows | where: "part", "day" | first -%}
   {%- if owhole -%}
@@ -279,7 +283,6 @@
 {%- if rows.size > 0 and tmax >= 30 and n_alerts < 2 -%}
   {%- capture a -%}<span class="mv-badge">{{ T_heat }} {{ tmax | round }}°</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
 {%- endif -%}
-{%- if n_alerts > 0 -%}{%- assign any_alerts = true -%}{%- endif -%}
     <div class="mv-head"><span class="when">{% if start == 0 %}{{ T_today }}{% else %}{{ T_tomorrow }}{% endif %}{{ alerts }}</span><span class="date">{{ day_date }}</span></div>
     <div class="hero">
       {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
@@ -408,8 +411,6 @@
         <path d="M{{ gx }} {{ floor_y | minus: 5 }}V{{ floor_y }}" stroke="#000" stroke-width="1"/>
         {%- if chart_axis -%}<text x="{{ gx }}" y="{{ chart_h | minus: 2 }}" text-anchor="middle" class="mv-tick">{{ hh | times: 6 | prepend: "0" | slice: -2, 2 }}</text>{%- endif -%}
       {%- endfor -%}
-    {%- elsif forloop.index0 > 0 -%}
-      <path d="M{{ x0 | times: k | round }} 0V{{ floor_y }}" stroke="#000" stroke-width="2"/>
     {%- endif -%}
   {%- endfor -%}
   <g fill="#000" shape-rendering="crispEdges">{{ bars }}</g>
@@ -453,6 +454,13 @@
 {%- else -%}
   {%- assign pm = rows | where: "part", "afternoon" | first | default: rows.last -%}
   {%- assign sym = pm.symbol -%}{%- assign cloud = pm.cloud -%}
+{%- endif -%}
+{%- if whole -%}
+  {%- for r in rows -%}
+    {%- if r.part == "day" -%}{%- continue -%}{%- endif -%}
+    {%- if r.tmin != nil and r.tmin < tmin -%}{%- assign tmin = r.tmin -%}{%- endif -%}
+    {%- if r.tmax != nil and r.tmax > tmax -%}{%- assign tmax = r.tmax -%}{%- endif -%}
+  {%- endfor -%}
 {%- endif -%}
 {%- if orows and orows.size > 0 -%}
   {%- assign owhole = orows | where: "part", "day" | first -%}
@@ -550,12 +558,12 @@
 {%- assign gtime = generated_local | date: "%H:%M" -%}
 {%- assign gday = generated_local | date: "%Y-%m-%d" -%}
 <div class="title_bar">
-  <span class="title">{{ place }}{% if obec %} <span class="mv-note">{{ T_obec }}</span>{% endif %}{% if any_alerts %}<span class="mv-note">{% if compact or obec or place.size > 12 %}{{ T_thresholds_short }}{% else %}{{ T_thresholds }}{% endif %}</span>{% endif %}</span>
+  <span class="title">{{ place }}{% if obec %} <span class="mv-note">{{ T_obec }}</span>{% endif %}</span>
   {%- if stale -%}
   <span class="instance"><span class="mv-badge">{{ T_stale }}</span> {{ gdate }} {{ gtime }}</span>
   {%- elsif compact -%}
   <span class="instance">{% if ai %}MeteoVerdict AI{% else %}MeteoVerdict{% endif %} · {% if gday != real_today %}{{ gdate }} {% endif %}{{ gtime }}</span>
   {%- else -%}
-  <span class="instance">{% if ai %}{{ T_ai }}{% else %}MeteoVerdict{% if models_used > 0 %} · {{ models_used }} {{ T_models }}{% endif %}{% endif %} · CC BY-SA · {% if gday != real_today %}{{ gdate }} {% endif %}{{ gtime }}</span>
+  <span class="instance">{% if ai %}{{ T_ai }}{% else %}MeteoVerdict{% if models_used > 0 %} · {{ models_used }} {{ T_models }}{% endif %}{% endif %} · {% if gday != real_today %}{{ gdate }} {% endif %}{{ gtime }}</span>
   {%- endif -%}
 </div>
