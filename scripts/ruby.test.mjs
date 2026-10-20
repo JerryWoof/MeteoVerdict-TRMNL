@@ -51,3 +51,22 @@ for (const [now, cases] of [["2026-10-12T15:40:00Z", CASES], ["2026-10-12T20:10:
     });
   }
 }
+
+// the new open data of 20 October: the blend, the AI's file and an obec over two polling URLs
+const fixture = (name) => JSON.parse(readFileSync(new URL(`../test/fixtures/2026-10-20-${name}.json`, import.meta.url)));
+const NEW = [["blend", fixture("CZ0201")], ["AI", fixture("CZ0201-ai")], ["obec", { IDX_0: fixture("CZ0201"), IDX_1: fixture("CZ0201-milicin") }]];
+for (const now of ["2026-10-20T10:00:00Z", "2026-10-20T20:30:00Z"]) {
+  for (const [name, data] of NEW) {
+    for (const [layout, opts] of CASES) {
+      test(`ruby = liquidjs: ${name} ${layout} ${JSON.stringify(opts)} at ${now}`, { skip }, async () => {
+        const settings = { view: opts.view, language: opts.lang, wind_unit: opts.wind };
+        const file = join(dir, "context.json");
+        writeFileSync(file, JSON.stringify({ ...data, trmnl: { user: { utc_offset: 7200 }, plugin_settings: { custom_fields_values: settings } } }));
+        const out = spawnSync("ruby", [new URL("render.rb", import.meta.url).pathname, layout, file, now], { encoding: "utf-8" });
+        assert.equal(out.status, 0, out.stderr);
+        freezeTime(now);
+        assert.equal(text(out.stdout), text(await renderLayout(layout, data, opts)));
+      });
+    }
+  }
+}

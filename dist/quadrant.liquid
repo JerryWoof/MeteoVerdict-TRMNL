@@ -1,9 +1,16 @@
 {%- comment -%} MeteoVerdict for TRMNL, quadrant: https://github.com/JerryWoof/MeteoVerdict-TRMNL (built from src/, edit there) {%- endcomment -%}
 
+{%- assign obec = nil -%}{%- assign OP = nil -%}
+{%- if IDX_0 -%}
+  {%- assign okres = IDX_0.okres -%}{%- assign forecast = IDX_0.forecast -%}{%- assign models = IDX_0.models -%}
+  {%- if IDX_1.obec and IDX_1.hourly.temperature_2m.size == IDX_0.forecast.hourly.time.size -%}{%- assign obec = IDX_1.obec -%}{%- assign OP = IDX_1.parts -%}{%- endif -%}
+{%- endif -%}
+{%- assign ai = false -%}{%- if forecast.model == "ai" -%}{%- assign ai = true -%}{%- endif -%}
 {%- assign settings = trmnl.plugin_settings.custom_fields_values -%}
 {%- assign lang = settings.language | default: "en" -%}
 {%- assign view = settings.view | default: "today_tomorrow" -%}
 {%- assign place = settings.place | default: "" | strip -%}
+{%- if place == "" and obec -%}{%- assign place = obec.name -%}{%- endif -%}
 {%- if place == "" -%}{%- if okres.code == "CZ0100" -%}{%- assign place = "Praha" -%}{%- else -%}{%- assign place = okres.name -%}{%- endif -%}{%- endif -%}
 {%- assign evening_switch = true -%}
 {%- if settings.evening_switch == false or settings.evening_switch == "false" or settings.evening_switch == "no" -%}{%- assign evening_switch = false -%}{%- endif -%}
@@ -24,9 +31,10 @@
   {%- assign T_outside = "Ven nejlépe" -%}
   {%- assign T_warmer = "o # ° tepleji" -%}{%- assign T_colder = "o # ° chladněji" -%}
   {%- assign T_warmest = "Nejtepleji" -%}{%- assign T_wettest = "Nejvíc srážek" -%}{%- assign T_sunniest = "Nejvíc slunce" -%}
-  {%- assign T_frost = "Mráz" -%}{%- assign T_ground_frost = "Přízemní mráz" -%}{%- assign T_ice = "Náledí" -%}{%- assign T_heat = "Vedro" -%}
-  {%- assign T_storm = "Silný vítr" -%}{%- assign T_downpour = "Vydatně prší" -%}
-  {%- assign T_updated = "aktualizace" -%}{%- assign T_models = "modelů" -%}
+  {%- assign T_frost = "Mráz" -%}{%- assign T_ground_frost = "Přízemní mráz" -%}{%- assign T_heat = "Vedro" -%}
+  {%- assign T_storm = "Silný vítr" -%}{%- assign T_gusts = "Nárazy" -%}{%- assign T_downpour = "Vydatně prší" -%}
+  {%- assign T_thresholds = "Prahy, ne výstrahy ČHMÚ" -%}{%- assign T_thresholds_short = "nejde o výstrahy ČHMÚ" -%}
+  {%- assign T_updated = "aktualizace" -%}{%- assign T_models = "modelů" -%}{%- assign T_ai = "MeteoVerdict AI (exp.)" -%}{%- assign T_obec = "obec (test)" -%}
   {%- assign T_stale = "stará předpověď" -%}{%- assign T_none = "Předpověď na dnešek zatím není. Poslední je z" -%}
   {%- assign T_symbols = "Jasno,Polojasno,Zataženo,Přeháňky,Déšť,Déšť se sněhem,Sněžení" | split: "," -%}
   {%- assign T_days = "neděle,pondělí,úterý,středa,čtvrtek,pátek,sobota" | split: "," -%}
@@ -49,9 +57,10 @@
   {%- assign T_outside = "Best outside" -%}
   {%- assign T_warmer = "# ° warmer" -%}{%- assign T_colder = "# ° colder" -%}
   {%- assign T_warmest = "Warmest" -%}{%- assign T_wettest = "Wettest" -%}{%- assign T_sunniest = "Sunniest" -%}
-  {%- assign T_frost = "Frost" -%}{%- assign T_ground_frost = "Ground frost" -%}{%- assign T_ice = "Black ice" -%}{%- assign T_heat = "Hot" -%}
-  {%- assign T_storm = "Strong wind" -%}{%- assign T_downpour = "Heavy rain" -%}
-  {%- assign T_updated = "updated" -%}{%- assign T_models = "models" -%}
+  {%- assign T_frost = "Frost" -%}{%- assign T_ground_frost = "Ground frost" -%}{%- assign T_heat = "Hot" -%}
+  {%- assign T_storm = "Strong wind" -%}{%- assign T_gusts = "Gusts" -%}{%- assign T_downpour = "Heavy rain" -%}
+  {%- assign T_thresholds = "Thresholds, not ČHMÚ warnings" -%}{%- assign T_thresholds_short = "not ČHMÚ warnings" -%}
+  {%- assign T_updated = "updated" -%}{%- assign T_models = "models" -%}{%- assign T_ai = "MeteoVerdict AI (exp.)" -%}{%- assign T_obec = "obec (test)" -%}
   {%- assign T_stale = "old forecast" -%}{%- assign T_none = "No forecast for today yet. The latest is from" -%}
   {%- assign T_symbols = "Sunny,Partly cloudy,Cloudy,Showers,Rain,Sleet,Snow" | split: "," -%}
   {%- assign T_days = "Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday" | split: "," -%}
@@ -59,6 +68,7 @@
   {%- assign T_months = "January,February,March,April,May,June,July,August,September,October,November,December" | split: "," -%}
   {%- assign T_dec = "." -%}
 {%- endif -%}
+{%- assign any_alerts = false -%}
 {%- assign SYMBOLS = "clear,partly,cloudy,showers,rain,sleet,snow" | split: "," -%}
 {%- assign now_utc = "now" | date: "%s" | plus: 0 -%}
 {%- assign year = now_utc | date: "%Y" -%}
@@ -81,8 +91,9 @@
 {%- assign age = now_utc | minus: e -%}
 {%- assign stale = false -%}{%- if age > 108000 -%}{%- assign stale = true -%}{%- endif -%}
 {%- assign start = 0 -%}{%- if evening_switch and now_hour >= 18 and days.size > 2 -%}{%- assign start = 1 -%}{%- endif -%}
-{%- assign H = forecast.hourly -%}
-{%- assign n_hours = H.time.size -%}
+{%- assign HS = forecast.hourly -%}
+{%- if obec -%}{%- assign H = IDX_1.hourly -%}{%- else -%}{%- assign H = forecast.hourly -%}{%- endif -%}
+{%- assign n_hours = HS.time.size -%}
 {%- assign models_used = models.variables.temperature_2m.lead_days["1"].size | default: 0 -%}
 {%- capture sun -%}<g stroke="#000" stroke-width="4" stroke-linecap="round"><circle cx="32" cy="32" r="11"/><path d="M32 6v7M32 51v7M6 32h7M51 32h7M13.6 13.6l5 5M45.4 45.4l5 5M13.6 50.4l5-5M45.4 18.6l5-5"/></g>{%- endcapture -%}
 {%- capture moon -%}<path d="M38 8a24 24 0 1 0 18 36A19 19 0 0 1 38 8z"/>{%- endcapture -%}
@@ -101,7 +112,9 @@
   .mv-head { display: flex; justify-content: space-between; align-items: center; background: #000; color: #fff; border-radius: 8px; padding: 3px 12px; white-space: nowrap; }
   .mv-head .when { font-size: 21px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
   .mv-head .date { font-size: 17px; font-weight: 600; }
-  .mv-max { font-weight: 800; letter-spacing: -2px; line-height: 1; }
+  .mv-max { font-weight: 800; letter-spacing: -2px; line-height: 1; white-space: nowrap; }
+  .mv-pm { font-size: 34%; font-weight: 700; letter-spacing: 0; vertical-align: 95%; margin-left: 2px; }
+  .title_bar .mv-note { font-size: 13px; font-weight: 600; margin-left: 10px; }
   .mv-glyph { width: 22px; height: 22px; vertical-align: -5px; }
   .mv-sun { font-weight: 700; white-space: nowrap; }
   .mv-facts { display: grid; grid-template-columns: repeat(4, 1fr); border: 2px solid #000; border-radius: 8px; padding: 3px 0; text-align: center; }
@@ -109,7 +122,9 @@
   .mv-fact span { display: block; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
   .mv-fact b { display: block; font-size: 20px; font-weight: 800; line-height: 1.15; }
   .mv-fact i { display: block; font-size: 11px; font-style: normal; }
-  .mv-chart { width: 100%; display: block; }
+  .mv-chart { display: block; flex: none !important; }
+  .mv-tick { font-size: 12px; font-weight: 700; }
+  .mv-lab { font-size: 16px; font-weight: 800; paint-order: stroke; stroke: #fff; stroke-width: 5px; stroke-linejoin: round; }
   .mv-badge { display: inline-block; background: #000; color: #fff; border-radius: 4px; padding: 0 5px; font-size: 13px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; white-space: nowrap; line-height: 1.45; }
   .mv-head .mv-badge { background: #fff; color: #000; margin-left: 8px; vertical-align: 2px; }
   .mv-empty { font-size: 20px; font-weight: 700; padding: 30px 10px; text-align: center; }
@@ -117,7 +132,7 @@
   .title_bar .instance { flex: none; margin-left: auto; padding-left: 12px; }
 </style>
 <svg width="0" height="0" style="position:absolute">
-  <defs><pattern id="mv-night" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="1.3" height="6" fill="#000"/></pattern></defs>
+  <defs><pattern id="mv-night" width="3" height="3" patternUnits="userSpaceOnUse"><rect width="1" height="1" fill="#000" shape-rendering="crispEdges"/></pattern></defs>
 </svg>
 <style>
   .mv-q { display: flex; flex-direction: column; justify-content: space-between; }
@@ -145,6 +160,7 @@
   <div class="mv mv-q">
     {%- assign day = days[start] -%}
 {%- if day -%}{%- assign rows = forecast.parts | where: "day", day -%}{%- else -%}{%- assign rows = "" | split: "," -%}{%- endif -%}
+{%- assign orows = nil -%}{%- if OP and day -%}{%- assign orows = OP | where: "day", day -%}{%- endif -%}
 {%- assign whole = rows | where: "part", "day" | first -%}
 {%- assign tmin = 999 -%}{%- assign tmax = -999 -%}{%- assign rain = 0 -%}{%- assign chance = 0 -%}{%- assign wind = 0 -%}{%- assign cloud = nil -%}{%- assign shine = nil -%}
 {%- for r in rows -%}
@@ -164,6 +180,33 @@
 {%- else -%}
   {%- assign pm = rows | where: "part", "afternoon" | first | default: rows.last -%}
   {%- assign sym = pm.symbol -%}{%- assign cloud = pm.cloud -%}
+{%- endif -%}
+{%- if orows and orows.size > 0 -%}
+  {%- assign owhole = orows | where: "part", "day" | first -%}
+  {%- if owhole -%}
+    {%- assign tmin = owhole.tmin -%}{%- assign tmax = owhole.tmax -%}{%- assign rain = owhole.precipitation -%}{%- assign wind = owhole.wind -%}
+  {%- else -%}
+    {%- assign tmin = 999 -%}{%- assign tmax = -999 -%}{%- assign rain = 0 -%}{%- assign wind = 0 -%}
+    {%- for r in orows -%}
+      {%- if r.tmin != nil and r.tmin < tmin -%}{%- assign tmin = r.tmin -%}{%- endif -%}
+      {%- if r.tmax != nil and r.tmax > tmax -%}{%- assign tmax = r.tmax -%}{%- endif -%}
+      {%- assign rain = rain | plus: r.precipitation -%}
+      {%- if r.wind > wind -%}{%- assign wind = r.wind -%}{%- endif -%}
+    {%- endfor -%}
+  {%- endif -%}
+{%- endif -%}
+{%- assign pm = nil -%}
+{%- if day and H.temperature_2m_hi -%}
+  {%- assign pm_t = -99 -%}
+  {%- for t in HS.time -%}
+    {%- assign v = H.temperature_2m[forloop.index0] -%}{%- assign hi = H.temperature_2m_hi[forloop.index0] -%}
+    {%- if v == nil or hi == nil or v <= pm_t -%}{%- continue -%}{%- endif -%}
+    {%- assign e = t | date: "%s" | plus: 0 -%}
+{%- if e >= dst_start and e < dst_end -%}{%- assign le = e | plus: 7200 -%}{%- else -%}{%- assign le = e | plus: 3600 -%}{%- endif -%}
+    {%- assign hd = le | date: "%Y-%m-%d" -%}
+    {%- if hd != day -%}{%- continue -%}{%- endif -%}
+    {%- assign pm_t = v -%}{%- assign pm = hi | minus: H.temperature_2m_lo[forloop.index0] | divided_by: 2.0 | round -%}
+  {%- endfor -%}
 {%- endif -%}
 {%- assign rise = rows.first.sunrise -%}{%- assign set = rows.first.sunset -%}{%- assign light = nil -%}
 {%- if rise -%}
@@ -203,38 +246,37 @@
   {%- assign day_date = T_months[mo] | slice: 0, 3 | prepend: " " | prepend: day_num -%}
 {%- endif -%}
 {%- assign alerts = "" -%}{%- assign n_alerts = 0 -%}
-{%- assign ice = false -%}
-{%- if day and tmin <= 1 -%}
-  {%- for t in H.time -%}
-    {%- assign e = t | date: "%s" | plus: 0 -%}
-{%- if e >= dst_start and e < dst_end -%}{%- assign le = e | plus: 7200 -%}{%- else -%}{%- assign le = e | plus: 3600 -%}{%- endif -%}
-    {%- assign hd = le | date: "%Y-%m-%d" -%}
-    {%- if hd != day -%}{%- continue -%}{%- endif -%}
-    {%- assign ht = H.temperature_2m[forloop.index0] -%}{%- assign hp = H.precipitation[forloop.index0] | default: 0 -%}
-    {%- if ht != nil and ht <= 0.5 and hp >= 0.1 -%}{%- assign ice = true -%}{%- break -%}{%- endif -%}
-  {%- endfor -%}
+{%- assign night = rows | where: "part", "night" | first -%}
+{%- if orows -%}{%- assign onight = orows | where: "part", "night" | first -%}{%- if onight.frost != nil -%}{%- assign night = onight -%}{%- endif -%}{%- endif -%}
+{%- if night.frost == true -%}
+  {%- capture a -%}<span class="mv-badge">{{ T_frost }} {{ night.night_min | round }}°</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
+{%- elsif night.ground_frost == true -%}
+  {%- capture a -%}<span class="mv-badge">{{ T_ground_frost }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
+{%- elsif night.frost == nil and rows.size > 0 and tmin <= 0 -%}
+  {%- capture a -%}<span class="mv-badge">{{ T_frost }} {{ tmin | round }}°</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
 {%- endif -%}
-{%- if ice -%}
-  {%- capture a -%}<span class="mv-badge">{{ T_ice }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
-{%- else -%}
-  {%- assign night = rows | where: "part", "night" | first -%}
-  {%- if night.frost == true -%}
-    {%- capture a -%}<span class="mv-badge">{{ T_frost }} {{ night.night_min | round }}°</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
-  {%- elsif night.ground_frost == true -%}
-    {%- capture a -%}<span class="mv-badge">{{ T_ground_frost }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
-  {%- elsif night.frost == nil and rows.size > 0 and tmin <= 0 -%}
-    {%- capture a -%}<span class="mv-badge">{{ T_frost }} {{ tmin | round }}°</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
+{%- assign heavy = false -%}{%- assign flagged = false -%}{%- assign gusty = false -%}{%- assign gust_flags = false -%}{%- assign gust_max = 0 -%}
+{%- for r in rows -%}
+  {%- if r.heavy_rain != nil -%}{%- assign flagged = true -%}{%- if r.heavy_rain == true -%}{%- assign heavy = true -%}{%- endif -%}{%- endif -%}
+  {%- if r.gust_over_threshold != nil -%}{%- assign gust_flags = true -%}
+    {%- if r.gust_over_threshold == true -%}{%- assign gusty = true -%}{%- if r.gust > gust_max -%}{%- assign gust_max = r.gust -%}{%- endif -%}{%- endif -%}
   {%- endif -%}
-{%- endif -%}
-{%- if rows.size > 0 and rain >= 10 -%}
+{%- endfor -%}
+{%- if flagged == false and rows.size > 0 and rain >= 10 -%}{%- assign heavy = true -%}{%- endif -%}
+{%- if heavy -%}
   {%- capture a -%}<span class="mv-badge">{{ T_downpour }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
 {%- endif -%}
-{%- if rows.size > 0 and wind >= 10 and n_alerts < 2 -%}
-  {%- capture a -%}<span class="mv-badge">{{ T_storm }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
+{%- if n_alerts < 2 -%}
+  {%- if gusty -%}
+    {%- capture a -%}<span class="mv-badge">{{ T_gusts }} {{ gust_max | times: wind_k | round }} {{ wind_unit }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
+  {%- elsif gust_flags == false and rows.size > 0 and wind >= 10 -%}
+    {%- capture a -%}<span class="mv-badge">{{ T_storm }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
+  {%- endif -%}
 {%- endif -%}
 {%- if rows.size > 0 and tmax >= 30 and n_alerts < 2 -%}
   {%- capture a -%}<span class="mv-badge">{{ T_heat }} {{ tmax | round }}°</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
 {%- endif -%}
+{%- if n_alerts > 0 -%}{%- assign any_alerts = true -%}{%- endif -%}
     <div class="top"><span>{% if start == 0 %}{{ T_today }}{% else %}{{ T_tomorrow }}{% endif %}{{ alerts }}</span><span>{{ day_short }} {{ day_date }}</span></div>
     <div class="hero">
       {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
@@ -263,6 +305,7 @@
     {%- if days.size > next_start -%}
     {%- assign day = days[next_start] -%}
 {%- if day -%}{%- assign rows = forecast.parts | where: "day", day -%}{%- else -%}{%- assign rows = "" | split: "," -%}{%- endif -%}
+{%- assign orows = nil -%}{%- if OP and day -%}{%- assign orows = OP | where: "day", day -%}{%- endif -%}
 {%- assign whole = rows | where: "part", "day" | first -%}
 {%- assign tmin = 999 -%}{%- assign tmax = -999 -%}{%- assign rain = 0 -%}{%- assign chance = 0 -%}{%- assign wind = 0 -%}{%- assign cloud = nil -%}{%- assign shine = nil -%}
 {%- for r in rows -%}
@@ -282,6 +325,33 @@
 {%- else -%}
   {%- assign pm = rows | where: "part", "afternoon" | first | default: rows.last -%}
   {%- assign sym = pm.symbol -%}{%- assign cloud = pm.cloud -%}
+{%- endif -%}
+{%- if orows and orows.size > 0 -%}
+  {%- assign owhole = orows | where: "part", "day" | first -%}
+  {%- if owhole -%}
+    {%- assign tmin = owhole.tmin -%}{%- assign tmax = owhole.tmax -%}{%- assign rain = owhole.precipitation -%}{%- assign wind = owhole.wind -%}
+  {%- else -%}
+    {%- assign tmin = 999 -%}{%- assign tmax = -999 -%}{%- assign rain = 0 -%}{%- assign wind = 0 -%}
+    {%- for r in orows -%}
+      {%- if r.tmin != nil and r.tmin < tmin -%}{%- assign tmin = r.tmin -%}{%- endif -%}
+      {%- if r.tmax != nil and r.tmax > tmax -%}{%- assign tmax = r.tmax -%}{%- endif -%}
+      {%- assign rain = rain | plus: r.precipitation -%}
+      {%- if r.wind > wind -%}{%- assign wind = r.wind -%}{%- endif -%}
+    {%- endfor -%}
+  {%- endif -%}
+{%- endif -%}
+{%- assign pm = nil -%}
+{%- if day and H.temperature_2m_hi -%}
+  {%- assign pm_t = -99 -%}
+  {%- for t in HS.time -%}
+    {%- assign v = H.temperature_2m[forloop.index0] -%}{%- assign hi = H.temperature_2m_hi[forloop.index0] -%}
+    {%- if v == nil or hi == nil or v <= pm_t -%}{%- continue -%}{%- endif -%}
+    {%- assign e = t | date: "%s" | plus: 0 -%}
+{%- if e >= dst_start and e < dst_end -%}{%- assign le = e | plus: 7200 -%}{%- else -%}{%- assign le = e | plus: 3600 -%}{%- endif -%}
+    {%- assign hd = le | date: "%Y-%m-%d" -%}
+    {%- if hd != day -%}{%- continue -%}{%- endif -%}
+    {%- assign pm_t = v -%}{%- assign pm = hi | minus: H.temperature_2m_lo[forloop.index0] | divided_by: 2.0 | round -%}
+  {%- endfor -%}
 {%- endif -%}
 {%- assign rise = rows.first.sunrise -%}{%- assign set = rows.first.sunset -%}{%- assign light = nil -%}
 {%- if rise -%}
@@ -352,12 +422,12 @@
 {%- assign gtime = generated_local | date: "%H:%M" -%}
 {%- assign gday = generated_local | date: "%Y-%m-%d" -%}
 <div class="title_bar">
-  <span class="title">{{ place }}</span>
+  <span class="title">{{ place }}{% if obec %} <span class="mv-note">{{ T_obec }}</span>{% endif %}{% if any_alerts %}<span class="mv-note">{% if compact or obec or place.size > 12 %}{{ T_thresholds_short }}{% else %}{{ T_thresholds }}{% endif %}</span>{% endif %}</span>
   {%- if stale -%}
   <span class="instance"><span class="mv-badge">{{ T_stale }}</span> {{ gdate }} {{ gtime }}</span>
   {%- elsif compact -%}
-  <span class="instance">MeteoVerdict · {% if gday != real_today %}{{ gdate }} {% endif %}{{ gtime }}</span>
+  <span class="instance">{% if ai %}MeteoVerdict AI{% else %}MeteoVerdict{% endif %} · {% if gday != real_today %}{{ gdate }} {% endif %}{{ gtime }}</span>
   {%- else -%}
-  <span class="instance">MeteoVerdict{% if models_used > 0 %} · {{ models_used }} {{ T_models }}{% endif %} · {{ T_updated }} {{ gdate }} {{ gtime }}</span>
+  <span class="instance">{% if ai %}{{ T_ai }}{% else %}MeteoVerdict{% if models_used > 0 %} · {{ models_used }} {{ T_models }}{% endif %}{% endif %} · CC BY-SA · {% if gday != real_today %}{{ gdate }} {% endif %}{{ gtime }}</span>
   {%- endif -%}
 </div>

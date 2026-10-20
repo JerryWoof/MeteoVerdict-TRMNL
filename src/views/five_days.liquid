@@ -21,7 +21,7 @@
   .mv-5 .card .f .mv-glyph { width: 14px; height: 14px; vertical-align: -2px; margin-right: 2px; }
   .mv-5 .card .b { margin-top: 3px; line-height: 1; }
   .mv-5 .card .b .mv-badge { font-size: 11px; }
-  .mv-5 .mv-chart { flex: 1; min-height: 44px; }
+  .mv-5 .mv-chart { margin-top: auto; }
   .mv-5 .sum { font-size: 15px; text-align: center; }
   .mv-5 .sum b { font-weight: 800; }
 </style>
@@ -40,7 +40,7 @@
         <div class="n">{{ day_date }}</div>
         {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
         {% include "partials/icon" %}
-        <div class="mv-max">{{ tmax | round }}°</div>
+        <div class="mv-max">{{ tmax | round }}°{% if pm != nil and pm >= 1 and forloop.first == false %}<small class="mv-pm">±{{ pm }}</small>{% endif %}</div>
         <div class="lo">{{ tmin | round }}°</div>
         <div class="f">
           {{ drop_glyph }}<b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b> · {{ chance | times: 100 | round }} %<br>
@@ -50,7 +50,7 @@
       </div>
     {%- endfor -%}
   </div>
-  {%- assign chart_days = five -%}{%- assign chart_h = 60 -%}{%- assign chart_class = "" -%}
+  {%- assign chart_days = five -%}{%- assign chart_w = 780 -%}{%- assign chart_h = 104 -%}{%- assign chart_axis = false -%}{%- assign chart_labels = false -%}{%- assign chart_class = "" -%}
   {% include "partials/chart" %}
   <div class="sum">
     {{ T_warmest }} <b>{{ best_t_day }} {{ best_t | round }}°</b>

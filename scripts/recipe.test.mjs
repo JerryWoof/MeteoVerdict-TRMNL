@@ -11,7 +11,7 @@ import { LAYOUTS } from "./build.mjs";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const markup = LAYOUTS.map((l) => readFileSync(join(root, "dist", `${l}.liquid`), "utf-8")).join("");
 const settings = readFileSync(join(root, "src", "settings.yml"), "utf-8");
-const POLLING_URL = "https://jerrywoof.github.io/MeteoVerdict/api/v1/okresy/{{ okres_code }}.json";
+const POLLING_URL = "https://jerrywoof.github.io/MeteoVerdict/api/v1/{{ forecast }}/{{ okres_code }}.json";
 
 test("no view wrapper: TRMNL adds view--full etc. itself", () => {
   assert.doesNotMatch(markup, /\b( view(--|__)(full|half_horizontal|half_vertical|quadrant))\b("|')>/);

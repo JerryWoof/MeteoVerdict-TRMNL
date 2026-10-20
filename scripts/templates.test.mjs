@@ -82,7 +82,8 @@ test("drizzle is rain too: no 'dry' next to millimetres", async () => {
 test("rain in the 24th hour still counts", async () => {
   freezeTime("2026-10-12T15:40:00Z"); // hour 15 UTC runs; the window ends at 15 UTC tomorrow
   const late = variant((f) => hourly(f, "precipitation", (_, i) => (i === 15 + 24 ? 1.5 : 0)));
-  assert.match(text(await renderLayout("full", late, { view: "next_24h" })), /Rain from 16:00 1\.5 mm/);
+  // it starts tomorrow: the sentence says so, with the chance of the parts of day it falls in
+  assert.match(text(await renderLayout("full", late, { view: "next_24h" })), /Rain from tomorrow 16:00 1\.5 mm · 23 % chance/);
 });
 
 test("rain in a day's last hour is drawn at the end of that day, not before the next", async () => {
@@ -90,8 +91,9 @@ test("rain in a day's last hour is drawn at the end of that day, not before the 
   // the hour 23–24 Prague time (CEST) ends at 22 UTC
   const late = variant((f) => hourly(f, "precipitation", (_, i) => (i === idx("2026-10-12T22:00:00Z") ? 2 : 0)));
   const html = await renderLayout("full", late, { view: "today_tomorrow" });
-  const bars = [...html.matchAll(/<rect x="([-\d.]+)" y="[\d.]+" width="7"/g)].map((m) => Number(m[1]));
-  assert.deepEqual(bars, [231.5]);
+  // the chart is 379 px wide, 15.8 px an hour: the bar of the hour 23–24 ends at the day's edge
+  const bars = [...html.matchAll(/<rect x="([-\d.]+)" y="[\d.]+" width="14.8"/g)].map((m) => Number(m[1]));
+  assert.deepEqual(bars, [364]);
 });
 
 test("missing values show a dash, not 0°", async () => {
@@ -134,7 +136,7 @@ test("wind in km/h", async () => {
   assert.match(words, new RegExp(`${Math.round(today.wind * 3.6)} km/h`));
 });
 
-test("frost, black ice and feels-like on a cold wet day", async () => {
+test("frost and feels-like on a cold wet day, and no black-ice badge", async () => {
   freezeTime("2026-10-12T15:40:00Z");
   const cold = variant((f) => {
     hourly(f, "temperature_2m", (v) => v - 14);
@@ -143,7 +145,7 @@ test("frost, black ice and feels-like on a cold wet day", async () => {
     for (const p of f.parts) { p.tmin -= 14; p.tmax -= 14; }
   });
   const words = text(await renderLayout("full", cold, { view: "next_24h" }));
-  assert.match(words, /Black ice/);
+  assert.doesNotMatch(words, /Black ice/);
   assert.match(words, /feels -\d+°/);
   assert.match(text(await renderLayout("full", cold, { view: "five_days" })), /Frost -\d+°/);
 });
@@ -308,4 +310,85 @@ test("Czech time follows summer time, hour by hour", async () => {
   freezeTime("2026-10-24T12:00:00Z");
   const html = await new Liquid({ timezoneOffset: 0 }).parseAndRender(template, { ...PRAHA, stamps });
   assert.match(text(html), /02:30 02:30 01:30 03:30\s*$/);
+});
+
+// files of 20 October 2026 (20:12 UTC) from the new open data: the blend for Benešov, the
+// AI's file for it, and the obec Miličín (605 m) in it
+const fixture = (name) => JSON.parse(readFileSync(new URL(`../test/fixtures/2026-10-20-${name}.json`, import.meta.url)));
+const BENESOV = fixture("CZ0201");
+const BENESOV_AI = fixture("CZ0201-ai");
+const MILICIN = fixture("CZ0201-milicin");
+const NOW20 = "2026-10-20T10:00:00Z";
+
+for (const [name, data] of [["blend", BENESOV], ["AI", BENESOV_AI], ["obec", { IDX_0: BENESOV, IDX_1: MILICIN }]]) {
+  for (const [layout, view] of CASES) {
+    for (const lang of ["en", "cs"]) {
+      test(`${name}: ${layout} ${view ?? ""} ${lang}`, async () => {
+        freezeTime(NOW20);
+        const html = await renderLayout(layout, data, { view, lang });
+        const words = text(html);
+        assert.doesNotMatch(words, /Liquid error|NaN|undefined|Infinity|\{\{|\{%/);
+        assert.doesNotMatch(html, /points=""|="NaN/);
+        assert.match(words, /\d+°/);
+      });
+    }
+  }
+}
+
+test("the footer names the forecast: the blend and its models, or the AI", async () => {
+  freezeTime("2026-10-12T15:40:00Z");
+  assert.match(text(await renderLayout("full", PRAHA, {})), /MeteoVerdict · 11 models · CC BY-SA/);
+  freezeTime(NOW20);
+  const ai = text(await renderLayout("full", BENESOV_AI, {}));
+  assert.match(ai, /MeteoVerdict AI \(exp\.\) · CC BY-SA/);
+  assert.doesNotMatch(ai, /models/);
+  assert.match(text(await renderLayout("quadrant", BENESOV_AI, {})), /MeteoVerdict AI · 22:12/);
+});
+
+test("the ± of the high, from tomorrow on, only with the blend's range", async () => {
+  freezeTime(NOW20);
+  const blend = text(await renderLayout("full", BENESOV, { view: "five_days" }));
+  assert.equal((blend.match(/° ±\d/g) ?? []).length, 4); // not today
+  assert.match(text(await renderLayout("full", BENESOV, {})), /18° ±\d/);
+  assert.doesNotMatch(text(await renderLayout("full", BENESOV_AI, { view: "five_days" })), /±/);
+  assert.doesNotMatch(text(await renderLayout("full", PRAHA, { view: "five_days" })), /±/); // older file
+});
+
+test("threshold badges come from MeteoVerdict's flags, with the note that they are not warnings", async () => {
+  freezeTime(NOW20);
+  const five = text(await renderLayout("full", BENESOV, { view: "five_days" }));
+  // heavy_rain on Wednesday and Thursday; ground frost the nights ending Friday and Sunday (beyond 5 days)
+  assert.equal((five.match(/Heavy rain/g) ?? []).length, 2);
+  assert.match(five, /Ground frost/);
+  assert.match(five, /Thresholds, not ČHMÚ warnings/);
+  assert.match(text(await renderLayout("full", BENESOV, { view: "five_days", lang: "cs" })), /Vydatně prší.*Prahy, ne výstrahy ČHMÚ/);
+  // a gust over the threshold, shown in the wind unit; no badge, no note
+  const gusty = structuredClone(BENESOV);
+  for (const p of gusty.forecast.parts) Object.assign(p, { heavy_rain: false, ground_frost: false, gust_over_threshold: p.day === "2026-10-22", gust: p.day === "2026-10-22" ? 16.2 : 5 });
+  const g = text(await renderLayout("full", gusty, { view: "five_days", wind: "kmh" }));
+  assert.match(g, /Gusts 58 km\/h/);
+  assert.doesNotMatch(g, /Strong wind|Heavy rain/);
+  const calm = structuredClone(gusty);
+  for (const p of calm.forecast.parts) p.gust_over_threshold = false;
+  assert.doesNotMatch(text(await renderLayout("full", calm, { view: "five_days" })), /Gusts|thresholds/);
+});
+
+test("an obec: its name, its temperatures and rain, the okres's sky", async () => {
+  freezeTime(NOW20);
+  const both = { IDX_0: BENESOV, IDX_1: MILICIN };
+  const words = text(await renderLayout("full", both, {}));
+  const day = (doc, d) => doc.find((p) => p.day === d && p.part === "day");
+  assert.match(words, /^ ?Today/);
+  assert.match(words, new RegExp(`${Math.round(day(MILICIN.parts, "2026-10-20").tmax)}°`));
+  assert.match(words, /Miličín obec \(test\)/);
+  assert.notEqual(Math.round(day(MILICIN.parts, "2026-10-21").tmax), Math.round(day(BENESOV.forecast.parts, "2026-10-21").tmax));
+  assert.match(words, new RegExp(`Tomorrow .*${Math.round(day(MILICIN.parts, "2026-10-21").tmax)}°`));
+  // the place name setting still wins
+  assert.match(text(await renderLayout("full", both, { place: "Chata" })), /Chata obec \(test\)/);
+  // an obec file that does not fit the okres file's hours is left out
+  const short = structuredClone(MILICIN);
+  short.hourly.temperature_2m = short.hourly.temperature_2m.slice(0, 100);
+  const okres = text(await renderLayout("full", { IDX_0: BENESOV, IDX_1: short }, {}));
+  assert.doesNotMatch(okres, /obec \(test\)|Miličín/);
+  assert.match(okres, /Benešov/);
 });

@@ -5,9 +5,13 @@
   the data) and light_diff_s ("+2", "−3", "±0"; "" when nil), and its names: day_long ("Monday 12 October"), day_name ("Monday"),
   day_short ("Mon"), day_num ("12"), day_dm ("12 October" / "12. října"), day_date
   ("12 Oct" / "12. 10."). Today's whole-day row is missing when the forecast is a few hours
-  short; the parts stand in for it.
+  short; the parts stand in for it. With an obec (`OP`), `orows` are its parts and its
+  tmin, tmax, rain and wind replace the okres's; the sky, chance and sun stay the okres's.
+  `pm`: half the blend's 80 % range at the day's warmest hour, rounded (the "±" of the
+  high; nil without a range, as in the AI's files).
 {%- endcomment -%}
 {%- if day -%}{%- assign rows = forecast.parts | where: "day", day -%}{%- else -%}{%- assign rows = "" | split: "," -%}{%- endif -%}
+{%- assign orows = nil -%}{%- if OP and day -%}{%- assign orows = OP | where: "day", day -%}{%- endif -%}
 {%- assign whole = rows | where: "part", "day" | first -%}
 {%- assign tmin = 999 -%}{%- assign tmax = -999 -%}{%- assign rain = 0 -%}{%- assign chance = 0 -%}{%- assign wind = 0 -%}{%- assign cloud = nil -%}{%- assign shine = nil -%}
 {%- for r in rows -%}
@@ -27,6 +31,32 @@
 {%- else -%}
   {%- assign pm = rows | where: "part", "afternoon" | first | default: rows.last -%}
   {%- assign sym = pm.symbol -%}{%- assign cloud = pm.cloud -%}
+{%- endif -%}
+{%- if orows and orows.size > 0 -%}
+  {%- assign owhole = orows | where: "part", "day" | first -%}
+  {%- if owhole -%}
+    {%- assign tmin = owhole.tmin -%}{%- assign tmax = owhole.tmax -%}{%- assign rain = owhole.precipitation -%}{%- assign wind = owhole.wind -%}
+  {%- else -%}
+    {%- assign tmin = 999 -%}{%- assign tmax = -999 -%}{%- assign rain = 0 -%}{%- assign wind = 0 -%}
+    {%- for r in orows -%}
+      {%- if r.tmin != nil and r.tmin < tmin -%}{%- assign tmin = r.tmin -%}{%- endif -%}
+      {%- if r.tmax != nil and r.tmax > tmax -%}{%- assign tmax = r.tmax -%}{%- endif -%}
+      {%- assign rain = rain | plus: r.precipitation -%}
+      {%- if r.wind > wind -%}{%- assign wind = r.wind -%}{%- endif -%}
+    {%- endfor -%}
+  {%- endif -%}
+{%- endif -%}
+{%- assign pm = nil -%}
+{%- if day and H.temperature_2m_hi -%}
+  {%- assign pm_t = -99 -%}
+  {%- for t in HS.time -%}
+    {%- assign v = H.temperature_2m[forloop.index0] -%}{%- assign hi = H.temperature_2m_hi[forloop.index0] -%}
+    {%- if v == nil or hi == nil or v <= pm_t -%}{%- continue -%}{%- endif -%}
+    {%- assign e = t | date: "%s" | plus: 0 -%}{% include "partials/local" %}
+    {%- assign hd = le | date: "%Y-%m-%d" -%}
+    {%- if hd != day -%}{%- continue -%}{%- endif -%}
+    {%- assign pm_t = v -%}{%- assign pm = hi | minus: H.temperature_2m_lo[forloop.index0] | divided_by: 2.0 | round -%}
+  {%- endfor -%}
 {%- endif -%}
 {%- assign rise = rows.first.sunrise -%}{%- assign set = rows.first.sunset -%}{%- assign light = nil -%}
 {%- if rise -%}

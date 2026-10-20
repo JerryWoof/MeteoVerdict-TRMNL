@@ -1,7 +1,11 @@
 {%- comment -%}
-  The footer: place, and when the forecast was made. `compact` (half and quarter
-  screens): the time only, unless the forecast is not from today. An old forecast says so.
+  The footer: place (an obec says it is a test), the thresholds note when a badge is on
+  screen, which forecast (MeteoVerdict AI, or the blend and its number of models), the
+  licence and when the forecast was made (the time; the date too when it is not from
+  today). `compact` (half and quarter screens): the
+  forecast's time only, unless it is not from today. An old forecast says so.
 {%- endcomment -%}
+{%- comment -%} the thresholds note in full where there is room for it, else short {%- endcomment -%}
 {%- if lang == "cs" -%}
   {%- assign gmo = generated_local | date: "%m" | plus: 0 -%}
   {%- assign gdate = generated_local | date: "%d" | plus: 0 | append: ". " | append: gmo | append: "." -%}
@@ -12,12 +16,12 @@
 {%- assign gtime = generated_local | date: "%H:%M" -%}
 {%- assign gday = generated_local | date: "%Y-%m-%d" -%}
 <div class="title_bar">
-  <span class="title">{{ place }}</span>
+  <span class="title">{{ place }}{% if obec %} <span class="mv-note">{{ T_obec }}</span>{% endif %}{% if any_alerts %}<span class="mv-note">{% if compact or obec or place.size > 12 %}{{ T_thresholds_short }}{% else %}{{ T_thresholds }}{% endif %}</span>{% endif %}</span>
   {%- if stale -%}
   <span class="instance"><span class="mv-badge">{{ T_stale }}</span> {{ gdate }} {{ gtime }}</span>
   {%- elsif compact -%}
-  <span class="instance">MeteoVerdict · {% if gday != real_today %}{{ gdate }} {% endif %}{{ gtime }}</span>
+  <span class="instance">{% if ai %}MeteoVerdict AI{% else %}MeteoVerdict{% endif %} · {% if gday != real_today %}{{ gdate }} {% endif %}{{ gtime }}</span>
   {%- else -%}
-  <span class="instance">MeteoVerdict{% if models_used > 0 %} · {{ models_used }} {{ T_models }}{% endif %} · {{ T_updated }} {{ gdate }} {{ gtime }}</span>
+  <span class="instance">{% if ai %}{{ T_ai }}{% else %}MeteoVerdict{% if models_used > 0 %} · {{ models_used }} {{ T_models }}{% endif %}{% endif %} · CC BY-SA · {% if gday != real_today %}{{ gdate }} {% endif %}{{ gtime }}</span>
   {%- endif -%}
 </div>

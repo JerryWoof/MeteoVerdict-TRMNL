@@ -5,7 +5,7 @@
 {%- endcomment -%}
 {%- comment -%} s: the hour that is running now; the window is s..s+24 (as far as the data goes) {%- endcomment -%}
 {%- assign s = 0 -%}
-{%- for t in H.time -%}{%- assign e = t | date: "%s" | plus: 0 -%}{%- if e <= now_utc -%}{%- assign s = forloop.index0 -%}{%- else -%}{%- break -%}{%- endif -%}{%- endfor -%}
+{%- for t in HS.time -%}{%- assign e = t | date: "%s" | plus: 0 -%}{%- if e <= now_utc -%}{%- assign s = forloop.index0 -%}{%- else -%}{%- break -%}{%- endif -%}{%- endfor -%}
 {%- assign cap = n_hours | minus: 1 -%}
 {%- assign last = s | plus: 24 | at_most: cap -%}
 {%- assign s1 = s | plus: 1 -%}
@@ -21,7 +21,7 @@
   {%- comment -%} the value at hour i fell in the hour before it {%- endcomment -%}
   {%- assign p = H.precipitation[i] | default: 0 -%}
   {%- assign w_rain = w_rain | plus: p -%}
-  {%- assign w_sun = w_sun | plus: H.sunshine_duration[i] -%}
+  {%- assign w_sun = w_sun | plus: HS.sunshine_duration[i] -%}
   {%- assign wv = H.wind_speed_10m[i] | default: 0 -%}
   {%- if wv > w_wind -%}{%- assign w_wind = wv -%}{%- endif -%}
   {%- if p >= 0.1 and first_wet < 0 -%}{%- assign first_wet = i -%}{%- endif -%}
@@ -35,14 +35,26 @@
   {%- if first_dry < 0 -%}
     {%- assign rain_text = T_rain_all -%}
   {%- else -%}
-    {%- assign e = H.time[first_dry] | date: "%s" | minus: 3600 -%}{% include "partials/local" %}
-    {%- assign rain_text = le | date: "%H:%M" | prepend: " " | prepend: T_rain_until -%}
+    {%- assign e = HS.time[first_dry] | date: "%s" | minus: 3600 -%}{% include "partials/local" %}
+    {%- assign rain_text = le | date: "%H:%M" | prepend: " " -%}{%- assign rd = le | date: "%Y-%m-%d" -%}
+    {%- if rd != real_today -%}{%- assign rain_text = T_tomorrow | downcase | prepend: " " | append: rain_text -%}{%- endif -%}
+    {%- assign rain_text = rain_text | prepend: T_rain_until -%}
   {%- endif -%}
 {%- else -%}
-  {%- assign e = H.time[first_wet] | date: "%s" | minus: 3600 -%}{% include "partials/local" %}
-  {%- assign rain_text = le | date: "%H:%M" | prepend: " " | prepend: T_rain_from -%}
+  {%- assign e = HS.time[first_wet] | date: "%s" | minus: 3600 -%}{% include "partials/local" %}
+  {%- assign rain_text = le | date: "%H:%M" | prepend: " " -%}{%- assign rd = le | date: "%Y-%m-%d" -%}
+  {%- if rd != real_today -%}{%- assign rain_text = T_tomorrow | downcase | prepend: " " | append: rain_text -%}{%- endif -%}
+  {%- assign rain_text = rain_text | prepend: T_rain_from -%}
 {%- endif -%}
 
+{%- comment -%} w_chance: the highest chance of rain of the parts of day the 24 hours overlap {%- endcomment -%}
+{%- assign w_chance = 0 -%}{%- assign w_end = now_local | plus: 86400 -%}
+{%- for r in forecast.parts -%}
+  {%- if r.part == "day" or r.rain_probability == nil -%}{%- continue -%}{%- endif -%}
+  {%- assign ps = 0 -%}{%- if r.part == "morning" -%}{%- assign ps = 6 -%}{%- elsif r.part == "afternoon" -%}{%- assign ps = 12 -%}{%- elsif r.part == "evening" -%}{%- assign ps = 18 -%}{%- endif -%}
+  {%- assign p0 = r.day | append: "T00:00:00Z" | date: "%s" | plus: 0 -%}{%- assign p0 = ps | times: 3600 | plus: p0 -%}{%- assign p1 = p0 | plus: 21600 -%}
+  {%- if p1 > now_local and p0 < w_end and r.rain_probability > w_chance -%}{%- assign w_chance = r.rain_probability -%}{%- endif -%}
+{%- endfor -%}
 {%- comment -%}
   Feels like: the wind chill (Environment Canada) at 10 °C or below with wind over
   4.8 km/h. Liquid has no powers, so v^0.16 is interpolated between known points.
@@ -80,7 +92,7 @@
   {%- if br >= 0.2 -%}{%- continue -%}{%- endif -%}
   {%- assign ta = H.temperature_2m[k] -%}{%- assign tb = H.temperature_2m[k1] -%}
   {%- if ta == nil or tb == nil -%}{%- continue -%}{%- endif -%}
-  {%- assign bs = H.sunshine_duration[k1] | default: 0 | plus: H.sunshine_duration[k2] | divided_by: 3600.0 -%}
+  {%- assign bs = HS.sunshine_duration[k1] | default: 0 | plus: HS.sunshine_duration[k2] | divided_by: 3600.0 -%}
   {%- assign bt = ta | plus: tb | divided_by: 2.0 | minus: 21 | abs -%}
   {%- assign bw = H.wind_speed_10m[k1] | default: 0 -%}
   {%- assign score = bs | times: 3 -%}
@@ -90,7 +102,7 @@
 {%- endfor -%}
 {%- endif -%}
 {%- if best >= 0 -%}
-  {%- assign e = H.time[best] | date: "%s" | plus: 0 -%}{% include "partials/local" %}{%- assign b_from = le | date: "%H" -%}{%- assign b_day = le | date: "%Y-%m-%d" -%}
+  {%- assign e = HS.time[best] | date: "%s" | plus: 0 -%}{% include "partials/local" %}{%- assign b_from = le | date: "%H" -%}{%- assign b_day = le | date: "%Y-%m-%d" -%}
   {%- assign e = e | plus: 7200 -%}{% include "partials/local" %}{%- assign b_to = le | date: "%H" -%}
 {%- endif -%}
 
@@ -117,7 +129,7 @@
   .mv-24 .range { font-size: 18px; font-weight: 700; }
   .mv-24 .say { border: 2px solid #000; border-radius: 8px; padding: 5px 10px; font-size: 18px; font-weight: 800; line-height: 1.2; }
   .mv-24 .say small { display: block; font-size: 14px; font-weight: 600; margin-top: 2px; }
-  .mv-24 .mv-kv { display: grid; grid-template-columns: auto 1fr; column-gap: 10px; font-size: 16px; line-height: 1.45; }
+  .mv-24 .mv-kv { display: grid; grid-template-columns: auto 1fr; column-gap: 8px; font-size: 15px; line-height: 1.5; white-space: nowrap; }
   .mv-24 .mv-kv b { font-weight: 800; }
   .mv-24 .mv-sun { font-size: 17px; display: flex; gap: 16px; }
   .mv-24 .mv-tmrw { margin-top: auto; display: flex; align-items: center; gap: 8px; border-top: 2px solid #000; padding-top: 4px; font-size: 19px; }
@@ -130,7 +142,7 @@
   .mv-24 .cells svg { width: 44px; height: 44px; display: block; margin: 0 auto; }
   .mv-24 .cells .t { font-size: 20px; font-weight: 800; line-height: 1; }
   .mv-24 .cells .r { font-size: 13px; font-weight: 600; min-height: 16px; }
-  .mv-24 .graph { flex: 1; width: 100%; }
+  .mv-24 .graph { margin-top: auto; }
 </style>
 <div class="mv mv-24">
   <div class="mv-head"><span class="when">{{ T_next24 }}</span><span class="date">{{ today_long }}</span></div>
@@ -144,7 +156,7 @@
       </div>
       <div class="range">{% if feels != nil %}{{ T_feels }} {{ feels }}° · {% endif %}{% if w_hi > -99 %}{{ T_high }} {{ w_hi | round }}° · {{ T_low }} {{ w_lo | round }}°{% endif %}</div>
       {%- if rain_text != "" -%}
-      <div class="say">{{ rain_text }}{% if w_rain >= 0.1 %}<small>{{ w_rain | round: 1 | replace: ".", T_dec }} mm</small>{% endif %}</div>
+      <div class="say">{{ rain_text }}{% if w_rain >= 0.1 %}<small>{{ w_rain | round: 1 | replace: ".", T_dec }} mm{% if w_chance >= 0.05 %} · {{ w_chance | times: 100 | round }} % {{ T_chance }}{% endif %}</small>{% endif %}</div>
       {%- endif -%}
       {%- if alerts != "" -%}<div>{{ alerts }}</div>{%- endif -%}
       <div class="mv-kv">
@@ -170,7 +182,7 @@
           {%- if i > cap -%}<div></div>{%- continue -%}{%- endif -%}
           {%- assign i2 = i | plus: 1 -%}{%- assign i3 = i | plus: 2 -%}
           {%- assign cell_rain = H.precipitation[i] | default: 0 | plus: H.precipitation[i2] | plus: H.precipitation[i3] -%}
-          {%- assign e = H.time[i] | date: "%s" | plus: 0 -%}{% include "partials/local" %}
+          {%- assign e = HS.time[i] | date: "%s" | plus: 0 -%}{% include "partials/local" %}
           {%- assign ch = le | date: "%H" | plus: 0 -%}
           {%- assign ct = H.temperature_2m[i] -%}
           <div>
@@ -182,7 +194,13 @@
           </div>
         {%- endfor -%}
       </div>
-      {%- comment -%} 10 units per hour from the start of hour s; temperatures in y 6-60, rain bars from 100 up to 33 (3 mm) {%- endcomment -%}
+      {%- comment -%}
+        The curve at its real size, 526 × 272 px (22 px per hour, 10 units per hour inside):
+        temperatures in the top 62 % under a row for labels, rain bars from the axis up to
+        40 % (3 mm), night as the dot screen, a line at midnight.
+      {%- endcomment -%}
+      {%- assign gw = 526 -%}{%- assign gh = 272 -%}{%- assign gk = 2.1917 -%}{%- assign g_floor = 270 -%}{%- assign g_top = 22 -%}
+      {%- assign g_curve = 154 -%}{%- assign g_rain = 99 -%}
       {%- assign w_range = w_hi | minus: w_lo -%}
       {%- assign w_span = w_range | at_least: 4 -%}
       {%- assign w_top = w_span | minus: w_range | divided_by: 2.0 | plus: w_hi -%}
@@ -193,24 +211,24 @@
         {%- assign x = j | times: 10 -%}
         {%- assign v = H.temperature_2m[i] -%}
         {%- if v != nil -%}
-          {%- assign y = w_top | minus: v | times: 54.0 | divided_by: w_span | plus: 6 | round: 1 -%}
-          {%- capture pt -%}{{ x }},{{ y }}{%- endcapture -%}
+          {%- assign y = w_top | minus: v | times: g_curve | divided_by: w_span | plus: g_top | round: 1 -%}
+          {%- capture pt -%}{{ x | times: gk | round: 1 }},{{ y }}{%- endcapture -%}
           {%- assign pts = pts | append: " " | append: pt -%}
         {%- endif -%}
         {%- if j == 24 -%}{%- break -%}{%- endif -%}
         {%- assign i1 = i | plus: 1 -%}
         {%- assign p = H.precipitation[i1] | default: 0 -%}
         {%- if p >= 0.1 -%}
-          {%- assign bh = p | at_most: 3 | times: 11 | plus: 1.5 | round: 1 -%}
-          {%- capture bar -%}<rect x="{{ x | plus: 1.5 }}" y="{{ 100 | minus: bh }}" width="7" height="{{ bh }}"/>{%- endcapture -%}
+          {%- assign bh = p | at_most: 3 | divided_by: 3.0 | times: g_rain | plus: 2 | round -%}
+          {%- capture bar -%}<rect x="{{ x | times: gk | plus: 1 | round }}" y="{{ g_floor | minus: bh }}" width="20" height="{{ bh }}"/>{%- endcapture -%}
           {%- assign bars = bars | append: bar -%}
         {%- endif -%}
         {%- comment -%} night: the part of this hour before sunrise or after sunset; a line at midnight {%- endcomment -%}
-        {%- assign e = H.time[i] | date: "%s" | plus: 0 -%}{% include "partials/local" %}
+        {%- assign e = HS.time[i] | date: "%s" | plus: 0 -%}{% include "partials/local" %}
         {%- assign hday = le | date: "%Y-%m-%d" -%}
         {%- assign m0 = le | date: "%H" | times: 60 -%}
         {%- if m0 == 0 and j > 0 -%}
-          {%- capture mark -%}<path d="M{{ x }} 0V100" stroke="#000" stroke-width="2" vector-effect="non-scaling-stroke"/>{%- endcapture -%}
+          {%- capture mark -%}<path d="M{{ x | times: gk | round }} 0V{{ g_floor }}" stroke="#000" stroke-width="2"/>{%- endcapture -%}
           {%- assign marks = marks | append: mark -%}
         {%- endif -%}
         {%- assign hrow = forecast.parts | where: "day", hday | first -%}
@@ -220,22 +238,24 @@
           {%- assign m1 = m0 | plus: 60 -%}
           {%- assign a = r_min | at_most: m1 | minus: m0 | at_least: 0 -%}
           {%- if a > 0 -%}
-            {%- capture n -%}<rect x="{{ x }}" y="0" width="{{ a | divided_by: 6.0 | round: 2 }}" height="100"/>{%- endcapture -%}{%- assign shade = shade | append: n -%}
+            {%- assign nx = x | times: gk | round -%}{%- assign nx1 = a | divided_by: 6.0 | plus: x | times: gk | round -%}
+            {%- capture n -%}<rect x="{{ nx }}" y="0" width="{{ nx1 | minus: nx }}" height="{{ g_floor }}"/>{%- endcapture -%}{%- assign shade = shade | append: n -%}
           {%- endif -%}
           {%- assign b0 = s_min | at_least: m0 -%}{%- assign b = m1 | minus: b0 | at_least: 0 -%}
           {%- if b > 0 -%}
-            {%- capture n -%}<rect x="{{ b0 | minus: m0 | divided_by: 6.0 | plus: x | round: 2 }}" y="0" width="{{ b | divided_by: 6.0 | round: 2 }}" height="100"/>{%- endcapture -%}{%- assign shade = shade | append: n -%}
+            {%- assign nx = b0 | minus: m0 | divided_by: 6.0 | plus: x | times: gk | round -%}{%- assign nx1 = x | plus: 10 | times: gk | round -%}
+            {%- capture n -%}<rect x="{{ nx }}" y="0" width="{{ nx1 | minus: nx }}" height="{{ g_floor }}"/>{%- endcapture -%}{%- assign shade = shade | append: n -%}
           {%- endif -%}
         {%- endif -%}
       {%- endfor -%}
-      <svg class="mv-chart graph" viewBox="0 0 240 102" preserveAspectRatio="none">
-        <g fill="url(#mv-night)">{{ shade }}</g>
-        <path d="M30 0V100M60 0V100M90 0V100M120 0V100M150 0V100M180 0V100M210 0V100" stroke="#000" stroke-width="1" stroke-dasharray="2 3" vector-effect="non-scaling-stroke"/>
+      <svg class="mv-chart graph" width="{{ gw }}" height="{{ gh }}" viewBox="0 0 {{ gw }} {{ gh }}">
+        <g fill="url(#mv-night)" shape-rendering="crispEdges">{{ shade }}</g>
+        {%- for c in (1..7) -%}<path d="M{{ c | times: 30 | times: gk | round | plus: 0.5 }} {{ g_floor | minus: 6 }}V{{ g_floor }}" stroke="#000" stroke-width="1"/>{%- endfor -%}
         {{ marks }}
-        <g fill="#000" stroke="#fff" stroke-width=".8">{{ bars }}</g>
-        <polyline points="{{ pts | strip }}" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
-        <polyline points="{{ pts | strip }}" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
-        <path d="M0 100.5H240" stroke="#000" stroke-width="2" vector-effect="non-scaling-stroke"/>
+        <g fill="#000" shape-rendering="crispEdges">{{ bars }}</g>
+        <polyline points="{{ pts | strip }}" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
+        <polyline points="{{ pts | strip }}" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
+        <path d="M0 {{ g_floor | plus: 1 }}H{{ gw }}" stroke="#000" stroke-width="2" shape-rendering="crispEdges"/>
       </svg>
     </div>
   </div>
