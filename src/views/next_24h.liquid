@@ -107,9 +107,15 @@
 {%- endif -%}
 
 {%- comment -%} today (alerts, next sunrise and sunset) and tomorrow {%- endcomment -%}
-{%- assign day = days[0] -%}{% include "partials/day" %}{% include "partials/alerts" %}
-{%- assign t_rise = rise -%}{%- assign t_set = set -%}{%- assign t_rise_min = rise_min -%}{%- assign t_set_min = set_min -%}{%- assign today_long = day_long -%}
-{%- assign day = days[1] -%}{% include "partials/day" %}
+{%- comment -%} one loop, so partials/day is in the file once: today's values kept, tomorrow's left {%- endcomment -%}
+{%- for day in days limit: 2 -%}
+  {% include "partials/day" %}
+  {%- if forloop.first -%}
+    {% include "partials/alerts" %}{%- assign today_alerts = alerts -%}
+    {%- assign t_rise = rise -%}{%- assign t_set = set -%}{%- assign t_rise_min = rise_min -%}{%- assign t_set_min = set_min -%}{%- assign today_long = day_long -%}
+  {%- endif -%}
+{%- endfor -%}
+{%- assign alerts = today_alerts -%}
 {%- assign now_min = now_local | date: "%H" | times: 60 -%}{%- assign now_min = now_local | date: "%M" | plus: now_min -%}
 {%- assign sun_a = "" -%}{%- assign sun_b = "" -%}
 {%- if t_rise -%}

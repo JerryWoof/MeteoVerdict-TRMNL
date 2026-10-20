@@ -8,6 +8,7 @@
 {%- assign best_t = -99 -%}{%- assign best_r = 0 -%}{%- assign best_s = -1 -%}
 <style>
   .mv-5 { display: flex; flex-direction: column; gap: 6px; }
+  .mv-5 .mv-head { order: -1; }
   .mv-5 .cards { display: grid; grid-template-columns: repeat({{ five.size }}, 1fr); }
   .mv-5 .card { text-align: center; padding: 0 4px; }
   .mv-5 .card + .card { border-left: 1px solid #000; }
@@ -26,12 +27,9 @@
   .mv-5 .sum b { font-weight: 800; }
 </style>
 <div class="mv mv-5">
-  {%- assign day = five.first -%}{% include "partials/day" %}{%- assign first_long = day_long -%}
-  {%- assign day = five.last -%}{% include "partials/day" %}
-  <div class="mv-head"><span class="when">{{ T_days5 }}</span><span class="date">{{ first_long }} – {{ day_long }}</span></div>
   <div class="cards">
     {%- for day in five -%}
-      {% include "partials/day" %}{% include "partials/alerts" %}
+      {% include "partials/day" %}{% include "partials/alerts" %}{%- if forloop.first -%}{%- assign first_long = day_long -%}{%- endif -%}
       {%- if tmax > best_t -%}{%- assign best_t = tmax -%}{%- assign best_t_day = day_name -%}{%- endif -%}
       {%- if rain > best_r -%}{%- assign best_r = rain -%}{%- assign best_r_day = day_name -%}{%- endif -%}
       {%- if shine != nil and shine > best_s -%}{%- assign best_s = shine -%}{%- assign best_s_day = day_name -%}{%- endif -%}
@@ -50,6 +48,8 @@
       </div>
     {%- endfor -%}
   </div>
+  {%- comment -%} the head comes first on screen (order: -1), once the cards have read the days {%- endcomment -%}
+  <div class="mv-head"><span class="when">{{ T_days5 }}</span><span class="date">{{ first_long }} – {{ day_long }}</span></div>
   {%- assign chart_days = five -%}{%- assign chart_w = 780 -%}{%- assign chart_h = 104 -%}{%- assign chart_axis = false -%}{%- assign chart_labels = false -%}{%- assign chart_class = "" -%}
   {% include "partials/chart" %}
   <div class="sum">
