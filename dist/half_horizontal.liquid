@@ -31,8 +31,8 @@
   {%- assign T_outside = "Ven nejlépe" -%}
   {%- assign T_warmer = "o # ° tepleji" -%}{%- assign T_colder = "o # ° chladněji" -%}
   {%- assign T_warmest = "Nejtepleji" -%}{%- assign T_wettest = "Nejvíc srážek" -%}{%- assign T_sunniest = "Nejvíc slunce" -%}
-  {%- assign T_frost = "Mráz" -%}{%- assign T_ground_frost = "Přízemní mráz" -%}{%- assign T_heat = "Vedro" -%}
-  {%- assign T_storm = "Silný vítr" -%}{%- assign T_gusts = "Nárazy" -%}{%- assign T_downpour = "Vydatně prší" -%}
+  {%- assign T_frost = "Mráz" -%}{%- assign T_ground_frost = "Mráz" -%}{%- assign T_heat = "Vedro" -%}
+  {%- assign T_storm = "Silný vítr" -%}{%- assign T_gusts = "Nárazy" -%}{%- assign T_downpour = "Déšť" -%}
   {%- assign T_updated = "aktualizace" -%}{%- assign T_models = "modelů" -%}{%- assign T_ai = "MeteoVerdict AI" -%}
   {%- assign T_stale = "stará předpověď" -%}{%- assign T_none = "Předpověď na dnešek zatím není. Poslední je z" -%}
   {%- assign T_symbols = "Jasno,Polojasno,Zataženo,Přeháňky,Déšť,Déšť se sněhem,Sněžení" | split: "," -%}
@@ -56,8 +56,8 @@
   {%- assign T_outside = "Best outside" -%}
   {%- assign T_warmer = "# ° warmer" -%}{%- assign T_colder = "# ° colder" -%}
   {%- assign T_warmest = "Warmest" -%}{%- assign T_wettest = "Wettest" -%}{%- assign T_sunniest = "Sunniest" -%}
-  {%- assign T_frost = "Frost" -%}{%- assign T_ground_frost = "Ground frost" -%}{%- assign T_heat = "Hot" -%}
-  {%- assign T_storm = "Strong wind" -%}{%- assign T_gusts = "Gusts" -%}{%- assign T_downpour = "Heavy rain" -%}
+  {%- assign T_frost = "Frost" -%}{%- assign T_ground_frost = "Frost" -%}{%- assign T_heat = "Hot" -%}
+  {%- assign T_storm = "Strong wind" -%}{%- assign T_gusts = "Gusts" -%}{%- assign T_downpour = "Rain" -%}
   {%- assign T_updated = "updated" -%}{%- assign T_models = "models" -%}{%- assign T_ai = "MeteoVerdict AI" -%}
   {%- assign T_stale = "old forecast" -%}{%- assign T_none = "No forecast for today yet. The latest is from" -%}
   {%- assign T_symbols = "Sunny,Partly cloudy,Cloudy,Showers,Rain,Sleet,Snow" | split: "," -%}
@@ -259,11 +259,11 @@
 {%- assign night = rows | where: "part", "night" | first -%}
 {%- if orows -%}{%- assign onight = orows | where: "part", "night" | first -%}{%- if onight.frost != nil -%}{%- assign night = onight -%}{%- endif -%}{%- endif -%}
 {%- if night.frost == true -%}
-  {%- capture a -%}<span class="mv-badge">{{ T_frost }} {{ night.night_min | round }}°</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
+  {%- capture a -%}<span class="mv-badge">{{ T_frost }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
 {%- elsif night.ground_frost == true -%}
   {%- capture a -%}<span class="mv-badge">{{ T_ground_frost }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
 {%- elsif night.frost == nil and rows.size > 0 and tmin <= 0 -%}
-  {%- capture a -%}<span class="mv-badge">{{ T_frost }} {{ tmin | round }}°</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
+  {%- capture a -%}<span class="mv-badge">{{ T_frost }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
 {%- endif -%}
 {%- assign heavy = false -%}{%- assign flagged = false -%}{%- assign gusty = false -%}{%- assign gust_flags = false -%}{%- assign gust_max = 0 -%}
 {%- for r in rows -%}

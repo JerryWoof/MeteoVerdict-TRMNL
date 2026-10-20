@@ -152,7 +152,7 @@ test("frost and feels-like on a cold wet day, and no black-ice badge", async () 
   const words = text(await renderLayout("full", cold, { view: "next_24h" }));
   assert.doesNotMatch(words, /Black ice/);
   assert.match(words, /feels -\d+°/);
-  assert.match(text(await renderLayout("full", cold, { view: "five_days" })), /Frost -\d+°/);
+  assert.match(text(await renderLayout("full", cold, { view: "five_days" })), /Frost/);
 });
 
 test("frost badges follow MeteoVerdict's corrected night minimum when the data has it", async () => {
@@ -160,15 +160,14 @@ test("frost badges follow MeteoVerdict's corrected night minimum when the data h
   const withNights = (fields) => variant((f) => {
     for (const p of f.parts) Object.assign(p, p.part === "night" ? fields : { frost: null, ground_frost: null });
   });
-  const five = async (doc) => text(await renderLayout("full", doc, { view: "five_days" }));
-  assert.match(await five(withNights({ night_min: 0.6, frost: true, ground_frost: true })), /Frost 1°/);
-  const ground = await five(withNights({ night_min: 3.1, frost: false, ground_frost: true }));
-  assert.match(ground, /Ground frost/);
-  assert.doesNotMatch(ground, /Frost \d/);
+  // the badges' words: air frost and ground frost are both just "Frost"
+  const five = async (doc) => (await renderLayout("full", doc, { view: "five_days" })).match(/<span class="mv-badge">[^<]*<\/span>/g) ?? [];
+  assert.ok((await five(withNights({ night_min: 0.6, frost: true, ground_frost: true }))).includes('<span class="mv-badge">Frost</span>'));
+  assert.ok((await five(withNights({ night_min: 3.1, frost: false, ground_frost: true }))).includes('<span class="mv-badge">Frost</span>'));
   // the corrected minimum says no frost: a raw low of -1 ° no longer raises the badge
   const mild = withNights({ night_min: 1.8, frost: false, ground_frost: false });
   for (const p of mild.forecast.parts) p.tmin = -1;
-  assert.doesNotMatch(await five(mild), /Frost|Ground frost/);
+  assert.equal((await five(mild)).length, 0);
 });
 
 test("the best two hours outside are in daylight and dry", async () => {
@@ -362,18 +361,20 @@ test("the ± of the high, from tomorrow on, only with the blend's range", async 
 
 test("threshold badges come from MeteoVerdict's flags", async () => {
   freezeTime(NOW20);
-  const five = text(await renderLayout("full", BENESOV, { view: "five_days" }));
-  // heavy_rain on Wednesday and Thursday; ground frost the nights ending Friday and Sunday (beyond 5 days)
-  assert.equal((five.match(/Heavy rain/g) ?? []).length, 2);
-  assert.match(five, /Ground frost/);
+  const html5 = await renderLayout("full", BENESOV, { view: "five_days" });
+  const five = text(html5);
+  const badges = html5.match(/<span class="mv-badge">[^<]*<\/span>/g) ?? [];
+  // heavy_rain on Wednesday and Thursday ("Rain"); ground frost the nights ending Friday and Sunday (beyond 5 days)
+  assert.equal(badges.filter((b) => b.includes(">Rain<")).length, 2);
+  assert.equal(badges.filter((b) => b.includes(">Frost<")).length, 1);
   assert.doesNotMatch(five, /ČHMÚ/);
-  assert.match(text(await renderLayout("full", BENESOV, { view: "five_days", lang: "cs" })), /Vydatně prší/);
+  assert.match(text(await renderLayout("full", BENESOV, { view: "five_days", lang: "cs" })), /Déšť.*Mráz/);
   // a gust over the threshold, shown in the wind unit
   const gusty = structuredClone(BENESOV);
   for (const p of gusty.forecast.parts) Object.assign(p, { heavy_rain: false, ground_frost: false, gust_over_threshold: p.day === "2026-10-22", gust: p.day === "2026-10-22" ? 16.2 : 5 });
   const g = text(await renderLayout("full", gusty, { view: "five_days", wind: "kmh" }));
   assert.match(g, /Gusts 58 km\/h/);
-  assert.doesNotMatch(g, /Strong wind|Heavy rain/);
+  assert.doesNotMatch(g, /Strong wind/);
   const calm = structuredClone(gusty);
   for (const p of calm.forecast.parts) p.gust_over_threshold = false;
   assert.doesNotMatch(text(await renderLayout("full", calm, { view: "five_days" })), /Gusts/);
