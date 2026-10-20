@@ -20,9 +20,16 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   for (const layout of LAYOUTS) {
     const body = inline(layout)
       .replace(/\{%-?\s*comment\s*-?%\}[\s\S]*?\{%-?\s*endcomment\s*-?%\}/g, "")
-      .replace(/\n\s*\n+/g, "\n");
+      .replace(/\n\s*\n+/g, "\n")
+      // TRMNL takes at most 100 kB per layout: no indentation, and no line breaks next to
+      // tags that trim the whitespace around them anyway ({%- and -%})
+      .replace(/^[ \t]+/gm, "")
+      .replace(/-%\}\n/g, "-%}")
+      .replace(/\n\{%-/g, "{%-");
     const out = `{%- comment -%} MeteoVerdict for TRMNL, ${layout}: https://github.com/JerryWoof/MeteoVerdict-TRMNL (built from src/, edit there) {%- endcomment -%}\n${body}`;
     writeFileSync(join(root, "dist", `${layout}.liquid`), out);
-    console.log(`dist/${layout}.liquid  ${(out.length / 1024).toFixed(1)} kB`);
+    const bytes = Buffer.byteLength(out);
+    if (bytes > 95000) throw new Error(`dist/${layout}.liquid is ${bytes} bytes: TRMNL takes at most 100 kB`);
+    console.log(`dist/${layout}.liquid  ${(bytes / 1000).toFixed(1)} kB`);
   }
 }
