@@ -14,7 +14,7 @@ const tmp = join(root, ".screens");
 mkdirSync(tmp, { recursive: true });
 mkdirSync(join(root, "screenshots"), { recursive: true });
 
-// MeteoVerdict AI, the default forecast, unless `source` says otherwise (an obec is the blend's)
+// MeteoVerdict AI, the default forecast, unless `source` says otherwise
 const one = (layout, okres, opts, source = { ai: true }) => async () => renderLayout(layout, await load({ okres, ...source }), opts);
 const mashup = (kind, parts) => async () => `<div class="mashup mashup--${kind}">${(await Promise.all(parts.map((p) => p()))).join("")}</div>`;
 // the live Prague forecast made 14° colder, windy and with a wet night: shows the threshold badges
@@ -46,7 +46,7 @@ const SHOTS = {
   ...Object.fromEntries(Object.entries(VIEWS).map(([name, view]) => [name, one("full", "CZ0100", { view, place: "Praha" })])),
   ...Object.fromEntries(Object.entries(VIEWS).map(([name, view]) => [`${name}-cs`, one("full", "CZ0642", { view, place: "Brno", lang: "cs" })])),
   "today-tomorrow-blend": one("full", "CZ0100", { view: "today_tomorrow", place: "Praha" }, {}),
-  "today-tomorrow-obec": one("full", "CZ0525", { view: "today_tomorrow" }, { obec: "CZ0525/spindleruv-mlyn" }),
+  "today-tomorrow-obec": one("full", "CZ0525", { view: "today_tomorrow" }, { ai: true, obec: "CZ0525/spindleruv-mlyn" }),
   "thresholds-simulated": winter({ view: "five_days", place: "Praha (simulated winter)" }),
   "mashup-half-horizontal": mashup("1Tx1B", [
     one("half_horizontal", "CZ0100", { place: "Praha" }),

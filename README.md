@@ -22,8 +22,8 @@ model's opinion. Free, no API key.
 - **Thresholds from MeteoVerdict itself:** the badges use the same flags as the website
   (*Frost* from the corrected night minimum or the ground, *Rain* when heavy rain is likely,
   gusts over 13.5 m/s).
-- **An obec instead of the okres** (a test): the temperature, rain and wind of any of
-  6,258 municipalities, corrected for its elevation.
+- **Your obec instead of the okres:** the temperature, rain and wind of any of 6,258
+  municipalities, corrected for its elevation, with MeteoVerdict AI or the combined forecast.
 - **Rain with its chance and day:** *Rain from tomorrow 16:00 · 1.5 mm · 23 % chance*.
 - **A cleaner chart:** drawn pixel for pixel for the panel, with the night as a light
   dot screen, an hour axis and larger rain bars.
@@ -129,10 +129,11 @@ models* (above).
 ![Špindlerův Mlýn, an obec in the okres Trutnov](screenshots/today-tomorrow-obec.png)
 
 For a hilly okres the okres's one forecast point can be far from your village. MeteoVerdict
-also forecasts every obec (a test, with the combined forecast), corrected for its elevation. With an obec, the
-temperature, rain and wind (and the frost badges) are the obec's; the sky, sunshine and
-chance of rain stay the okres's. The footer shows the obec's name. See
-[Install](#an-obec-private-plugins) for how to set it up.
+also forecasts every obec, corrected for its elevation, with MeteoVerdict AI and with the
+combined forecast (still a test on the website). With an obec, the temperature, rain and
+wind (and the frost badges) are the obec's; the sky, sunshine and chance of rain stay the
+okres's. The footer shows the obec's name. See [Install](#an-obec-private-plugins) for
+how to set it up.
 
 ## Sharing the screen
 
@@ -187,7 +188,8 @@ Add it to your TRMNL as a private plugin. That takes about five minutes.
    | Half Vertical | [`half_vertical.liquid`](dist/half_vertical.liquid) |
    | Quadrant | [`quadrant.liquid`](dist/quadrant.liquid) |
 
-   Then click **Force Refresh**.
+   Then click **Force Refresh**. (TRMNL takes at most 100 kB per tab; the build keeps
+   every file under 95 kB.)
 5. **Refresh rate:** hourly. The forecast itself changes a few times a day, but the
    24-hour view and the "now" line move with the clock.
 6. Add the plugin to a playlist, or to a mashup.
@@ -205,7 +207,8 @@ https://jerrywoof.github.io/MeteoVerdict/api/v1/ai/obce/CZ0525/spindleruv-mlyn.j
 
 With the combined forecast, the same without `ai/`.
 
-The okres in the form must be the obec's okres. The obec's address is its okres code and
+Both lines name the obec's okres (`CZ0525` above); the Okres and Forecast fields of the
+form are not used then. The obec's address is its okres code and
 its name in lower case without diacritics, with `-` for spaces (`CZ0201/benesov`,
 `CZ0525/spindleruv-mlyn`; a repeated name in one okres gets `-2`, `-3`). The
 [Data page](https://jerrywoof.github.io/MeteoVerdict/data.html#trmnl) finds it for you
@@ -234,7 +237,7 @@ requirements (its own styles exceed the linter's limit on inline layout styles).
 | Chance of rain | MeteoVerdict's chance of rain for each part of the day; the 24-hour sentence takes the highest of the parts it covers |
 | Clouds, sunshine | The mean of the models, corrected against ČHMÚ observations |
 | Thresholds | MeteoVerdict's flags in the open data: frost and ground frost from the corrected night minimum, heavy rain from the calibrated chance of 5 mm, gusts corrected against ČHMÚ gust observations |
-| Obec | The blend at the obec's own point, corrected for its elevation (a test; the okres's stations check it only indirectly) |
+| Obec | MeteoVerdict AI or the blend at the obec's own point, corrected for its elevation (the okres's stations check it only indirectly) |
 | Sunrise, sunset | Calculated for the okres's forecast point (NOAA solar equations) |
 | Day and part-of-day symbols | MeteoVerdict's: rain, sleet or snow when likely; showers at a 30 % chance; otherwise by cloud cover |
 | Hourly symbols (next 24 hours) | The plugin's own, per hour: rain, sleet or snow from 0.5 mm, showers from 0.1 mm, otherwise clear under 25 % cloud, partly cloudy under 70 % |

@@ -137,3 +137,17 @@ An opus review changed the plan in these ways (they override the sections above)
   screenshot keeps its attribution. The model count stays dynamic.
 
 Out of scope for now: a "Tonight / frost" view, AI obce, a native TRMNL X (1040 × 780) layout.
+
+## Outcome (21 October 2026)
+
+Built as planned, then changed with the owner:
+- **MeteoVerdict AI is the default** (form field `forecast_model`, renamed from `forecast`,
+  which clashed with the data's `forecast`); the combined forecast stays a choice.
+- **One chart under both days** in today and tomorrow and the weekend, curves from edge to
+  edge, no lines at midnight in any chart.
+- **Badges in one word:** *Frost* (air or ground) and *Rain* (heavy rain); gusts and heat as before.
+- **No licence or thresholds note on screen**; the README and the About box say both.
+  Obce without the "(test)" label.
+- **Obce with the AI:** `api/v1/ai/obce/{okres}/{id}.json` (MeteoVerdict #248).
+- **Size:** the Full layout is under TRMNL's 100 kB limit (91 kB): the two-day layout and a
+  day's numbers are in the file once each, and the build fails above 95 kB.
