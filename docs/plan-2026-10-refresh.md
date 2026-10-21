@@ -46,9 +46,9 @@ Two new kinds of files in `api/v1`, built from what Pages already has (`data/sco
 The plugin then polls one or two URLs:
 
 ```
-https://jerrywoof.github.io/MeteoVerdict/api/v1/okresy/{{ okres_code }}.json        blend (default, unchanged)
-https://jerrywoof.github.io/MeteoVerdict/api/v1/ai/okresy/{{ okres_code }}.json     AI instead
-https://jerrywoof.github.io/MeteoVerdict/api/v1/obce/CZ0201/benesov.json            optional second line: an obec
+https://meteoverdict.cz/api/v1/okresy/{{ okres_code }}.json        blend (default, unchanged)
+https://meteoverdict.cz/api/v1/ai/okresy/{{ okres_code }}.json     AI instead
+https://meteoverdict.cz/api/v1/obce/CZ0201/benesov.json            optional second line: an obec
 ```
 
 With two lines TRMNL gives `IDX_0` and `IDX_1`; the templates read either shape. The
