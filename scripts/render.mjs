@@ -13,7 +13,7 @@ import { fileURLToPath } from "node:url";
 import { Liquid } from "liquidjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const API = "https://jerrywoof.github.io/MeteoVerdict/api/v1/okresy";
+const API = "https://meteoverdict.cz/api/v1/okresy";
 export const SIZES = { full: [800, 480], half_horizontal: [800, 240], half_vertical: [400, 480], quadrant: [400, 240] };
 const MASHUPS = { "half_horizontal,half_horizontal": "1Tx1B", "half_vertical,half_vertical": "1Lx1R", "quadrant,quadrant,quadrant,quadrant": "2x2" };
 

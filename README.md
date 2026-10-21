@@ -7,7 +7,7 @@ for frost, rain, gusts and heat. In English or Czech.
 
 ![Today and tomorrow in Prague](screenshots/today-tomorrow.png)
 
-The forecast is [MeteoVerdict](https://jerrywoof.github.io/MeteoVerdict/)'s. Every day,
+The forecast is [MeteoVerdict](https://meteoverdict.cz/)'s. Every day,
 MeteoVerdict checks how well about 20 weather models forecast what ČHMÚ stations then
 measured, and blends them, weighting each model by how accurate it has been in your okres
 over the last 90 days. So you get a forecast tuned for where you live rather than one
@@ -160,7 +160,7 @@ Add it to your TRMNL as a private plugin. That takes about five minutes.
 2. **Strategy:** Polling. **Polling URL:**
 
    ```
-   https://jerrywoof.github.io/MeteoVerdict/api/v1/{{ forecast_model }}/{{ okres_code }}.json
+   https://meteoverdict.cz/api/v1/{{ forecast_model }}/{{ okres_code }}.json
    ```
 
    `{{ forecast_model }}` and `{{ okres_code }}` are filled in from the form in step 3.
@@ -201,8 +201,8 @@ obec's. TRMNL passes both files to the layouts, which use the obec's temperature
 wind and show its name. With MeteoVerdict AI (both files from `ai/`):
 
 ```
-https://jerrywoof.github.io/MeteoVerdict/api/v1/ai/okresy/CZ0525.json
-https://jerrywoof.github.io/MeteoVerdict/api/v1/ai/obce/CZ0525/spindleruv-mlyn.json
+https://meteoverdict.cz/api/v1/ai/okresy/CZ0525.json
+https://meteoverdict.cz/api/v1/ai/obce/CZ0525/spindleruv-mlyn.json
 ```
 
 With the combined forecast, the same without `ai/`.
@@ -211,8 +211,8 @@ Both lines name the obec's okres (`CZ0525` above); the Okres and Forecast fields
 form are not used then. The obec's address is its okres code and
 its name in lower case without diacritics, with `-` for spaces (`CZ0201/benesov`,
 `CZ0525/spindleruv-mlyn`; a repeated name in one okres gets `-2`, `-3`). The
-[Data page](https://jerrywoof.github.io/MeteoVerdict/data.html#trmnl) finds it for you
-and lists all obce in [`api/v1/obce/index.json`](https://jerrywoof.github.io/MeteoVerdict/api/v1/obce/index.json).
+[Data page](https://meteoverdict.cz/data.html#trmnl) finds it for you
+and lists all obce in [`api/v1/obce/index.json`](https://meteoverdict.cz/api/v1/obce/index.json).
 If the obec's file doesn't match the okres file (another okres, or a forecast run apart),
 the layouts fall back to the okres.
 

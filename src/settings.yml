@@ -9,7 +9,7 @@
     rain, gusts and heat. Compact layouts for half and quarter
     screens let you show two or four places at once, or the weather next to your
     calendar.<br/><br/>
-    The forecast is <a href="https://jerrywoof.github.io/MeteoVerdict/" class="underline">MeteoVerdict</a>'s.
+    The forecast is <a href="https://meteoverdict.cz/" class="underline">MeteoVerdict</a>'s.
     Every day it checks how well about 20 weather models forecast what ČHMÚ stations then
     measured, and blends them, weighting each model by how accurate it has been in your
     okres over the last 90 days. By default the temperature and wind come from MeteoVerdict
@@ -21,7 +21,7 @@
     MeteoVerdict, CC BY-SA 4.0, built from Open-Meteo.com, ČHMÚ and the weather services'
     model data. Not affiliated with TRMNL, ČHMÚ or Open-Meteo.
   github_url: https://github.com/JerryWoof/MeteoVerdict-TRMNL
-  learn_more_url: https://jerrywoof.github.io/MeteoVerdict/
+  learn_more_url: https://meteoverdict.cz/
   category: environment,life
 - keyname: okres_code
   field_type: select

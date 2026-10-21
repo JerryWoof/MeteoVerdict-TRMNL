@@ -88,7 +88,7 @@ the public preview.
 2. **Create the master.** In TRMNL go to **Plugins → Private Plugin → Add new**. Name it
    `MeteoVerdict`. Make a new one rather than forking a recipe, because Chef rejects forks.
    - **Strategy:** Polling. **Polling URL:**
-     `https://jerrywoof.github.io/MeteoVerdict/api/v1/{{ forecast_model }}/{{ okres_code }}.json`
+     `https://meteoverdict.cz/api/v1/{{ forecast_model }}/{{ okres_code }}.json`
    - **Fastest refresh rate:** hourly is enough. The forecast changes twice a day, and the
      24-hour view's "now" line moves by the hour.
 3. **Form fields:** paste [`src/settings.yml`](../src/settings.yml) and save. Then fill in
