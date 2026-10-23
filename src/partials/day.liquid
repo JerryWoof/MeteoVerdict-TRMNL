@@ -13,7 +13,7 @@
 {%- if day -%}{%- assign rows = forecast.parts | where: "day", day -%}{%- else -%}{%- assign rows = "" | split: "," -%}{%- endif -%}
 {%- assign orows = nil -%}{%- if OP and day -%}{%- assign orows = OP | where: "day", day -%}{%- endif -%}
 {%- assign whole = rows | where: "part", "day" | first -%}
-{%- assign tmin = 999 -%}{%- assign tmax = -999 -%}{%- assign rain = 0 -%}{%- assign chance = 0 -%}{%- assign wind = 0 -%}{%- assign cloud = nil -%}{%- assign shine = nil -%}
+{%- assign tmin = 999 -%}{%- assign tmax = -999 -%}{%- assign rain = 0 -%}{%- assign chance = 0 -%}{%- assign wind = 0 -%}{%- assign gust = 0 -%}{%- assign cloud = nil -%}{%- assign shine = nil -%}
 {%- for r in rows -%}
   {%- if r.part == "day" -%}{%- continue -%}{%- endif -%}
   {%- if r.tmin != nil and r.tmin < tmin -%}{%- assign tmin = r.tmin -%}{%- endif -%}
@@ -21,6 +21,7 @@
   {%- assign rain = rain | plus: r.precipitation -%}
   {%- if r.rain_probability > chance -%}{%- assign chance = r.rain_probability -%}{%- endif -%}
   {%- if r.wind > wind -%}{%- assign wind = r.wind -%}{%- endif -%}
+  {%- if r.gust != nil and r.gust > gust -%}{%- assign gust = r.gust -%}{%- endif -%}
   {%- if r.sunshine != nil -%}{%- assign shine = shine | plus: r.sunshine -%}{%- endif -%}
 {%- endfor -%}
 {%- if whole -%}

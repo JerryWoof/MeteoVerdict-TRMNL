@@ -1,9 +1,0 @@
-{%- comment -%}
-  Today and tomorrow side by side; tomorrow and the day after in the evening (`start`).
-  Sets `pair` and `two`: full.liquid then draws them with partials/two_days (once in the
-  file, for this view and the weekend, so the markup stays under TRMNL's 100 kB).
-{%- endcomment -%}
-{%- assign pair = "" -%}
-{%- for d in days offset: start limit: 2 -%}{%- assign pair = pair | append: d | append: "," -%}{%- endfor -%}
-{%- assign pair = pair | split: "," -%}
-{%- assign weekend = false -%}{%- assign two = true -%}

@@ -32,18 +32,18 @@
 
 {%- if lang == "cs" -%}
   {%- assign T_today = "Dnes" -%}{%- assign T_tomorrow = "Zítra" -%}
-  {%- assign T_next24 = "Příštích 24 hodin" -%}{%- assign T_days5 = "Předpověď na 5 dní" -%}
-  {%- assign T_beyond = "# je mimo předpověď" -%}{%- assign T_weekend_later = "Víkend zatím mimo předpověď" -%}
+  {%- assign T_next = "Příštích # hodin" -%}{%- assign T_days5 = "Předpověď na 5 dní" -%}
+  {%- assign T_beyond = "# je mimo předpověď" -%}{%- assign T_notice = "Odznaky nejsou výstrahy ČHMÚ" -%}{%- assign T_pressure = "Tlak" -%}{%- assign T_humidity = "Vlhkost" -%}{%- assign T_dew = "rosný bod" -%}{%- assign T_rising = "stoupá" -%}{%- assign T_falling = "klesá" -%}{%- assign T_steady = "stabilní" -%}{%- assign T_gusts_l = "nárazy" -%}{%- assign T_mean = "průměr" -%}{%- assign T_fog = "mlha možná" -%}
   {%- assign T_rain = "Srážky" -%}{%- assign T_chance = "šance" -%}
   {%- assign T_sunshine = "Slunce" -%}{%- assign T_of = "z" -%}
   {%- assign T_clouds = "Oblačnost" -%}{%- assign T_daytime = "přes den" -%}
   {%- assign T_wind = "Vítr" -%}{%- assign T_max = "nejvíc" -%}
   {%- assign T_parts = "Noc,Ráno,Odpoledne,Večer" | split: "," -%}
   {%- assign T_now = "Teď" -%}{%- assign T_high = "max" -%}{%- assign T_low = "min" -%}
-  {%- assign T_feels = "pocitově" -%}
-  {%- assign T_dry = "Příštích 24 hodin bez srážek" -%}
+  
+  {%- assign T_dry = "Příštích # hodin bez srážek" -%}
   {%- assign T_rain_from = "Srážky od" -%}{%- assign T_rain_until = "Srážky do" -%}{%- assign T_rain_all = "Srážky celý den" -%}
-  {%- assign T_outside = "Ven nejlépe" -%}
+  
   {%- assign T_warmer = "o # ° tepleji" -%}{%- assign T_colder = "o # ° chladněji" -%}
   {%- assign T_warmest = "Nejtepleji" -%}{%- assign T_wettest = "Nejvíc srážek" -%}{%- assign T_sunniest = "Nejvíc slunce" -%}
   {%- assign T_frost = "Mráz" -%}{%- assign T_ground_frost = "Mráz" -%}{%- assign T_heat = "Vedro" -%}
@@ -57,18 +57,18 @@
   {%- assign T_dec = "," -%}
 {%- else -%}
   {%- assign T_today = "Today" -%}{%- assign T_tomorrow = "Tomorrow" -%}
-  {%- assign T_next24 = "Next 24 hours" -%}{%- assign T_days5 = "5-day forecast" -%}
-  {%- assign T_beyond = "# is beyond the forecast" -%}{%- assign T_weekend_later = "Weekend not in the forecast yet" -%}
+  {%- assign T_next = "Next # hours" -%}{%- assign T_days5 = "5-day forecast" -%}
+  {%- assign T_beyond = "# is beyond the forecast" -%}{%- assign T_notice = "Badges are not ČHMÚ warnings" -%}{%- assign T_pressure = "Pressure" -%}{%- assign T_humidity = "Humidity" -%}{%- assign T_dew = "dew point" -%}{%- assign T_rising = "rising" -%}{%- assign T_falling = "falling" -%}{%- assign T_steady = "steady" -%}{%- assign T_gusts_l = "gusts" -%}{%- assign T_mean = "mean" -%}{%- assign T_fog = "fog possible" -%}
   {%- assign T_rain = "Rain" -%}{%- assign T_chance = "chance" -%}
   {%- assign T_sunshine = "Sunshine" -%}{%- assign T_of = "of" -%}
   {%- assign T_clouds = "Clouds" -%}{%- assign T_daytime = "daytime" -%}
   {%- assign T_wind = "Wind" -%}{%- assign T_max = "max" -%}
   {%- assign T_parts = "Night,Morning,Afternoon,Evening" | split: "," -%}
   {%- assign T_now = "Now" -%}{%- assign T_high = "high" -%}{%- assign T_low = "low" -%}
-  {%- assign T_feels = "feels" -%}
-  {%- assign T_dry = "Dry for the next 24 hours" -%}
+  
+  {%- assign T_dry = "Dry for the next # hours" -%}
   {%- assign T_rain_from = "Rain from" -%}{%- assign T_rain_until = "Rain until" -%}{%- assign T_rain_all = "Rain all day" -%}
-  {%- assign T_outside = "Best outside" -%}
+  
   {%- assign T_warmer = "# ° warmer" -%}{%- assign T_colder = "# ° colder" -%}
   {%- assign T_warmest = "Warmest" -%}{%- assign T_wettest = "Wettest" -%}{%- assign T_sunniest = "Sunniest" -%}
   {%- assign T_frost = "Frost" -%}{%- assign T_ground_frost = "Frost" -%}{%- assign T_heat = "Hot" -%}
@@ -117,6 +117,17 @@
 {%- assign HS = forecast.hourly -%}
 {%- if obec -%}{%- assign H = IDX_1.hourly -%}{%- else -%}{%- assign H = forecast.hourly -%}{%- endif -%}
 {%- assign n_hours = HS.time.size -%}
+{%- comment -%} s: the hour that is running now (the last hourly time not after now); pressure then and its trend over 6 hours {%- endcomment -%}
+{%- assign s = 0 -%}
+{%- for t in HS.time -%}{%- assign e = t | date: "%s" | plus: 0 -%}{%- if e <= now_utc -%}{%- assign s = forloop.index0 -%}{%- else -%}{%- break -%}{%- endif -%}{%- endfor -%}
+{%- assign p_now = HS.pressure_msl[s] -%}{%- assign p_trend = "" -%}
+{%- if p_now != nil -%}
+  {%- assign s6 = s | plus: 6 -%}{%- assign p_next = HS.pressure_msl[s6] -%}
+  {%- if p_next != nil -%}
+    {%- assign p_diff = p_next | minus: p_now -%}
+    {%- if p_diff >= 1 -%}{%- assign p_trend = T_rising -%}{%- elsif p_diff <= -1 -%}{%- assign p_trend = T_falling -%}{%- else -%}{%- assign p_trend = T_steady -%}{%- endif -%}
+  {%- endif -%}
+{%- endif -%}
 
 {%- comment -%} weather symbols as inline SVG (64x64), black on white for e-ink {%- endcomment -%}
 {%- capture sun -%}<g stroke="#000" stroke-width="4" stroke-linecap="round"><circle cx="32" cy="32" r="11"/><path d="M32 6v7M32 51v7M6 32h7M51 32h7M13.6 13.6l5 5M45.4 45.4l5 5M13.6 50.4l5-5M45.4 18.6l5-5"/></g>{%- endcapture -%}
@@ -154,6 +165,7 @@
   .mv-head .mv-badge { background: #fff; color: #000; margin-left: 8px; vertical-align: 2px; }
   .mv-empty { font-size: 20px; font-weight: 700; padding: 30px 10px; text-align: center; }
   .title_bar .title { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .title_bar .mv-note { font-family: "Inter", "Helvetica Neue", Arial, sans-serif; flex: 1 1 auto; min-width: 0; margin-left: 14px; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .title_bar .instance { flex: none; margin-left: auto; padding-left: 12px; }
 </style>
 <svg width="0" height="0" style="position:absolute">

@@ -1,8 +1,8 @@
 // Renders a layout the way TRMNL does (liquidjs instead of Ruby Liquid) into an HTML page
 // at the device's size, with TRMNL's framework CSS and its view wrapper.
-//   node scripts/render.mjs out.html [--layout full] [--view next_24h] [--okres CZ0100]
+//   node scripts/render.mjs out.html [--layout full] [--view next_24h | next_48h | five_days] [--okres CZ0100]
 //     [--place Praha] [--lang cs] [--data file.json] [--now 2026-10-12T15:30:00Z]
-//     [--offset 7200] [--ai 1] [--obec CZ0525/spindleruv-mlyn] [--mashup "half_horizontal:CZ0100,half_horizontal:CZ0642"]
+//     [--offset 7200] [--ai 1] [--obec CZ0525/spindleruv-mlyn]
 // --data: a saved okres file instead of the live one; --now: pretend it is that time.
 // TRMNL renders on UTC servers; liquidjs's epoch seconds ("%s") follow the machine's time
 // zone, so render in UTC too or every time is off by your UTC offset.
@@ -14,8 +14,7 @@ import { Liquid } from "liquidjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const API = "https://meteoverdict.cz/api/v1/okresy";
-export const SIZES = { full: [800, 480], half_horizontal: [800, 240], half_vertical: [400, 480], quadrant: [400, 240] };
-const MASHUPS = { "half_horizontal,half_horizontal": "1Tx1B", "half_vertical,half_vertical": "1Lx1R", "quadrant,quadrant,quadrant,quadrant": "2x2" };
+export const SIZES = { full: [800, 480] };
 
 export function freezeTime(iso) {
   const fixed = new Date(iso).getTime();
@@ -71,17 +70,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const a = args(process.argv.slice(2));
   if (a.now) freezeTime(a.now);
   const opts = { view: a.view, place: a.place, lang: a.lang, offset: Number(a.offset ?? 7200), evening: a.evening, wind: a.wind };
-  let html;
-  if (a.mashup) {
-    const slots = a.mashup.split(",").map((s) => s.split(":"));
-    const kind = MASHUPS[slots.map(([l]) => l).join(",")];
-    if (!kind) throw new Error(`no mashup for ${a.mashup}`);
-    const views = [];
-    for (const [layout, okres, place] of slots) views.push(await renderLayout(layout, await load({ okres }), { ...opts, place }));
-    html = page(`<div class="mashup mashup--${kind}">${views.join("")}</div>`);
-  } else {
-    const layout = a.layout ?? "full";
-    html = page(await renderLayout(layout, await load({ ...a, okres: a.okres ?? (a.obec ? a.obec.split("/")[0] : undefined) }), opts), SIZES[layout]);
-  }
+  const layout = a.layout ?? "full";
+  const html = page(await renderLayout(layout, await load({ ...a, okres: a.okres ?? (a.obec ? a.obec.split("/")[0] : undefined) }), opts), SIZES[layout]);
   writeFileSync(a._[0] ?? "preview.html", html);
 }
