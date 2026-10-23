@@ -5,14 +5,15 @@
 {%- endcomment -%}
 
 {%- comment -%}
-  One polling URL: an okres file (blend `api/v1/okresy/…` or AI `api/v1/ai/okresy/…`) at the
+  One polling URL: an okres file (blend `api/v1/okresy/…` or AI `api/v1/ai/okresy/…`; both with `forecast.model`,
+  `forecast.sources`, `forecast.hourly` and `forecast.parts`, no `models` block) at the
   top level. Two (private plugins): IDX_0 is the okres file and IDX_1 an obec file
   (`api/v1/obce/…`), whose temperature, rain and wind replace the okres's: `H` (hourly) and
   `OP` (parts) are the obec's then, `HS` (sky: cloud and sunshine) is always the okres's.
 {%- endcomment -%}
 {%- assign obec = nil -%}{%- assign OP = nil -%}
 {%- if IDX_0 -%}
-  {%- assign okres = IDX_0.okres -%}{%- assign forecast = IDX_0.forecast -%}{%- assign models = IDX_0.models -%}
+  {%- assign okres = IDX_0.okres -%}{%- assign forecast = IDX_0.forecast -%}
   {%- if IDX_1.obec and IDX_1.hourly.temperature_2m.size == IDX_0.forecast.hourly.time.size -%}{%- assign obec = IDX_1.obec -%}{%- assign OP = IDX_1.parts -%}{%- endif -%}
 {%- endif -%}
 {%- comment -%} MeteoVerdict AI: the okres file says so, or an obec file from api/v1/ai/obce {%- endcomment -%}
@@ -47,7 +48,7 @@
   {%- assign T_warmest = "Nejtepleji" -%}{%- assign T_wettest = "Nejvíc srážek" -%}{%- assign T_sunniest = "Nejvíc slunce" -%}
   {%- assign T_frost = "Mráz" -%}{%- assign T_ground_frost = "Mráz" -%}{%- assign T_heat = "Vedro" -%}
   {%- assign T_storm = "Silný vítr" -%}{%- assign T_gusts = "Nárazy" -%}{%- assign T_downpour = "Déšť" -%}
-  {%- assign T_updated = "aktualizace" -%}{%- assign T_models = "modelů" -%}{%- assign T_ai = "MeteoVerdict AI" -%}
+  {%- assign T_updated = "aktualizace" -%}{%- assign T_ai = "MeteoVerdict AI" -%}
   {%- assign T_stale = "stará předpověď" -%}{%- assign T_none = "Předpověď na dnešek zatím není. Poslední je z" -%}
   {%- assign T_symbols = "Jasno,Polojasno,Zataženo,Přeháňky,Déšť,Déšť se sněhem,Sněžení" | split: "," -%}
   {%- assign T_days = "neděle,pondělí,úterý,středa,čtvrtek,pátek,sobota" | split: "," -%}
@@ -72,7 +73,7 @@
   {%- assign T_warmest = "Warmest" -%}{%- assign T_wettest = "Wettest" -%}{%- assign T_sunniest = "Sunniest" -%}
   {%- assign T_frost = "Frost" -%}{%- assign T_ground_frost = "Frost" -%}{%- assign T_heat = "Hot" -%}
   {%- assign T_storm = "Strong wind" -%}{%- assign T_gusts = "Gusts" -%}{%- assign T_downpour = "Rain" -%}
-  {%- assign T_updated = "updated" -%}{%- assign T_models = "models" -%}{%- assign T_ai = "MeteoVerdict AI" -%}
+  {%- assign T_updated = "updated" -%}{%- assign T_ai = "MeteoVerdict AI" -%}
   {%- assign T_stale = "old forecast" -%}{%- assign T_none = "No forecast for today yet. The latest is from" -%}
   {%- assign T_symbols = "Sunny,Partly cloudy,Cloudy,Showers,Rain,Sleet,Snow" | split: "," -%}
   {%- assign T_days = "Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday" | split: "," -%}
@@ -116,7 +117,6 @@
 {%- assign HS = forecast.hourly -%}
 {%- if obec -%}{%- assign H = IDX_1.hourly -%}{%- else -%}{%- assign H = forecast.hourly -%}{%- endif -%}
 {%- assign n_hours = HS.time.size -%}
-{%- assign models_used = models.variables.temperature_2m.lead_days["1"].size | default: 0 -%}
 
 {%- comment -%} weather symbols as inline SVG (64x64), black on white for e-ink {%- endcomment -%}
 {%- capture sun -%}<g stroke="#000" stroke-width="4" stroke-linecap="round"><circle cx="32" cy="32" r="11"/><path d="M32 6v7M32 51v7M6 32h7M51 32h7M13.6 13.6l5 5M45.4 45.4l5 5M13.6 50.4l5-5M45.4 18.6l5-5"/></g>{%- endcapture -%}

@@ -41,7 +41,7 @@
         <div class="mv-max">{{ tmax | round }}°{% if pm != nil and pm >= 1 and forloop.first == false %}<small class="mv-pm">±{{ pm }}</small>{% endif %}</div>
         <div class="lo">{{ tmin | round }}°</div>
         <div class="f">
-          {{ drop_glyph }}<b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b> · {{ chance | times: 100 | round }} %<br>
+          {{ drop_glyph }}<b>{% assign n = rain %}{% include "partials/dec1" %} mm</b> · {{ chance | times: 100 | round }} %<br>
           {%- if shine != nil -%}{{ sun_glyph }}<b>{{ shine | round | replace: ".", T_dec }} h</b> · {% endif %}{{ wind | times: wind_k | round }} {{ wind_unit }}
         </div>
         <div class="b">{% if alerts != "" %}{{ alerts }}{% else %}&nbsp;{% endif %}</div>
@@ -54,7 +54,7 @@
   {% include "partials/chart" %}
   <div class="sum">
     {{ T_warmest }} <b>{{ best_t_day }} {{ best_t | round }}°</b>
-    {%- if best_r >= 0.5 %} · {{ T_wettest }} <b>{{ best_r_day }} {{ best_r | round: 1 | replace: ".", T_dec }} mm</b>{% endif -%}
+    {%- if best_r >= 0.5 %} · {{ T_wettest }} <b>{{ best_r_day }} {% assign n = best_r %}{% include "partials/dec1" %} mm</b>{% endif -%}
     {%- if best_s > 0 %} · {{ T_sunniest }} <b>{{ best_s_day }} {{ best_s | round | replace: ".", T_dec }} h</b>{% endif %}
   </div>
 </div>

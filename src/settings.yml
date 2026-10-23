@@ -12,8 +12,8 @@
     The forecast is <a href="https://meteoverdict.cz/" class="underline">MeteoVerdict</a>'s.
     Every day it checks how well about 20 weather models forecast what ČHMÚ stations then
     measured, and blends them, weighting each model by how accurate it has been in your
-    okres over the last 90 days. By default the temperature and wind come from MeteoVerdict
-    AI, its own AI model. Free, no API key, no account.<br/><br/>
+    okres over the last 90 days. By default the forecast is MeteoVerdict
+    AI's, its own AI model. Free, no API key, no account.<br/><br/>
     Počasí pro váš okres podle MeteoVerdictu, česky i anglicky.<br/><br/>
     The badges are MeteoVerdict's thresholds, not official ČHMÚ warnings
     (<a href="https://www.chmi.cz/" class="underline">chmi.cz</a>). Questions and bugs:
@@ -108,7 +108,7 @@
 - keyname: forecast_model
   field_type: select
   name: Forecast
-  description: MeteoVerdict AI (temperature and wind from MeteoVerdict's AI model, the rest from the combined forecast), or MeteoVerdict's combined forecast of all models, with the range of the temperature.
+  description: MeteoVerdict AI (MeteoVerdict's own AI model), or MeteoVerdict's combined forecast of all models, with the range of the temperature.
   options:
   - "MeteoVerdict AI": ai/okresy
   - "MeteoVerdict (all models combined)": okresy
