@@ -78,6 +78,7 @@ const symbol = (name, size, night = false) => {
   }[name] ?? "";
   return `<svg width="${size}" height="${size}" viewBox="0 0 64 64" style="overflow:visible;flex:none">${body}</svg>`;
 };
+const compass = (from) => from == null ? "" : ["S","SV","V","JV","J","JZ","Z","SZ"][Math.round(from / 45) % 8];
 const arrow = (from, size = 13) => from == null ? "" : `<svg width="${size}" height="${size}" viewBox="-6 -6 12 12" style="vertical-align:-1px;overflow:visible"><g transform="rotate(${(from + 180) % 360})"><path d="M0-5V5M-3.5 1.5 0 5l3.5-3.5" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g></svg>`;
 const riseSvg = `<svg class="mv-glyph" viewBox="0 0 24 24"><path d="M2 19h20M6.5 19a5.5 5.5 0 0 1 11 0M12 3v7M8.5 6.5 12 3l3.5 3.5" fill="none" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const setSvg = `<svg class="mv-glyph" viewBox="0 0 24 24"><path d="M2 19h20M6.5 19a5.5 5.5 0 0 1 11 0M12 3v7M8.5 6.5 12 10l3.5-3.5" fill="none" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -90,7 +91,7 @@ const hourSymbol = (h) => {
 };
 
 // ---------- chart: the real style plus the ± band ----------
-function chart({ days, w, h, axis = true, labels = false, now = false, band = true }) {
+function chart({ days, w, h, axis = true, labels = false, now = false, band = false }) {
   const hs = hours.filter((x) => days.includes(x.day));
   const n = hs.length, k = w / n, floor = axis ? h - 16 : h - 2, top = labels ? 20 : 6, plot = floor - top, curveH = plot * 0.62, rainH = plot * 0.4;
   const t = (key) => hs.map((a) => H[key][a.i]);
@@ -115,7 +116,7 @@ function chart({ days, w, h, axis = true, labels = false, now = false, band = tr
     // the 80 % range: a dotted outline, so the night's dot screen and the curve stay readable
     s += `<polygon points="${[...up, ...dn].join(" ")}" fill="#fff" fill-opacity=".6" stroke="#000" stroke-width="1" stroke-dasharray="1 3"/>`;
   }
-  s += `<polyline points="${line}" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/><polyline points="${line}" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+  s += `<polyline points="${line}" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>`;
   if (labels) {
     const v = t("temperature_2m"), jx = v.indexOf(Math.max(...v)), jn = v.indexOf(Math.min(...v));
     s += `<text x="${Math.min(Math.max(cx(jx), 16), w - 16)}" y="${y(v[jx]) - 7}" text-anchor="middle" class="mv-lab">${Math.round(v[jx])}°</text><text x="${Math.min(Math.max(cx(jn), 16), w - 16)}" y="${y(v[jn]) + 20}" text-anchor="middle" class="mv-lab">${Math.round(v[jn])}°</text>`;
@@ -140,7 +141,7 @@ function alerts(d) {
   if (a.length < 2 && d.snow >= 0.5) a.push(`Sníh ${dec1(d.snow)} cm`);
   return a.map(badge).join("");
 }
-const NOTE = "Odznaky jsou prahy MeteoVerdictu, ne výstrahy ČHMÚ";
+const NOTE = "Odznaky nejsou výstrahy ČHMÚ";
 const pr = () => { const j = hours.find((a) => a.t === NOW).i, ahead = H.pressure_msl[j + 6] - H.pressure_msl[j]; return `${Math.round(H.pressure_msl[j])} hPa ${Math.abs(ahead) < 1 ? "→" : ahead > 0 ? "↗" : "↘"}`; };
 const titleBar = (note) => `<div class="title_bar"><span class="title">${PLACE}</span>${note ? `<span class="mv-note2">${NOTE}</span>` : ""}<span class="instance">${pr()} · MeteoVerdict AI · 12:00</span></div>`;
 const defs = `<svg width="0" height="0" style="position:absolute"><defs><pattern id="mv-night" width="3" height="3" patternUnits="userSpaceOnUse"><rect width="1" height="1" fill="#000" shape-rendering="crispEdges"/></pattern></defs></svg>`;
@@ -189,12 +190,12 @@ function twoDays() {
         <div class="mv-fact"><span>Srážky</span><b>${dec1(d.rain)} mm</b><i>${Math.round(d.pop * 100)} % šance</i></div>
         <div class="mv-fact"><span>Slunce</span><b>${dec1(d.sun)} h</b><i>z ${lightTxt(d)}</i></div>
         <div class="mv-fact"><span>Oblačnost</span><b>${d.cloud} %</b><i>přes den</i></div>
-        <div class="mv-fact"><span>Vítr</span><b>${arrow(d.dir, 15)} ${Math.round(d.wind)} m/s</b><i>nárazy ${Math.round(d.gust)}</i></div>
+        <div class="mv-fact"><span>Vítr</span><b>${compass(d.dir)} ${Math.round(d.wind)} m/s</b><i>nárazy ${Math.round(d.gust)}</i></div>
       </div>
       <div class="mv-parts">${d.parts.map((p, j) => `<div class="mv-part"><div class="n">${["Noc", "Ráno", "Odpoledne", "Večer"][j]}</div>${symbol(p.symbol, 38, j === 0 || (j === 3 && hm(d.sunset) < 1200))}<div class="t">${Math.round(j === 0 ? p.tmin : p.tmax)}°</div></div>`).join("")}</div></div>`;
   };
   return shell(`<div class="mv mv-tt"><div class="cols">${col(a, 0)}${col(b, 1, a)}</div>
-    ${chart({ days: [a.d, b.d], w: 780, h: 116, now: true })}${windStrip([a.d, b.d], 780)}</div>`, alerts(a) + alerts(b) !== "");
+    ${chart({ days: [a.d, b.d], w: 780, h: 132, now: true })}</div>`, alerts(a) + alerts(b) !== "");
 }
 
 // ---------- 5 days (+ wind direction and gusts, the band) ----------
@@ -203,8 +204,8 @@ function fiveDays() {
   const best = (k, f = (v) => v) => ds.reduce((x, y) => (f(y[k]) > f(x[k]) ? y : x));
   const card = (d, i) => `<div class="card"><div class="d">${i ? SHORT[dow(d.d)] : "Dnes"}</div><div class="n">${dm(d.d)}</div>${symbol(d.symbol, 66)}
     <div class="mv-max">${Math.round(d.tmax)}°${i && d.pm >= 1 ? `<small class="mv-pm">±${d.pm}</small>` : ""}</div><div class="lo">${Math.round(d.tmin)}°</div>
-    <div class="f">${riseSvgDrop()}<b>${dec1(d.rain)} mm</b> · ${Math.round(d.pop * 100)} %<br>${sunGlyph()}<b>${Math.round(d.sun)} h</b> · ${arrow(d.dir)} ${Math.round(d.wind)} m/s</div>
-    <div class="f2">${d.gust >= 10 ? `↯ nárazy ${Math.round(d.gust)}` : "&nbsp;"}</div>
+    <div class="f">${riseSvgDrop()}<b>${dec1(d.rain)} mm</b> · ${Math.round(d.pop * 100)} %<br>${sunGlyph()}<b>${Math.round(d.sun)} h</b> · ${compass(d.dir)} ${Math.round(d.wind)} m/s</div>
+    <div class="f2">${d.gust >= 10 ? `nárazy ${Math.round(d.gust)} m/s` : "&nbsp;"}</div>
     <div class="b">${alerts(d) || "&nbsp;"}</div></div>`;
   const w = best("tmax"), r = best("rain"), s = best("sun");
   const flagged = ds.some((d) => alerts(d));
@@ -233,14 +234,14 @@ function oneDay() {
     <div class="mv-facts">
       <div class="mv-fact"><span>Srážky</span><b>${dec1(d.rain)} mm</b><i>${Math.round(d.pop * 100)} % šance</i></div>
       <div class="mv-fact"><span>Slunce</span><b>${dec1(d.sun)} h</b><i>z ${lightTxt(d)}</i></div>
-      <div class="mv-fact"><span>Vítr</span><b>${arrow(d.dir, 15)} ${Math.round(d.wind)} m/s</b><i>nárazy ${Math.round(d.gust)}</i></div>
+      <div class="mv-fact"><span>Vítr</span><b>${compass(d.dir)} ${Math.round(d.wind)} m/s</b><i>nárazy ${Math.round(d.gust)}</i></div>
       <div class="mv-fact"><span>Oblačnost</span><b>${d.cloud} %</b><i>přes den</i></div>
     </div>
     <div class="mv-parts" style="grid-template-columns:repeat(4,1fr)">${d.parts.map((p, k) => `<div class="mv-part"><div class="n">${["Noc", "Ráno", "Odpol.", "Večer"][k]}</div>${symbol(p.symbol, 34, k === 0 || (k === 3 && hm(d.sunset) < 1200))}<div class="t">${Math.round(k === 0 ? p.tmin : p.tmax)}°</div></div>`).join("")}</div>
     <div class="mv-kv2" style="border-top:2px solid #000;padding-top:4px;margin-top:auto">Zítra ${symbol(tm.symbol, 22).replace("<svg", '<svg style="vertical-align:-6px;overflow:visible"')} <b>${Math.round(tm.tmax)}° / ${Math.round(tm.tmin)}°</b> · ${dec1(tm.rain)} mm</div>
     <div class="mv-kv2">vlhkost ${Math.round(H.relative_humidity_2m[j])} % · rosný bod ${Math.round(H.dew_point_2m[j])}°</div>
   </div>`;
-  const right = `<div class="right"><div class="cells">${cells}</div>${chart({ days: [d.d], w: 434, h: 252, labels: true, now: true })}${windStrip([d.d], 434)}</div>`;
+  const right = `<div class="right"><div class="cells">${cells}</div>${chart({ days: [d.d], w: 434, h: 268, labels: true, now: true })}</div>`;
   return shell(`<div class="mv mv-1"><div class="mv-head"><span class="when">Dnes${al}</span><span class="date">${long(d.d)}</span></div><div class="body">${left}${right}</div></div>`, al !== "");
 }
 
