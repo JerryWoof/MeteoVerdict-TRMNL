@@ -6,7 +6,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-export const LAYOUTS = ["full", "half_horizontal", "half_vertical", "quadrant"];
+export const LAYOUTS = ["full"];
 const INCLUDE = /\{%-?\s*include\s+"([^"]+)"\s*-?%\}/g;
 
 export function inline(name, seen = []) {

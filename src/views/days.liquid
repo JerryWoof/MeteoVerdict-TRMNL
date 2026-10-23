@@ -1,0 +1,386 @@
+{%- comment -%}
+  The day views, in one loop over `pair` (partials day and alerts are in the file once: TRMNL
+  takes at most 100 kB per layout). `mode`, from `view`:
+  two:   Today and tomorrow side by side (or tomorrow and the day after in the evening,
+         `start`), each with its badges and parts of day, one hourly curve under both, the
+         second day saying how much warmer or colder it gets.
+  five:  a card per day from today, one hourly curve under all of them and a line naming
+         the warmest, wettest and sunniest day.
+  hours: the next `hours_n` hours (24 or 48) from now in the design of the two days: now,
+         the rain, the extremes and the sun, six facts over the window, a symbol and
+         temperature every 3 (24 h) or 6 (48 h) hours, one curve with rain bars, the night
+         as the dot screen, a line at midnight and the highest and lowest value on it.
+         `pair` is then today and tomorrow (for the badges and the sun).
+{%- endcomment -%}
+{%- assign pair = "" -%}
+{%- case view -%}
+{%- when "five_days" -%}{%- assign mode = "five" -%}{%- for d in days limit: 5 -%}{%- assign pair = pair | append: d | append: "," -%}{%- endfor -%}
+{%- when "next_24h" -%}{%- assign mode = "hours" -%}{%- assign hours_n = 24 -%}{%- for d in days limit: 2 -%}{%- assign pair = pair | append: d | append: "," -%}{%- endfor -%}
+{%- when "next_48h" -%}{%- assign mode = "hours" -%}{%- assign hours_n = 48 -%}{%- for d in days limit: 2 -%}{%- assign pair = pair | append: d | append: "," -%}{%- endfor -%}
+{%- else -%}{%- assign mode = "two" -%}{%- for d in days offset: start limit: 2 -%}{%- assign pair = pair | append: d | append: "," -%}{%- endfor -%}
+{%- endcase -%}
+{%- assign pair = pair | split: "," -%}
+{%- assign any_alert = false -%}
+{%- assign best_t = -99 -%}{%- assign best_r = 0 -%}{%- assign best_s = -1 -%}{%- assign today_alerts = "" -%}
+{%- assign pair_both = 0 -%}
+{%- for d in pair -%}{%- if days contains d -%}{%- assign pair_both = pair_both | plus: 1 -%}{%- endif -%}{%- endfor -%}
+{%- if mode == "hours" -%}
+{%- assign cap = n_hours | minus: 1 -%}
+{%- assign last = s | plus: hours_n | at_most: cap -%}
+{%- assign s1 = s | plus: 1 -%}
+{%- if hours_n > 24 -%}{%- assign step = 6 -%}{%- else -%}{%- assign step = 3 -%}{%- endif -%}
+{%- assign w_lo = 99 -%}{%- assign w_hi = -99 -%}{%- assign w_rain = 0 -%}{%- assign w_snow = 0 -%}{%- assign w_sun = 0 -%}{%- assign w_wind = 0 -%}{%- assign w_gust = 0 -%}{%- assign w_cloud = 0 -%}
+{%- assign first_wet = -1 -%}{%- assign first_dry = -1 -%}
+{%- for i in (s..last) -%}
+  {%- assign v = H.temperature_2m[i] -%}
+  {%- if v != nil -%}
+    {%- if v < w_lo -%}{%- assign w_lo = v -%}{%- endif -%}
+    {%- if v > w_hi -%}{%- assign w_hi = v -%}{%- endif -%}
+  {%- endif -%}
+  {%- if i == s -%}{%- continue -%}{%- endif -%}
+  {%- comment -%} the value at hour i fell in the hour before it {%- endcomment -%}
+  {%- assign p = H.precipitation[i] | default: 0 -%}
+  {%- assign w_rain = w_rain | plus: p -%}
+  {%- assign w_snow = w_snow | plus: HS.snowfall[i] -%}
+  {%- assign w_sun = w_sun | plus: HS.sunshine_duration[i] -%}
+  {%- assign w_cloud = w_cloud | plus: HS.cloud_cover[i] -%}
+  {%- assign wv = H.wind_speed_10m[i] | default: 0 -%}
+  {%- if wv > w_wind -%}{%- assign w_wind = wv -%}{%- endif -%}
+  {%- assign gv = HS.wind_gusts_10m[i] | default: 0 -%}
+  {%- if gv > w_gust -%}{%- assign w_gust = gv -%}{%- endif -%}
+  {%- if p >= 0.1 and first_wet < 0 -%}{%- assign first_wet = i -%}{%- endif -%}
+  {%- if p < 0.1 and first_wet >= 0 and first_dry < 0 -%}{%- assign first_dry = i -%}{%- endif -%}
+{%- endfor -%}
+{%- assign w_hours = last | minus: s -%}
+{%- assign w_cloud = w_cloud | divided_by: w_hours | round -%}
+{%- comment -%} the sentence about the rain: from when, until when, all the time, or none {%- endcomment -%}
+{%- if first_wet < 0 -%}
+  {%- assign rain_text = T_dry | replace: "#", hours_n -%}
+  {%- if w_hours < hours_n -%}{%- assign rain_text = "" -%}{%- endif -%}
+{%- elsif first_wet == s1 -%}
+  {%- if first_dry < 0 -%}
+    {%- assign rain_text = T_rain_all -%}
+  {%- else -%}
+    {%- assign e = HS.time[first_dry] | date: "%s" | minus: 3600 -%}{% include "partials/local" %}
+    {%- assign rain_text = le | date: "%H:%M" | prepend: " " -%}{%- assign rd = le | date: "%Y-%m-%d" -%}
+    {%- if rd != real_today -%}{%- assign rain_text = T_tomorrow | downcase | prepend: " " | append: rain_text -%}{%- endif -%}
+    {%- assign rain_text = rain_text | prepend: T_rain_until -%}
+  {%- endif -%}
+{%- else -%}
+  {%- assign e = HS.time[first_wet] | date: "%s" | minus: 3600 -%}{% include "partials/local" %}
+  {%- assign rain_text = le | date: "%H:%M" | prepend: " " -%}{%- assign rd = le | date: "%Y-%m-%d" -%}
+  {%- if rd != real_today -%}{%- assign rain_text = T_tomorrow | downcase | prepend: " " | append: rain_text -%}{%- endif -%}
+  {%- assign rain_text = rain_text | prepend: T_rain_from -%}
+{%- endif -%}
+
+{%- comment -%} w_chance: the highest chance of rain of the parts of day the window overlaps {%- endcomment -%}
+{%- assign w_chance = 0 -%}{%- assign w_end = hours_n | times: 3600 | plus: now_local -%}
+{%- for r in forecast.parts -%}
+  {%- if r.part == "day" or r.rain_probability == nil -%}{%- continue -%}{%- endif -%}
+  {%- assign ps = 0 -%}{%- if r.part == "morning" -%}{%- assign ps = 6 -%}{%- elsif r.part == "afternoon" -%}{%- assign ps = 12 -%}{%- elsif r.part == "evening" -%}{%- assign ps = 18 -%}{%- endif -%}
+  {%- assign p0 = r.day | append: "T00:00:00Z" | date: "%s" | plus: 0 -%}{%- assign p0 = ps | times: 3600 | plus: p0 -%}{%- assign p1 = p0 | plus: 21600 -%}
+  {%- if p1 > now_local and p0 < w_end and r.rain_probability > w_chance -%}{%- assign w_chance = r.rain_probability -%}{%- endif -%}
+{%- endfor -%}
+{%- assign now_t = H.temperature_2m[s] -%}
+{%- assign rh_now = HS.relative_humidity_2m[s] -%}{%- assign dew_now = HS.dew_point_2m[s] -%}
+{%- endif -%}
+{%- capture items -%}
+{%- assign prev_max = nil -%}
+{%- for day in pair -%}
+  {% include "partials/day" %}
+  {%- if days contains day -%}{% include "partials/alerts" %}{%- else -%}{%- assign alerts = "" -%}{%- endif -%}
+  {%- if alerts != "" -%}{%- assign any_alert = true -%}{%- endif -%}
+  {%- if forloop.first -%}{%- assign first_long = day_long -%}{%- assign today_alerts = alerts -%}{%- assign light_today = light -%}{%- assign t_rise = rise -%}{%- assign t_set = set -%}{%- assign t_set_min = set_min -%}{%- assign today_long = day_long -%}
+  {%- elsif alerts != "" and today_alerts == "" -%}{%- assign today_alerts = alerts -%}{%- endif -%}
+  {%- if mode == "two" -%}
+    <div class="col">
+      <div class="mv-head">
+        <span class="when">
+          {%- if forloop.first and start == 0 -%}{{ T_today }}{%- elsif forloop.first or start == 0 -%}{{ T_tomorrow }}{%- else -%}{{ day_name }}{%- endif -%}
+          {%- if alerts != "" -%}{{ alerts }}{%- endif -%}
+        </span>
+        <span class="date">{% if alerts != "" %}{{ day_short }} {{ day_date }}{% elsif start == 0 or forloop.first %}{{ day_long }}{% else %}{{ day_date }}{% endif %}</span>
+      </div>
+      {%- if days contains day -%}
+      <div class="hero">
+        {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
+        {% include "partials/icon" %}
+        <div class="temps">
+          <span class="mv-max">{{ tmax | round }}°{% if pm != nil and pm >= 1 and day != real_today %}<small class="mv-pm">±{{ pm }}</small>{% endif %}</span>
+          <span class="min">{{ T_low }} {{ tmin | round }}°</span>
+        </div>
+        <div class="side">
+          <div class="what">{% include "partials/word" %}</div>
+          {%- if prev_max != nil -%}
+            {%- assign dt = tmax | round | minus: prev_max -%}
+            {%- if dt >= 2 -%}<div class="diff">{{ T_warmer | replace: "# ", dt }}</div>
+            {%- elsif dt <= -2 -%}{%- assign adt = dt | abs -%}<div class="diff">{{ T_colder | replace: "# ", adt }}</div>{%- endif -%}
+          {%- endif -%}
+          {%- if rise -%}
+          <div class="mv-sun">{{ rise_svg }} {{ rise }}</div>
+          <div class="mv-sun">{{ set_svg }} {{ set }}</div>
+          {%- endif -%}
+        </div>
+      </div>
+      <div class="mv-facts">
+        <div class="mv-fact"><span>{{ T_rain }}</span><b>{%- assign n = rain -%}{% include "partials/dec1" %} mm</b><i>{{ chance | times: 100 | round }} % {{ T_chance }}</i></div>
+        <div class="mv-fact"><span>{{ T_sunshine }}</span><b>{% if shine != nil %}{%- assign n = shine -%}{% include "partials/dec1" %} h{% else %}–{% endif %}</b><i>{% if light %}{{ T_of }} {{ light | divided_by: 60 | floor }} h {{ light | modulo: 60 }} min{% if light_diff_s != "" %} ({{ light_diff_s }}){% endif %}{% endif %}</i></div>
+        <div class="mv-fact"><span>{{ T_clouds }}</span><b>{% if cloud != nil %}{{ cloud | round }} %{% else %}–{% endif %}</b><i>{{ T_daytime }}</i></div>
+        <div class="mv-fact"><span>{{ T_wind }}</span><b>{{ wind | times: wind_k | round }} {{ wind_unit }}</b><i>{% if gust > 0 %}{{ T_gusts_l }} {{ gust | times: wind_k | round }}{% else %}{{ T_max }}{% endif %}</i></div>
+      </div>
+      {% include "partials/parts" %}
+      {%- assign prev_max = tmax | round -%}
+      {%- else -%}
+      {%- assign beyond_name = day_name | capitalize -%}
+      <div class="beyond">{{ T_beyond | replace: "#", beyond_name }}</div>
+      {%- assign prev_max = nil -%}
+      {%- endif -%}
+    </div>
+  {%- elsif mode == "five" -%}
+    {%- if tmax > best_t -%}{%- assign best_t = tmax -%}{%- assign best_t_day = day_name -%}{%- endif -%}
+    {%- if rain > best_r -%}{%- assign best_r = rain -%}{%- assign best_r_day = day_name -%}{%- endif -%}
+    {%- if shine != nil and shine > best_s -%}{%- assign best_s = shine -%}{%- assign best_s_day = day_name -%}{%- endif -%}
+      <div class="card">
+        <div class="d">{% if forloop.first %}{{ T_today }}{% else %}{{ day_short }}{% endif %}</div>
+        <div class="n">{{ day_date }}</div>
+        {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
+        {% include "partials/icon" %}
+        <div class="mv-max">{{ tmax | round }}°{% if pm != nil and pm >= 1 and forloop.first == false %}<small class="mv-pm">±{{ pm }}</small>{% endif %}</div>
+        <div class="lo">{{ tmin | round }}°</div>
+        <div class="f">
+          {{ drop_glyph }}<b>{% assign n = rain %}{% include "partials/dec1" %} mm</b> · {{ chance | times: 100 | round }} %<br>
+          {%- if shine != nil -%}{{ sun_glyph }}<b>{{ shine | round | replace: ".", T_dec }} h</b> · {% endif %}{{ wind | times: wind_k | round }} {{ wind_unit }}
+        </div>
+        <div class="g">{% if gust >= 10 and gusty != true %}{{ T_gusts_l }} {{ gust | times: wind_k | round }} {{ wind_unit }}{% else %}&nbsp;{% endif %}</div>
+        <div class="b">{% if alerts != "" %}{{ alerts }}{% else %}&nbsp;{% endif %}</div>
+      </div>
+  {%- endif -%}
+{%- endfor -%}
+{%- endcapture -%}
+{%- if mode == "hours" -%}
+{%- assign alerts = today_alerts -%}{%- if alerts != "" -%}{%- assign any_alert = true -%}{%- endif -%}
+{%- assign e = HS.time[last] | date: "%s" | plus: 0 -%}{% include "partials/local" %}
+{%- assign end_day = le | date: "%Y-%m-%d" -%}{%- assign end_wd = le | date: "%w" | plus: 0 -%}{%- assign end_mo = le | date: "%m" | plus: 0 | minus: 1 -%}{%- assign end_num = le | date: "%d" | plus: 0 -%}
+{%- if lang == "cs" -%}{%- assign end_long = T_days[end_wd] | append: " " | append: end_num | append: ". " | append: T_months[end_mo] -%}{%- else -%}{%- assign end_long = T_days[end_wd] | append: " " | append: end_num | append: " " | append: T_months[end_mo] -%}{%- endif -%}
+{%- assign now_min = now_local | date: "%H" | times: 60 -%}{%- assign now_min = now_local | date: "%M" | plus: now_min -%}
+{%- assign sun_a = "" -%}{%- assign sun_b = "" -%}
+{%- if t_rise -%}
+  {%- if now_min < t_set_min -%}{%- assign sun_a = set_svg | append: " " | append: t_set -%}{%- assign sun_b = rise_svg | append: " " | append: rise -%}
+  {%- else -%}{%- assign sun_a = rise_svg | append: " " | append: rise -%}{%- assign sun_b = set_svg | append: " " | append: set -%}{%- endif -%}
+{%- endif -%}
+{%- assign light_h = light_today | default: 0 -%}
+
+  {%- comment -%}
+    The chart at its real size, 780 px wide: the window's hours at 10 units each (gk px per
+    unit), temperatures in the top 62 %, rain bars from the axis up to 40 % (3 mm), night
+    as the dot screen, a line at midnight, ticks and labels every `step` hours, and the
+    symbol and temperature of those hours above it.
+  {%- endcomment -%}
+  {%- assign gw = 780 -%}{%- assign gh = 132 -%}{%- assign gk = 78.0 | divided_by: hours_n -%}
+  {%- assign g_floor = gh | minus: 18 -%}{%- assign g_top = 22 -%}
+  {%- assign g_plot = g_floor | minus: g_top -%}{%- assign g_curve = g_plot | times: 0.62 -%}{%- assign g_rain = g_plot | times: 0.4 -%}
+  {%- assign w_range = w_hi | minus: w_lo -%}{%- assign w_span = w_range | at_least: 4 -%}
+  {%- assign w_top = w_span | minus: w_range | divided_by: 2.0 | plus: w_hi -%}
+  {%- assign pts = "" -%}{%- assign bars = "" -%}{%- assign shade = "" -%}{%- assign marks = "" -%}{%- assign cells = "" -%}
+  {%- assign x_hi = 0 -%}{%- assign x_lo = 0 -%}
+  {%- for j in (0..hours_n) -%}
+    {%- assign i = s | plus: j -%}
+    {%- if i > cap -%}{%- break -%}{%- endif -%}
+    {%- assign x = j | times: 10 -%}
+    {%- assign v = H.temperature_2m[i] -%}
+    {%- if v != nil -%}
+      {%- assign y = w_top | minus: v | times: g_curve | divided_by: w_span | plus: g_top | round: 1 -%}
+      {%- capture pt -%}{{ x | times: gk | round: 1 }},{{ y }}{%- endcapture -%}
+      {%- assign pts = pts | append: " " | append: pt -%}
+      {%- if v == w_hi and x_hi == 0 -%}{%- assign x_hi = x -%}{%- endif -%}
+      {%- if v == w_lo and x_lo == 0 -%}{%- assign x_lo = x -%}{%- endif -%}
+    {%- endif -%}
+    {%- assign e = HS.time[i] | date: "%s" | plus: 0 -%}{% include "partials/local" %}
+    {%- assign ch = le | date: "%H" | plus: 0 -%}
+    {%- comment -%} a tick, label, symbol and temperature at every `step`th hour (not at the running hour itself) {%- endcomment -%}
+    {%- assign cm = ch | modulo: step -%}
+    {%- capture sym_svg -%}{%- assign icon_class = "" -%}{% include "partials/hour_symbol" %}{% include "partials/icon" %}{%- endcapture -%}
+    {%- if j == 1 -%}{%- assign hero_svg = sym_svg -%}{%- endif -%}
+    {%- if cm == 0 and j > 0 and j < hours_n -%}
+      {%- assign tx = x | times: gk | round -%}
+      {%- capture mark -%}<path d="M{{ tx | plus: 0.5 }} {{ g_floor | minus: 5 }}V{{ g_floor }}" stroke="#000" stroke-width="1"/><text x="{{ tx | plus: 0.5 }}" y="{{ gh | minus: 3 }}" text-anchor="middle" class="mv-tick">{{ ch | prepend: "0" | slice: -2, 2 }}</text>{%- endcapture -%}
+      {%- assign marks = marks | append: mark -%}
+      {%- assign cl = tx | minus: 36 | at_least: 0 | at_most: 708 -%}
+      {%- capture cell -%}
+      <div style="left:{{ cl }}px">
+        <div class="h">{% if ch == 0 %}{%- assign cwd = le | date: "%w" | plus: 0 -%}{{ T_days_short[cwd] }} {% endif %}{{ le | date: "%H" }}</div>
+        {{ sym_svg }}
+        <div class="t">{% if v != nil %}{{ v | round }}°{% else %}–{% endif %}</div>
+      </div>
+      {%- endcapture -%}
+      {%- assign cells = cells | append: cell -%}
+    {%- endif -%}
+    {%- if j == hours_n -%}{%- break -%}{%- endif -%}
+    {%- assign i1 = i | plus: 1 -%}
+    {%- assign p = H.precipitation[i1] | default: 0 -%}
+    {%- if p >= 0.1 -%}
+      {%- assign bh = p | at_most: 3 | divided_by: 3.0 | times: g_rain | plus: 2 | round -%}
+      {%- capture bar -%}<rect x="{{ x | times: gk | plus: 1 | round }}" y="{{ g_floor | minus: bh }}" width="{{ gk | times: 10 | minus: 1 | round: 1 }}" height="{{ bh }}"/>{%- endcapture -%}
+      {%- assign bars = bars | append: bar -%}
+    {%- endif -%}
+    {%- comment -%} night: the part of this hour before sunrise or after sunset; a line at midnight {%- endcomment -%}
+    {%- assign hday = le | date: "%Y-%m-%d" -%}
+    {%- assign m0 = ch | times: 60 -%}
+    {%- if m0 == 0 and j > 0 -%}
+      {%- capture mark -%}<path d="M{{ x | times: gk | round | plus: 0.5 }} 0V{{ g_floor }}" stroke="#000" stroke-width="1"/>{%- endcapture -%}
+      {%- assign marks = marks | append: mark -%}
+    {%- endif -%}
+    {%- assign hrow = forecast.parts | where: "day", hday | first -%}
+    {%- if hrow.sunrise -%}
+      {%- assign r_min = hrow.sunrise | slice: 0, 2 | times: 60 -%}{%- assign r_min = hrow.sunrise | slice: 3, 2 | plus: r_min -%}
+      {%- assign s_min = hrow.sunset | slice: 0, 2 | times: 60 -%}{%- assign s_min = hrow.sunset | slice: 3, 2 | plus: s_min -%}
+      {%- assign m1 = m0 | plus: 60 -%}
+      {%- assign a = r_min | at_most: m1 | minus: m0 | at_least: 0 -%}
+      {%- if a > 0 -%}
+        {%- assign nx = x | times: gk | round -%}{%- assign nx1 = a | divided_by: 6.0 | plus: x | times: gk | round -%}
+        {%- capture nr -%}<rect x="{{ nx }}" y="0" width="{{ nx1 | minus: nx }}" height="{{ g_floor }}"/>{%- endcapture -%}{%- assign shade = shade | append: nr -%}
+      {%- endif -%}
+      {%- assign b0 = s_min | at_least: m0 -%}{%- assign b = m1 | minus: b0 | at_least: 0 -%}
+      {%- if b > 0 -%}
+        {%- assign nx = b0 | minus: m0 | divided_by: 6.0 | plus: x | times: gk | round -%}{%- assign nx1 = x | plus: 10 | times: gk | round -%}
+        {%- capture nr -%}<rect x="{{ nx }}" y="0" width="{{ nx1 | minus: nx }}" height="{{ g_floor }}"/>{%- endcapture -%}{%- assign shade = shade | append: nr -%}
+      {%- endif -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endif -%}
+{%- comment -%} the hourly curve of the two days and of the five: partials/chart, once {%- endcomment -%}
+{%- if mode != "hours" -%}
+  {%- assign chart_days = "" -%}
+  {%- for d in pair -%}{%- if days contains d -%}{%- assign chart_days = chart_days | append: d | append: "," -%}{%- endif -%}{%- endfor -%}
+  {%- assign chart_days = chart_days | split: "," -%}
+  {%- assign chart_w = 780 -%}{%- assign chart_h = 132 -%}{%- if mode == "five" -%}{%- assign chart_h = 104 -%}{%- endif -%}{%- assign chart_axis = true -%}{%- if mode == "five" -%}{%- assign chart_axis = false -%}{%- endif -%}{%- assign chart_labels = false -%}{%- assign chart_class = "" -%}
+  {%- capture chart_html -%}{% include "partials/chart" %}{%- endcapture -%}
+{%- endif -%}
+{%- case mode -%}
+{%- when "two" -%}
+<style>
+  .mv-tt { display: flex; flex-direction: column; gap: 5px; }
+  .mv-wk { display: flex; flex-direction: column; gap: 4px; }
+  .mv-wk .note { font-size: 14px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-bottom: 2px solid #000; padding-bottom: 2px; }
+  .mv-wk .mv-tt { flex: 1; min-height: 0; height: auto; }
+  .mv-tt .cols { flex: 1; min-height: 0; display: flex; gap: 22px; }
+  .mv-tt .col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+  .mv-tt .hero { display: flex; align-items: center; gap: 6px; height: 96px; }
+  .mv-tt .hero > svg { width: 92px; height: 92px; flex: none; }
+  .mv-tt .temps { display: flex; flex-direction: column; flex: none; }
+  .mv-tt .mv-max { font-size: 72px; }
+  .mv-tt .min { font-size: 20px; font-weight: 600; margin-top: 2px; }
+  .mv-tt .mv-head .when { overflow: hidden; text-overflow: clip; }
+  .mv-tt .side { margin-left: auto; text-align: right; line-height: 1.3; min-width: 0; }
+  .mv-tt .what { font-size: 18px; font-weight: 800; white-space: nowrap; }
+  .mv-tt .diff { font-size: 15px; font-weight: 600; white-space: nowrap; }
+  .mv-tt .mv-sun { font-size: 17px; }
+  .mv-tt .mv-facts { grid-template-columns: 1fr 1.2fr 1fr 1fr; }
+  .mv-tt .mv-fact i { white-space: nowrap; }
+  .mv-parts { display: grid; grid-template-columns: repeat(4, 1fr); text-align: center; }
+  .mv-part .n { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .mv-part svg { width: 38px; height: 38px; display: block; margin: 0 auto; }
+  .mv-part .t { font-size: 19px; font-weight: 800; line-height: 1; }
+  .mv-tt .mv-chart { margin-top: auto; }
+  .mv-tt .beyond { flex: 1; display: flex; align-items: center; justify-content: center; border: 2px dashed #000; border-radius: 8px; padding: 20px; font-size: 20px; font-weight: 700; text-align: center; }
+</style>
+<div class="mv mv-tt">
+  <div class="cols">{{ items }}</div>
+  {{ chart_html }}
+</div>
+{%- when "five" -%}
+<style>
+  .mv-5 { display: flex; flex-direction: column; gap: 6px; }
+  .mv-5 .mv-head { order: -1; }
+  .mv-5 .cards { display: grid; grid-template-columns: repeat({{ pair.size }}, 1fr); }
+  .mv-5 .card { text-align: center; padding: 0 4px; }
+  .mv-5 .card + .card { border-left: 1px solid #000; }
+  .mv-5 .card .d { font-size: 17px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+  .mv-5 .card .n { font-size: 13px; font-weight: 600; }
+  .mv-5 .card > svg { width: 66px; height: 66px; display: block; margin: 2px auto 0; }
+  .mv-5 .card .mv-max { font-size: 44px; }
+  .mv-5 .card .lo { font-size: 20px; font-weight: 600; }
+  .mv-5 .card .f { font-size: 14px; line-height: 1.35; margin-top: 3px; }
+  .mv-5 .card .f b { font-weight: 800; }
+  .mv-5 .card .f .mv-glyph { width: 14px; height: 14px; vertical-align: -2px; margin-right: 2px; }
+  .mv-5 .card .g { font-size: 13px; font-weight: 700; white-space: nowrap; }
+  .mv-5 .card .b { margin-top: 3px; line-height: 1; }
+  .mv-5 .card .b .mv-badge { font-size: 11px; }
+  .mv-5 .mv-chart { margin-top: auto; }
+  .mv-5 .sum { font-size: 15px; text-align: center; }
+  .mv-5 .sum b { font-weight: 800; }
+</style>
+<div class="mv mv-5">
+  <div class="cards">{{ items }}</div>
+  {%- comment -%} the head comes first on screen (order: -1), once the cards have read the days {%- endcomment -%}
+  <div class="mv-head"><span class="when">{{ T_days5 }}</span><span class="date">{{ first_long }} – {{ day_long }}</span></div>
+  {{ chart_html }}
+  <div class="sum">
+    {{ T_warmest }} <b>{{ best_t_day }} {{ best_t | round }}°</b>
+    {%- if best_r >= 0.5 %} · {{ T_wettest }} <b>{{ best_r_day }} {% assign n = best_r %}{% include "partials/dec1" %} mm</b>{% endif -%}
+    {%- if best_s > 0 %} · {{ T_sunniest }} <b>{{ best_s_day }} {{ best_s | round | replace: ".", T_dec }} h</b>{% endif %}
+  </div>
+</div>
+{%- else -%}
+<style>
+  .mv-nh { display: flex; flex-direction: column; gap: 5px; }
+  .mv-nh .hero { display: flex; align-items: center; gap: 10px; height: 96px; }
+  .mv-nh .hero > svg { width: 92px; height: 92px; flex: none; }
+  .mv-nh .temps { display: flex; flex-direction: column; flex: none; }
+  .mv-nh .mv-max { font-size: 72px; }
+  .mv-nh .min { font-size: 18px; font-weight: 600; margin-top: 2px; white-space: nowrap; }
+  .mv-nh .say { flex: 1; min-width: 0; border: 2px solid #000; border-radius: 8px; padding: 5px 10px; font-size: 19px; font-weight: 800; line-height: 1.2; }
+  .mv-nh .say small { display: block; font-size: 14px; font-weight: 600; margin-top: 2px; }
+  .mv-nh .side { text-align: right; line-height: 1.3; white-space: nowrap; }
+  .mv-nh .what { font-size: 18px; font-weight: 800; }
+  .mv-nh .mv-sun { font-size: 17px; }
+  .mv-nh .mv-facts { grid-template-columns: repeat(6, 1fr); }
+  .mv-nh .cells { position: relative; height: 86px; }
+  .mv-nh .cells > div { position: absolute; width: 72px; text-align: center; }
+  .mv-nh .cells .h { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .mv-nh .cells svg { width: 38px; height: 38px; display: block; margin: 0 auto; }
+  .mv-nh .cells .t { font-size: 19px; font-weight: 800; line-height: 1; }
+  .mv-nh .mv-chart { margin-top: auto; }
+</style>
+<div class="mv mv-nh">
+  <div class="mv-head"><span class="when">{{ T_next | replace: "#", hours_n }}{% if alerts != "" %}{{ alerts }}{% endif %}</span><span class="date">{{ today_long }} → {{ end_long }}</span></div>
+  <div class="hero">
+    {{ hero_svg }}
+    <div class="temps">
+      <span class="mv-max">{% if now_t != nil %}{{ now_t | round }}°{% else %}–{% endif %}</span>
+      <span class="min">{{ T_now }} · {{ now_local | date: "%H:%M" }}</span>
+    </div>
+    {%- if rain_text != "" -%}
+    <div class="say">{{ rain_text }}{% if w_rain >= 0.1 %}<small>{% assign n = w_rain %}{% include "partials/dec1" %} mm{% if w_chance >= 0.05 %} · {{ w_chance | times: 100 | round }} % {{ T_chance }}{% endif %}</small>{% endif %}</div>
+    {%- else -%}<div style="flex:1"></div>{%- endif -%}
+    <div class="side">
+      {%- if w_hi > -99 -%}<div class="what">{{ T_high }} {{ w_hi | round }}° · {{ T_low }} {{ w_lo | round }}°</div>{%- endif -%}
+      {%- if sun_a != "" -%}<div class="mv-sun">{{ sun_a }}</div><div class="mv-sun">{{ sun_b }}</div>{%- endif -%}
+    </div>
+  </div>
+  <div class="mv-facts">
+    <div class="mv-fact"><span>{{ T_rain }}</span><b>{% assign n = w_rain %}{% include "partials/dec1" %} mm</b><i>{% if w_snow >= 0.1 %}{% assign n = w_snow %}{% include "partials/dec1" %} cm{% else %}{{ w_chance | times: 100 | round }} % {{ T_chance }}{% endif %}</i></div>
+    <div class="mv-fact"><span>{{ T_sunshine }}</span><b>{%- assign n = w_sun | divided_by: 3600.0 -%}{% include "partials/dec1" %} h</b><i>{% if light_h > 0 %}{{ T_of }} {{ light_h | divided_by: 60 | floor }} h {{ light_h | modulo: 60 }} min{% endif %}</i></div>
+    <div class="mv-fact"><span>{{ T_clouds }}</span><b>{{ w_cloud }} %</b><i>{{ T_mean }}</i></div>
+    <div class="mv-fact"><span>{{ T_wind }}</span><b>{{ w_wind | times: wind_k | round }} {{ wind_unit }}</b><i>{{ T_gusts_l }} {{ w_gust | times: wind_k | round }}</i></div>
+    <div class="mv-fact"><span>{{ T_pressure }}</span><b>{% if p_now != nil %}{{ p_now | round }} hPa{% else %}–{% endif %}</b><i>{{ p_trend }}&nbsp;</i></div>
+    <div class="mv-fact"><span>{{ T_humidity }}</span><b>{% if rh_now != nil %}{{ rh_now | round }} %{% else %}–{% endif %}</b><i>{% if dew_now != nil %}{{ T_dew }} {{ dew_now | round }}°{% endif %}&nbsp;</i></div>
+  </div>
+  <div class="cells">{{ cells }}</div>
+  <svg class="mv-chart" width="{{ gw }}" height="{{ gh }}" viewBox="0 0 {{ gw }} {{ gh }}">
+    <g fill="url(#mv-night)" shape-rendering="crispEdges">{{ shade }}</g>
+    {{ marks }}
+    <g fill="#000" shape-rendering="crispEdges">{{ bars }}</g>
+    <polyline points="{{ pts | strip }}" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
+    {%- if w_hi > -99 -%}
+      {%- assign lx_max = gw | minus: 16 -%}{%- assign lx = x_hi | times: gk | at_least: 16 | at_most: lx_max | round -%}
+      {%- assign ly = w_top | minus: w_hi | times: g_curve | divided_by: w_span | plus: g_top | minus: 7 | round -%}
+      <text x="{{ lx }}" y="{{ ly }}" text-anchor="middle" class="mv-lab">{{ w_hi | round }}°</text>
+      {%- assign lx = x_lo | times: gk | at_least: 16 | at_most: lx_max | round -%}
+      {%- assign ly = w_top | minus: w_lo | times: g_curve | divided_by: w_span | plus: g_top | plus: 20 | round -%}
+      <text x="{{ lx }}" y="{{ ly }}" text-anchor="middle" class="mv-lab">{{ w_lo | round }}°</text>
+    {%- endif -%}
+    <path d="M0 {{ g_floor | plus: 1 }}H{{ gw }}" stroke="#000" stroke-width="2" shape-rendering="crispEdges"/>
+  </svg>
+</div>
+{%- endcase -%}

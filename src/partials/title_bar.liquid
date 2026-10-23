@@ -2,8 +2,7 @@
   The footer's time is the Czech clock at render time (the TRMNL poll), so it reads as the
   current time; the forecast's own time is shown only when the forecast is stale.
   The footer: place, which forecast (MeteoVerdict AI or MeteoVerdict, the blend) and when the forecast was made (the time; the date too when it is not from
-  today). `compact` (half and quarter screens): the
-  forecast's time only, unless it is not from today. An old forecast says so.
+  today). An old forecast says so.
 {%- endcomment -%}
 {%- if lang == "cs" -%}
   {%- assign gmo = generated_local | date: "%m" | plus: 0 -%}
@@ -18,9 +17,8 @@
   <span class="title">{{ place }}</span>
   {%- if stale -%}
   <span class="instance"><span class="mv-badge">{{ T_stale }}</span> {{ T_updated }} {{ gdate }} {{ gtime }}</span>
-  {%- elsif compact -%}
-  <span class="instance">{% if ai %}MeteoVerdict AI{% else %}MeteoVerdict{% endif %} · {{ now_local | date: "%H:%M" }}</span>
   {%- else -%}
+  {%- if any_alert -%}<span class="mv-note">{{ T_notice }}</span>{%- endif -%}
   <span class="instance">{% if ai %}{{ T_ai }}{% else %}MeteoVerdict{% endif %} · {{ now_local | date: "%H:%M" }}</span>
   {%- endif -%}
 </div>

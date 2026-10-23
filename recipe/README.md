@@ -17,7 +17,7 @@ yet**. You submit it from TRMNL yourself; the TRMNL team then reviews it.
 | [`icon.png`](icon.png) | The recipe icon, 512 × 512 PNG, black on white. Upload it in the plugin's settings |
 | [`icon.svg`](icon.svg) | Its source. Re-export: `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --hide-scrollbars --force-device-scale-factor=1 --window-size=512,512 --screenshot=recipe/icon.png file://$PWD/recipe/icon.svg` |
 | [`../src/settings.yml`](../src/settings.yml) | Form fields, now with the *About This Plugin* field: the recipe's public description, categories and links |
-| [`../dist/`](../dist) | The four layouts to paste into **Edit Markup** |
+| [`../dist/`](../dist) | The layout to paste into **Edit Markup** (`full.liquid`) |
 
 The icon is a sun half behind a cloud, with a tick on the cloud for the verdict. The
 strokes are thick so it still reads at the 28 to 40 px TRMNL shows icons at. TRMNL does not
@@ -40,10 +40,9 @@ under 100 words the recipe page is left out of Google and other search engines. 
 written in English with one Czech line:
 
 > Weather for your Czech district (okres) on your TRMNL: today and tomorrow, the next 24
-> hours, five days or the weekend, with temperature and its range, rain with its timing
+> or 48 hours or five days, with temperature and its range, rain with its timing
 > and chance, sunshine, clouds, wind, sunrise and sunset, and badges for frost, rain,
-> gusts and heat. Compact layouts for half and quarter screens let you
-> show two or four places at once, or the weather next to your calendar.
+> gusts and heat.
 >
 > The forecast is MeteoVerdict's. Every day it checks how well about 20 weather models
 > forecast what ČHMÚ stations then measured, and blends them, weighting each model by how
@@ -134,7 +133,7 @@ and the [Chef source](https://gist.github.com/ryanckulp/fbe5f68c51db1ae214a97da2
 | Every custom field used in the polling URL or the markup | **Done**: `okres_code` in the URL, the rest in the markup (tested) |
 | Featured image | **You**: checklist step 7 |
 | Icon | **You**: checklist step 6, [`icon.png`](icon.png) |
-| No `view view--full` (etc.) wrapper, because TRMNL adds it | **Done**: removed from all four layouts. The local renderer adds it as TRMNL does |
+| No `view view--full` (etc.) wrapper, because TRMNL adds it | **Done**: removed from the layout. The local renderer adds it as TRMNL does |
 | Every layout has content | **Done** |
 | Not a fork | **You**: create the master fresh (step 2) |
 | No `opacity` | **Done**: none (tested) |
@@ -163,7 +162,7 @@ and the [Chef source](https://gist.github.com/ryanckulp/fbe5f68c51db1ae214a97da2
 | No inline `opacity`; `label--gray` gets `1bit:text--black` | **Done**: there's no opacity, and Framework gray labels aren't used. Everything is pure black on white |
 | Provided fonts | **Done**: Inter, the Framework's font |
 | Preview on TRMNL OG and TRMNL X (landscape and portrait) | **You**: step 5 |
-| Keep markup DRY with the Shared tab | **Optional**: `dist/` inlines the shared part into each layout, which works but is repeated four times. Moving it into the Shared tab is possible later |
+| Keep markup DRY with the Shared tab | **Optional**: `dist/` inlines the shared part into each layout, which works. Moving it into the Shared tab is possible later |
 
 ### The inline-style check
 
@@ -171,7 +170,7 @@ Chef counts the words `padding`, `margin`, `font-size`, `text-align`, `justify-c
 `border-radius`, `background-color` and `object-fit` anywhere in the markup, CSS
 included, and asks for 6 or fewer. TRMNL's guide explains the reason: the Framework's
 classes should do this styling. The plugin styles its own classes in a `<style>` block
-(it uses no `style=""` attributes), and repeats that block in each of the four layouts,
+(it uses no `style=""` attributes), and repeats that block in the layout,
 which comes to 212. The options:
 
 1. **Restyle onto Framework classes** (`p--`, `m--`, `text--center`, `flex--between`,

@@ -14,7 +14,7 @@ const settings = readFileSync(join(root, "src", "settings.yml"), "utf-8");
 const POLLING_URL = "https://meteoverdict.cz/api/v1/{{ forecast_model }}/{{ okres_code }}.json";
 
 test("no view wrapper: TRMNL adds view--full etc. itself", () => {
-  assert.doesNotMatch(markup, /\b( view(--|__)(full|half_horizontal|half_vertical|quadrant))\b("|')>/);
+  assert.doesNotMatch(markup, /\b( view(--|__)full)\b("|')>/);
 });
 
 test("no opacity, async functions, window load handlers or <img> tags", () => {
@@ -51,5 +51,5 @@ test("links in field descriptions are HTML links; no optional: false", () => {
 test("Chef's inline-style count (advisory here, limit 6)", (t) => {
   const props = ["justify-content", "padding", "margin", "background-color", "border-radius", "text-align", "object-fit", "font-size"];
   const n = props.reduce((sum, p) => sum + markup.split(p).length - 1, 0);
-  t.diagnostic(`Chef counts ${n} of ${props.join(", ")} in the four layouts (it allows 6)`);
+  t.diagnostic(`Chef counts ${n} of ${props.join(", ")} in the layout (it allows 6)`);
 });

@@ -11,10 +11,7 @@ import { freezeTime, renderLayout } from "./render.mjs";
 
 const PRAHA = JSON.parse(readFileSync(new URL("../test/fixtures/CZ0100.json", import.meta.url)));
 const BRNO = JSON.parse(readFileSync(new URL("../test/fixtures/CZ0642.json", import.meta.url)));
-const CASES = [
-  ["full", "today_tomorrow"], ["full", "next_24h"], ["full", "five_days"], ["full", "weekend"],
-  ["half_horizontal"], ["half_vertical"], ["quadrant"],
-];
+const CASES = [["full", "today_tomorrow"], ["full", "next_24h"], ["full", "next_48h"], ["full", "five_days"]];
 // the saved files are from 12 October 2026, 15:20 UTC
 const TIMES = ["2026-10-12T15:40:00Z", "2026-10-12T21:30:00Z", "2026-10-13T04:10:00Z"];
 const text = (html) => html.replace(/<style[\s\S]*?<\/style>/g, "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
@@ -105,13 +102,13 @@ test("missing values show a dash, not 0°", async () => {
   freezeTime("2026-10-12T15:40:00Z");
   const gaps = variant((f) => hourly(f, "temperature_2m", (v, i) => (i >= 15 && i <= 20 ? null : v)));
   const words = text(await renderLayout("full", gaps, { view: "next_24h" }));
-  assert.match(words, /Now · 17:40 –/);
+  assert.match(words, /– Now · 17:40/);
   assert.match(words, /18 –/);
 });
 
 test("an old forecast says so, and one with nothing left for today says that instead", async () => {
   freezeTime("2026-10-14T09:00:00Z"); // 42 hours after it was made
-  assert.match(text(await renderLayout("quadrant", PRAHA, {})), /old forecast updated 12 Oct 17:20/);
+  assert.match(text(await renderLayout("full", PRAHA, {})), /old forecast updated 12 Oct 17:20/);
   freezeTime("2026-10-19T09:00:00Z"); // after its last day
   const words = text(await renderLayout("full", PRAHA, {}));
   assert.match(words, /No forecast for today yet\. The latest is from 12\.10\. 17:20/);
@@ -120,9 +117,7 @@ test("an old forecast says so, and one with nothing left for today says that ins
 
 test("on the last day there is no tomorrow", async () => {
   freezeTime("2026-10-17T09:00:00Z");
-  for (const layout of ["quadrant", "half_vertical"]) {
-    assert.doesNotMatch(text(await renderLayout(layout, PRAHA, {})), /Tomorrow/);
-  }
+  assert.doesNotMatch(text(await renderLayout("full", PRAHA, {})), /Tomorrow/);
 });
 
 test("in the evening the day layouts move on to tomorrow, unless switched off", async () => {
@@ -141,20 +136,6 @@ test("wind in km/h", async () => {
   assert.match(words, new RegExp(`${Math.round(today.wind * 3.6)} km/h`));
 });
 
-test("frost and feels-like on a cold wet day, and no black-ice badge", async () => {
-  freezeTime("2026-10-12T15:40:00Z");
-  const cold = variant((f) => {
-    hourly(f, "temperature_2m", (v) => v - 14);
-    hourly(f, "wind_speed_10m", () => 8);
-    hourly(f, "precipitation", (_, i) => (i === idx("2026-10-12T20:00:00Z") ? 0.4 : 0));
-    for (const p of f.parts) { p.tmin -= 14; p.tmax -= 14; }
-  });
-  const words = text(await renderLayout("full", cold, { view: "next_24h" }));
-  assert.doesNotMatch(words, /Black ice/);
-  assert.match(words, /feels -\d+°/);
-  assert.match(text(await renderLayout("full", cold, { view: "five_days" })), /Frost/);
-});
-
 test("frost badges follow MeteoVerdict's corrected night minimum when the data has it", async () => {
   freezeTime("2026-10-12T15:40:00Z");
   const withNights = (fields) => variant((f) => {
@@ -170,16 +151,6 @@ test("frost badges follow MeteoVerdict's corrected night minimum when the data h
   assert.equal((await five(mild)).length, 0);
 });
 
-test("the best two hours outside are in daylight and dry", async () => {
-  freezeTime("2026-10-12T05:00:00Z"); // 07:00 in Prague
-  const words = text(await renderLayout("full", PRAHA, { view: "next_24h" }));
-  const [, from, to] = words.match(/Best outside (\d\d)–(\d\d) h/);
-  assert.equal(Number(to) - Number(from), 2);
-  assert.ok(Number(from) >= 7 && Number(to) <= 18, `${from}–${to}`);
-  freezeTime("2026-10-12T10:00:00Z"); // noon: tomorrow morning is sunnier than this afternoon
-  assert.match(text(await renderLayout("full", PRAHA, { view: "next_24h" })), /Best outside tomorrow 10–12 h/);
-});
-
 test("the second day says how much warmer or colder", async () => {
   freezeTime("2026-10-12T08:00:00Z");
   const warm = variant((f) => { for (const p of f.parts) if (p.day === "2026-10-13") p.tmax += 6; });
@@ -193,26 +164,6 @@ const later = variant((f) => {
   for (const p of f.parts) p.day = next(`${p.day}T00:00:00Z`).slice(0, 10);
   f.hourly.time = f.hourly.time.map((t) => `${next(t).slice(0, 16)}Z`);
   f.generated = `${next(f.generated).slice(0, 16)}+00:00`;
-});
-
-test("weekend: on a weekday the coming Saturday and Sunday", async () => {
-  freezeTime("2026-10-14T10:00:00Z"); // Wednesday
-  const words = text(await renderLayout("full", later, { view: "weekend" }));
-  assert.match(words, /Saturday 17 October .* Sunday 18 October/);
-  assert.doesNotMatch(words, /beyond the forecast|Today|Wednesday/);
-  const sunday = later.forecast.parts.find((p) => p.day === "2026-10-18" && p.part === "day");
-  assert.match(words, new RegExp(`Sunday 18 October .*${Math.round(sunday.tmax)}°`));
-});
-
-test("weekend: on Saturday this weekend, on Sunday Sunday and Monday", async () => {
-  freezeTime("2026-10-17T10:00:00Z");
-  const sat = text(await renderLayout("full", later, { view: "weekend", lang: "cs" }));
-  assert.match(sat, /sobota 17\. října .* neděle 18\. října/);
-  assert.doesNotMatch(sat, /mimo předpověď/);
-  freezeTime("2026-10-18T10:00:00Z");
-  const sun = text(await renderLayout("full", later, { view: "weekend" }));
-  assert.match(sun, /Sunday 18 October .* Monday 19 October Monday is beyond the forecast/);
-  assert.doesNotMatch(sun, /Saturday/);
 });
 
 // the saved Prague file moved `n` days later; `extra` more days copied from its last day
@@ -233,56 +184,6 @@ const shifted = (n, extra = 0) => variant((f) => {
   f.generated = `${move(f.generated, n).slice(0, 16)}+00:00`;
 });
 
-test("weekend: on Saturday evening Sunday and Monday", async () => {
-  freezeTime("2026-10-17T17:30:00Z"); // Saturday 19:30 in Prague
-  const words = text(await renderLayout("full", later, { view: "weekend" }));
-  assert.match(words, /Sunday 18 October .* Monday 19 October Monday is beyond the forecast/);
-  assert.doesNotMatch(words, /Saturday/);
-  const cs = text(await renderLayout("full", later, { view: "weekend", lang: "cs" }));
-  assert.match(cs, /neděle 18\. října .* pondělí 19\. října Pondělí je mimo předpověď/);
-});
-
-test("weekend: on Sunday evening the next weekend", async () => {
-  freezeTime("2026-10-18T17:30:00Z"); // Sunday 19:30 in Prague
-  // a forecast from Sunday reaches Friday: the next weekend is all beyond it, so a note
-  // and the next two days from tomorrow
-  const sunday = shifted(6);
-  const en = text(await renderLayout("full", sunday, { view: "weekend" }));
-  assert.match(en, /^ ?Weekend not in the forecast yet Monday 19 October .* Tuesday 20 October/);
-  assert.doesNotMatch(en, /beyond the forecast|Sunday|Today|Tomorrow/);
-  const cs = text(await renderLayout("full", sunday, { view: "weekend", lang: "cs" }));
-  assert.match(cs, /Víkend zatím mimo předpověď pondělí 19\. října .* úterý 20\. října/);
-  // one more day of data: Saturday, and a note for Sunday
-  const words = text(await renderLayout("full", shifted(6, 1), { view: "weekend" }));
-  assert.match(words, /Saturday 24 October .* Sunday 25 October Sunday is beyond the forecast/);
-  assert.doesNotMatch(words, /18 October|Monday/);
-});
-
-test("weekend: with the evening switch off, the evening is like the day", async () => {
-  freezeTime("2026-10-17T17:30:00Z"); // Saturday 19:30
-  const sat = text(await renderLayout("full", later, { view: "weekend", evening: false }));
-  assert.match(sat, /Saturday 17 October .* Sunday 18 October/);
-  freezeTime("2026-10-18T17:30:00Z"); // Sunday 19:30
-  const sun = text(await renderLayout("full", shifted(6, 1), { view: "weekend", evening: false }));
-  assert.match(sun, /Sunday 18 October .* Monday 19 October/);
-  freezeTime("2026-10-17T15:30:00Z"); // Saturday 17:30, before the switch
-  assert.match(text(await renderLayout("full", later, { view: "weekend" })), /Saturday 17 October .* Sunday 18 October/);
-});
-
-test("weekend: a day beyond the forecast gets a note; no weekend at all, the next days", async () => {
-  freezeTime("2026-10-12T10:00:00Z"); // Monday: the data ends on Saturday
-  const words = text(await renderLayout("full", PRAHA, { view: "weekend" }));
-  assert.match(words, /Saturday 17 October .* Sunday 18 October Sunday is beyond the forecast/);
-  assert.match(text(await renderLayout("full", PRAHA, { view: "weekend", lang: "cs" })), /Neděle je mimo předpověď/);
-  const short = variant((f) => { f.parts = f.parts.filter((p) => p.day < "2026-10-17"); });
-  const none = text(await renderLayout("full", short, { view: "weekend" }));
-  assert.match(none, /Weekend not in the forecast yet Monday 12 October .* Tuesday 13 October/);
-  assert.doesNotMatch(none, /Saturday|beyond the forecast/);
-  freezeTime("2026-10-12T17:30:00Z"); // 19:30: from tomorrow, unless the switch is off
-  assert.match(text(await renderLayout("full", short, { view: "weekend" })), /Weekend not in the forecast yet Tuesday 13 October .* Wednesday 14 October/);
-  assert.match(text(await renderLayout("full", short, { view: "weekend", evening: false })), /Weekend not in the forecast yet Monday 12 October .* Tuesday 13 October/);
-});
-
 test("daylight says how much shorter it is than the day before", async () => {
   freezeTime("2026-10-12T10:00:00Z");
   const words = text(await renderLayout("full", PRAHA, {}));
@@ -291,20 +192,6 @@ test("daylight says how much shorter it is than the day before", async () => {
   assert.match(words, /of 10 h 55 min \(−3\)/);
   const longer = variant((f) => { for (const p of f.parts) if (p.day === "2026-10-13") p.sunset = "18:20"; });
   assert.match(text(await renderLayout("full", longer, { lang: "cs" })), /z 11 h 0 min \(\+2\)/);
-});
-
-test("the half and quarter layouts show the day-length change too", async () => {
-  freezeTime("2026-10-13T10:00:00Z"); // 13 Oct: 3 minutes shorter than the 12th
-  assert.match(text(await renderLayout("half_vertical", PRAHA, {})), /Sunshine [\d.]+ h 10 h 55 min \(−3\)/);
-  assert.match(text(await renderLayout("half_vertical", PRAHA, { lang: "cs" })), /Slunce [\d,]+ h 10 h 55 min \(−3\)/);
-  for (const layout of ["half_horizontal", "quadrant"]) {
-    assert.match(text(await renderLayout(layout, PRAHA, {})), /07:20 18:15 \(−3\)/);
-  }
-  freezeTime("2026-10-12T10:00:00Z"); // no 11 Oct in the data: daylight without a change
-  assert.match(text(await renderLayout("half_vertical", PRAHA, {})), /10 h 58 min Clouds/);
-  for (const layout of ["half_horizontal", "quadrant"]) {
-    assert.doesNotMatch(text(await renderLayout(layout, PRAHA, {})), /18:17 \(/);
-  }
 });
 
 test("Czech time follows summer time, hour by hour", async () => {
@@ -347,7 +234,6 @@ test("the footer names the forecast: the blend or the AI", async () => {
   assert.match(ai, /MeteoVerdict AI · 12:00/);
   assert.doesNotMatch(ai, /CC BY-SA/);
   assert.doesNotMatch(ai, /models/);
-  assert.match(text(await renderLayout("quadrant", BENESOV_AI, {})), /MeteoVerdict AI · 12:00/);
   // the blend's file has no `models` block since 23 October (an older file still has one: ignored)
   const blend = text(await renderLayout("full", BENESOV, {}));
   assert.match(blend, /MeteoVerdict · 12:00 $/);
@@ -376,7 +262,7 @@ test("threshold badges come from MeteoVerdict's flags", async () => {
   // ground frost again on Tuesday
   assert.equal(badges.filter((b) => b.includes(">Rain<")).length, 1);
   assert.equal(badges.filter((b) => b.includes(">Frost<")).length, 2);
-  assert.doesNotMatch(five, /ČHMÚ/);
+  assert.match(five, /Badges are not ČHMÚ warnings/); // whenever a badge is shown
   assert.match(text(await renderLayout("full", BENESOV, { view: "five_days", lang: "cs" })), /Déšť.*Mráz/);
   // a gust over the threshold, shown in the wind unit
   const gusty = structuredClone(BENESOV);
@@ -396,12 +282,12 @@ test("an obec: its name, its temperatures and rain, the okres's sky", async () =
   const day = (doc, d) => doc.find((p) => p.day === d && p.part === "day");
   assert.match(words, /^ ?Today/);
   assert.match(words, new RegExp(`${Math.round(day(MILICIN.parts, "2026-10-24").tmax)}°`));
-  assert.match(words, /Miličín MeteoVerdict/);
+  assert.match(words, /Miličín .*MeteoVerdict/);
   assert.doesNotMatch(words, /test/);
   assert.notEqual(Math.round(day(MILICIN.parts, "2026-10-25").tmax), Math.round(day(BENESOV.forecast.parts, "2026-10-25").tmax));
   assert.match(words, new RegExp(`Tomorrow .*${Math.round(day(MILICIN.parts, "2026-10-25").tmax)}°`));
   // the place name setting still wins
-  assert.match(text(await renderLayout("full", both, { place: "Chata" })), /Chata MeteoVerdict/);
+  assert.match(text(await renderLayout("full", both, { place: "Chata" })), /Chata .*MeteoVerdict/);
   // an obec file that does not fit the okres file's hours is left out
   const short = structuredClone(MILICIN);
   short.hourly.temperature_2m = short.hourly.temperature_2m.slice(0, 100);
@@ -428,4 +314,29 @@ test("an obec file from the AI says MeteoVerdict AI, whatever the okres file", a
   const words = text(await renderLayout("full", { IDX_0: BENESOV, IDX_1: { ...MILICIN, model: "ai" } }, {}));
   assert.match(words, /MeteoVerdict AI · 12:00/);
   assert.match(text(await renderLayout("full", { IDX_0: BENESOV_AI, IDX_1: MILICIN }, {})), /MeteoVerdict AI/);
+});
+
+test("next 24 and 48 hours: the span of days, the six facts, the symbols every 3 and 6 hours", async () => {
+  freezeTime(NOW_NEW); // 12:00 in Prague on Saturday 24 October; summer time ends that night
+  const h24 = text(await renderLayout("full", BENESOV_AI, { view: "next_24h" }));
+  assert.match(h24, /Next 24 hours .*Saturday 24 October → Sunday 25 October/);
+  for (const fact of ["Rain", "Sunshine", "Clouds", "Wind", "Pressure", "Humidity"]) assert.match(h24, new RegExp(fact));
+  assert.match(h24, /gusts \d+/);
+  assert.match(h24, /dew point -?\d+°/);
+  assert.match(h24, /Rain from tomorrow 08:00/);
+  assert.match(h24, /15 .*18 .*21 .*Sun 00 .*03 .*06 .*09/); // every 3 hours
+  const h48 = text(await renderLayout("full", BENESOV_AI, { view: "next_48h", lang: "cs" }));
+  assert.match(h48, /Příštích 48 hodin .*sobota 24\. října → pondělí 26\. října/);
+  assert.match(h48, /18 .*Ne 00 .*06 .*12 .*18 .*Po 00 .*06/); // every 6 hours, midnights with the day
+  assert.doesNotMatch(h48, /NaN|undefined/);
+});
+
+test("the wind says its gusts, and the note on the thresholds comes with a badge", async () => {
+  freezeTime(NOW_NEW);
+  const words = text(await renderLayout("full", BENESOV_AI, {}));
+  assert.match(words, /Wind \d+ m\/s gusts \d+/);
+  assert.match(words, /Badges are not ČHMÚ warnings/);
+  const calm = structuredClone(BENESOV_AI);
+  for (const p of calm.forecast.parts) Object.assign(p, { frost: false, ground_frost: false, heavy_rain: false, gust_over_threshold: false });
+  assert.doesNotMatch(text(await renderLayout("full", calm, {})), /ČHMÚ/);
 });
