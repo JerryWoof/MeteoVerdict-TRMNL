@@ -170,14 +170,18 @@ const EXTRA = `
 .mv-1 .cells svg { width:34px; height:34px; display:block; margin:0 auto }
 .mv-1 .cells .t { font-size:18px; font-weight:800; line-height:1 }
 .mv-1 .cells .r { font-size:12px; font-weight:700; min-height:14px }
-.mv-1 .mv-chart { margin-top:auto }
+.mv-1 .mv-chart { margin-top:0 }
+.mv-1{gap:2px !important}.mv-1>*{flex:none}.mrow{position:relative;height:30px;width:800px}
+.gut{position:absolute;left:0;top:2px;width:100px;line-height:1.05;font-size:11px}.gut span{display:block;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase}.gut b{display:block;font-size:15px;font-weight:800;white-space:nowrap}.gut b i{font-size:10px;font-style:normal;font-weight:600;margin-left:3px}
+.legend{position:absolute;left:0;top:14px;font-size:10px;font-weight:700;line-height:1.5;white-space:nowrap}
+.g2{position:absolute;right:12px;top:0;font-size:10px;font-weight:700;display:none}
 .mv-1 .top{display:flex;gap:14px;align-items:center}
 .mv-1 .say{flex:1;border:2px solid #000;border-radius:8px;padding:6px 10px;font-size:20px;font-weight:800;line-height:1.2}
 .mv-1 .say small{display:block;font-size:15px;font-weight:600;margin-top:2px}
 .mv-1 .mv-facts.f6{grid-template-columns:repeat(6,1fr)}
 .mv-1 .mv-fact:nth-child(n+3){border-top:0}.mv-1 .mv-fact:nth-child(2n+1){border-left:1px solid #000}.mv-1 .mv-fact:first-child{border-left:0}
 .mv-1 .hero{height:auto}
-.mv-1 .hero>svg{width:80px;height:80px}.mv-1 .mv-max{font-size:68px}
+.mv-1 .hero>svg{width:80px;height:80px}.mv-1 .mv-max{font-size:60px}.mv-1 .hero>svg{width:60px;height:60px}.mv-1 .say{padding:3px 10px;font-size:19px}.mv-1 .cells .h{font-size:13px}.mv-1 .cells .t{font-size:16px}
 .mv-1 .mv-kv2 { font-size:14px; font-weight:600; white-space:nowrap }
 .mv-5 .card .f2 { font-size:13px; font-weight:700; line-height:1.3; white-space:nowrap }
 .mv-5 .card .b .mv-badge{font-size:11px}
@@ -226,57 +230,80 @@ const sunGlyphSvg = `<svg class="mv-glyph" viewBox="0 0 24 24"><g stroke="#000" 
 function riseSvgDrop() { return dropGlyph; }
 function sunGlyph() { return sunGlyphSvg; }
 
-// ---------- next 24 hours: the 2-days format (facts on top, the chart below), one wide column ----------
+// ---------- next 24 hours: an instrument panel ----------
+// the temperature curve with the dew point and the rain, symbols every 3 hours above it, and under it
+// small multiples on the same time axis: wind with its gusts, cloud, sunshine, pressure, humidity
 function next24() {
   const i0 = hours.find((a) => a.t === NOW).i;
   const win = hours.filter((h) => h.i > i0 && h.i <= i0 + 24); // the hours ending after now, for 24 hours
-  const k = 780 / 24, w = 780, h = 112, floor = h - 16, top = 20, plot = floor - top, curveH = plot * 0.62, rainH = plot * 0.4;
-  const temp = win.map((a) => H.temperature_2m[a.i]);
-  const lo = Math.min(...temp), hi = Math.max(...temp), span = Math.max(hi - lo, 4), top0 = hi + (span - (hi - lo)) / 2;
-  const y = (v) => top + ((top0 - v) / span) * curveH;
+  const GX = 100, W = 680, k = W / 24, X = (j) => GX + j * k, XC = (j) => GX + (j + 0.5) * k;
+  const v = (key) => win.map((a) => H[key][a.i]);
+  const temp = v("temperature_2m"), dew = v("dew_point_2m");
+  const hi = Math.max(...temp), lo = Math.min(...temp, ...dew), span = Math.max(hi - lo, 4);
   const night = (a) => { const q = DAYLIST.find((d) => d.d === a.day), m = a.hour * 60 + 30; return m < hm(q.sunrise) || m >= hm(q.sunset); };
-  let svg = `<svg class="mv-chart" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`;
-  let run = null;
-  win.forEach((a, j) => { if (night(a) && run === null) run = j; if ((!night(a) || j === win.length - 1) && run !== null) { const end = night(a) ? j + 1 : j; svg += `<rect x="${Math.round(run * k)}" y="0" width="${Math.round(end * k) - Math.round(run * k)}" height="${floor}" fill="url(#mv-night)"/>`; run = null; } });
-  win.forEach((a, j) => {
-    if (a.hour % 3 === 0) { const gx = Math.round((j + 1) * k) + 0.5; svg += `<path d="M${gx} ${floor - 5}V${floor}" stroke="#000" stroke-width="1"/><text x="${gx}" y="${h - 2}" text-anchor="middle" class="mv-tick">${String(a.hour).padStart(2, "0")}</text>`; }
-    if (a.hour === 0) svg += `<path d="M${Math.round(j * k + k) + 0.5} 0V${floor}" stroke="#000" stroke-width="1"/>`;
-  });
-  svg += `<g fill="#000" shape-rendering="crispEdges">${win.map((a, j) => { const p = H.precipitation[a.i] ?? 0; if (p < 0.1) return ""; const bh = Math.round(Math.min(p, 3) / 3 * rainH + 2); return `<rect x="${Math.round(j * k + 0.5)}" y="${floor - bh}" width="${(k - 1).toFixed(1)}" height="${bh}"/>`; }).join("")}</g>`;
-  svg += `<polyline points="${win.map((a, j) => `${((j + 0.5) * k).toFixed(1)},${y(H.temperature_2m[a.i]).toFixed(1)}`).join(" ")}" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>`;
-  const jx = temp.indexOf(hi), jn = temp.indexOf(lo);
-  for (const [j, v, dy] of [[jx, hi, -7], [jn, lo, 20]]) svg += `<text x="${Math.min(Math.max((j + 0.5) * k, 16), w - 16)}" y="${y(v) + dy}" text-anchor="middle" class="mv-lab">${Math.round(v)}°</text>`;
-  svg += `<path d="M0 ${floor + 1}H${w}" stroke="#000" stroke-width="2" shape-rendering="crispEdges"/></svg>`;
+  const dayInfo = DAYLIST[0], tmInfo = DAYLIST[1], now = hours[i0];
 
-  const sum = (key) => win.reduce((t, a) => t + (H[key][a.i] ?? 0), 0);
-  const mean = (key) => Math.round(win.reduce((t, a) => t + H[key][a.i], 0) / win.length);
-  const rain = sum("precipitation"), snow = sum("snowfall"), sunH = sum("sunshine_duration") / 3600;
-  const wind = Math.max(...win.map((a) => H.wind_speed_10m[a.i])), gust = Math.max(...win.map((a) => H.wind_gusts_10m[a.i]));
-  const now = hours[i0], pop = Math.max(...P.filter((q) => (q.day === DAYLIST[0].d && ["afternoon", "evening"].includes(q.part)) || (q.day === DAYLIST[1].d && ["night", "morning"].includes(q.part))).map((q) => q.rain_probability));
+  // night as the dot screen, over every panel
+  const PANEL_TOP = 0;
+  const nights = [];
+  let run = null;
+  win.forEach((a, j) => { if (night(a) && run === null) run = j; if (run !== null && (!night(a) || j === win.length - 1)) { nights.push([run, night(a) ? j + 1 : j]); run = null; } });
+  const nightRects = (y0, y1) => nights.map(([a, b]) => `<rect x="${Math.round(X(a))}" y="${y0}" width="${Math.round(X(b)) - Math.round(X(a))}" height="${y1 - y0}" fill="url(#mv-night)"/>`).join("");
+  const midnight = win.findIndex((a) => a.hour === 0);
+
+  // main chart
+  const CH = 112, top = 16, floor = CH - 14, curveH = (floor - top) * 0.66, rainH = (floor - top) * 0.34;
+  const y = (t) => top + ((hi - t) / span) * curveH;
+  const kmax = temp.indexOf(hi), kmin = temp.indexOf(Math.min(...temp));
+  let main = `<svg class="mv-chart" width="800" height="${CH}" viewBox="0 0 800 ${CH}" style="margin:0 0 0 -10px">${nightRects(0, floor)}`;
+  if (midnight >= 0) main += `<path d="M${Math.round(X(midnight)) + 0.5} 0V${floor}" stroke="#000" stroke-width="1"/>`;
+  win.forEach((a, j) => { if (a.hour % 3 === 0) main += `<path d="M${Math.round(X(j + 1)) + 0.5} ${floor - 5}V${floor}" stroke="#000" stroke-width="1"/><text x="${Math.round(X(j + 1)) + 0.5}" y="${CH - 1}" text-anchor="middle" class="mv-tick">${String(a.hour).padStart(2, "0")}</text>`; });
+  main += `<g fill="#000" shape-rendering="crispEdges">${win.map((a, j) => { const p = H.precipitation[a.i] ?? 0; if (p < 0.1) return ""; const bh = Math.round(Math.min(p, 3) / 3 * rainH + 2); return `<rect x="${Math.round(X(j)) + 1}" y="${floor - bh}" width="${(k - 2).toFixed(1)}" height="${bh}"/>`; }).join("")}</g>`;
+  main += `<polyline points="${win.map((a, j) => `${XC(j).toFixed(1)},${y(dew[j]).toFixed(1)}`).join(" ")}" fill="none" stroke="#000" stroke-width="2" stroke-dasharray="2 4" stroke-linecap="round"/>`;
+  main += `<polyline points="${win.map((a, j) => `${XC(j).toFixed(1)},${y(temp[j]).toFixed(1)}`).join(" ")}" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+  for (const [j, val, dy] of [[kmax, hi, -6], [kmin, Math.min(...temp), 17]]) main += `<text x="${Math.min(Math.max(XC(j), GX + 14), 770)}" y="${y(val) + dy}" text-anchor="middle" class="mv-lab">${Math.round(val)}°</text>`;
+  // sunset and sunrise on the time axis
+  const sunAt = (day, hhmm, glyph) => { const j = win.findIndex((a) => a.day === day && a.hour * 60 + 60 > hm(hhmm)); return j < 0 ? "" : `<g transform="translate(${(X(j) + ((hm(hhmm) % 60) / 60) * k - 7).toFixed(1)} ${floor - 22}) scale(.58)">${glyph}</g>`; };
+  main += sunAt(dayInfo.d, dayInfo.sunset, riseSvg.replace('class="mv-glyph" ', "").replace("viewBox", 'width="24" height="24" viewBox').replace(/^<svg[^>]*>/, "<g>").replace("</svg>", "</g>").replace('M8.5 6.5 12 3l3.5 3.5', 'M8.5 6.5 12 10l3.5-3.5')) + sunAt(tmInfo.d, tmInfo.sunrise, riseSvg.replace(/^<svg[^>]*>/, "<g>").replace("</svg>", "</g>"));
+  main += `<path d="M${GX} ${floor + 1}H800" stroke="#000" stroke-width="2" shape-rendering="crispEdges"/></svg>`;
+  const gutter = (label, value, sub = "") => `<div class="gut"><span>${label}</span><b>${value}</b><i>${sub}</i></div>`;
+
+  // small multiples
+  const RH = 30;
+  const row = (label, value, sub, body) => `<div class="mrow"><div class="gut"><span>${label}</span><b>${value}<i>${sub}</i></b></div><svg width="${W}" height="${RH}" viewBox="${GX} 0 ${W} ${RH}" style="overflow:visible;margin-left:${GX - 10}px;position:absolute;left:0;top:0">${nightRects(0, RH)}<path d="M${GX} ${RH - 0.5}H800" stroke="#000" stroke-width="1"/>${body}</svg></div>`;
+  const wind = v("wind_speed_10m"), gust = v("wind_gusts_10m"), cloud = v("cloud_cover"), sunS = v("sunshine_duration"), press = v("pressure_msl"), hum = v("relative_humidity_2m");
+  const wmax = Math.max(12, ...gust);
+  const wbars = win.map((a, j) => { const h1 = Math.max(1, Math.round((wind[j] / wmax) * (RH - 4))); const g1 = Math.round((gust[j] / wmax) * (RH - 4)); return `<rect x="${Math.round(X(j)) + 1}" y="${RH - 1 - h1}" width="${(k - 2).toFixed(1)}" height="${h1}" fill="#000"/><rect x="${Math.round(X(j)) + 1}" y="${RH - 1 - g1}" width="${(k - 2).toFixed(1)}" height="1.5" fill="#000"/>`; }).join("");
+  const cpts = (arr, lo2, hi2) => arr.map((q, j) => `${XC(j).toFixed(1)},${(RH - 3 - ((q - lo2) / (hi2 - lo2 || 1)) * (RH - 6)).toFixed(1)}`).join(" ");
+  const cloudArea = `<polygon points="${GX},${RH} ${cpts(cloud, 0, 100)} ${GX + W},${RH}" fill="#fff" stroke="none"/><polyline points="${cpts(cloud, 0, 100)}" fill="none" stroke="#000" stroke-width="2"/>${win.map((a, j) => `<rect x="${Math.round(X(j)) + 1}" y="${(RH - 3 - (cloud[j] / 100) * (RH - 6)).toFixed(1)}" width="${(k - 2).toFixed(1)}" height="${((cloud[j] / 100) * (RH - 6) + 3).toFixed(1)}" fill="url(#mv-night)"/>`).join("")}`;
+  const sbars = win.map((a, j) => { const h1 = Math.round(Math.min(sunS[j] / 3600, 1) * (RH - 4)); return h1 < 1 ? "" : `<rect x="${Math.round(X(j)) + 1}" y="${RH - 1 - h1}" width="${(k - 2).toFixed(1)}" height="${h1}" fill="#000"/>`; }).join("");
+  const plo = Math.min(...press), phi = Math.max(...press, plo + 4);
+  const hlo = Math.min(...hum), hhi = Math.max(...hum);
+  const rain = v("precipitation").reduce((t, q) => t + (q ?? 0), 0), snow = v("snowfall").reduce((t, q) => t + (q ?? 0), 0);
+  const sunH = sunS.reduce((t, q) => t + q, 0) / 3600;
+  const pop = Math.max(...P.filter((q) => (q.day === dayInfo.d && ["afternoon", "evening"].includes(q.part)) || (q.day === tmInfo.d && ["night", "morning"].includes(q.part))).map((q) => q.rain_probability));
   const first = win.find((a) => (H.precipitation[a.i] ?? 0) >= 0.1);
-  const say = first ? `Srážky od ${first.day === now.day ? "" : "zítra "}${String(first.hour).padStart(2, "0")}:00` : "Příštích 24 hodin bez srážek";
-  const dayInfo = DAYLIST[0], tmInfo = DAYLIST[1];
-  const nextSun = hm(dayInfo.sunset) > 12 * 60 ? { set: dayInfo.sunset, rise: tmInfo.sunrise } : { set: tmInfo.sunset, rise: tmInfo.sunrise };
-  const p0 = H.pressure_msl[i0], ahead = H.pressure_msl[i0 + 6] - p0, trend = Math.abs(ahead) < 1 ? "stabilní" : ahead > 0 ? "stoupá" : "klesá";
-  // a cell every 3 hours, centred on its tick of the chart
-  const cells = win.map((a, j) => ({ a, j })).filter(({ a }) => a.hour % 3 === 0).map(({ a, j }) => { const s = hourSymbol(a), r = H.precipitation[a.i]; return `<div style="position:absolute;left:${Math.round((j + 1) * k) - 36}px;width:72px"><div class="h">${a.hour === 0 ? `${SHORT[dow(a.day)]} 00` : String(a.hour).padStart(2, "0")}</div>${symbol(s.name, 34, s.night)}<div class="t">${Math.round(H.temperature_2m[a.i])}°</div><div class="r">${r >= 0.1 ? `${dec1(r)} mm` : ""}</div></div>`; }).join("");
+  const say = first ? `Srážky od ${first.day === now.day ? "" : "zítra "}${String(first.hour).padStart(2, "0")}:00` : "24 hodin bez srážek";
+  const ptrend = press.at(-1) - press[0];
+  const spread = Math.min(...win.map((a, j) => temp[j] - dew[j]));
+  const rows = [
+    row("Vítr", `${Math.round(Math.max(...wind))} m/s`, `nárazy ${Math.round(Math.max(...gust))}`, wbars),
+    row("Oblačnost", `${Math.round(cloud.reduce((t, q) => t + q, 0) / cloud.length)} %`, "průměr", cloudArea),
+    row("Slunce", `${dec1(sunH)} h`, `z ${Math.round(light(dayInfo) / 60)} h`, sbars),
+    row("Tlak", `${Math.round(press[0])} hPa`, `${ptrend > 0.5 ? "↗ stoupá" : ptrend < -0.5 ? "↘ klesá" : "→ stabilní"}`, `<polyline points="${cpts(press, plo, phi)}" fill="none" stroke="#000" stroke-width="2.5" stroke-linejoin="round"/>`),
+  ].join("");
+
+  const cells = win.map((a, j) => ({ a, j })).filter(({ a }) => a.hour % 3 === 0).map(({ a, j }) => { const q = hourSymbol(a), r = H.precipitation[a.i]; return `<div style="position:absolute;left:${Math.round(X(j + 1)) - 10 - 30}px;width:60px"><div class="h">${a.hour === 0 ? `${SHORT[dow(a.day)]} 00` : String(a.hour).padStart(2, "0")}</div>${symbol(q.name, 26, q.night)}<div class="t">${Math.round(H.temperature_2m[a.i])}°</div></div>`; }).join("");
   const al = alerts({ ...dayInfo, heavy: dayInfo.heavy || tmInfo.heavy, frost: tmInfo.frost, ground: tmInfo.ground, gustFlag: dayInfo.gustFlag || tmInfo.gustFlag, gust: Math.max(dayInfo.gust, tmInfo.gust), fog: Math.max(dayInfo.fog, tmInfo.fog), snow });
   const nowSym = hourSymbol(now);
+  const fogNote = spread < 2 ? " · rosný bod blízko: mlha možná" : "";
   return shell(`<div class="mv mv-1"><div class="mv-head"><span class="when">Příštích 24 hodin${al}</span><span class="date">${long(now.day)}</span></div>
     <div class="top">
-      <div class="hero">${symbol(nowSym.name, 92, nowSym.night)}<div class="temps"><span class="mv-max">${Math.round(H.temperature_2m[i0])}°</span><span class="min">teď · 12:00</span></div>
-        <div class="side"><div class="what">max ${Math.round(hi)}° · min ${Math.round(lo)}°</div><div class="mv-sun">${setSvg} ${nextSun.set} &nbsp; ${riseSvg} ${nextSun.rise}</div></div></div>
-      <div class="say">${say}${rain >= 0.1 ? `<small>${dec1(rain)} mm · ${Math.round(pop * 100)} % šance</small>` : `<small>${Math.round(pop * 100)} % šance srážek</small>`}</div>
+      <div class="hero">${symbol(nowSym.name, 60, nowSym.night)}<div class="temps"><span class="mv-max">${Math.round(temp[0] > H.temperature_2m[i0] ? temp[0] : H.temperature_2m[i0])}°</span></div>
+        <div class="side"><div class="what">teď 12:00</div><div class="mv-sun">↑ ${Math.round(hi)}° &nbsp;↓ ${Math.round(Math.min(...temp))}°</div><div class="mv-kv2">vlhkost ${Math.round(hum[0])} %</div></div></div>
+      <div class="say">${say}<small>${rain >= 0.1 ? `${dec1(rain)} mm · ` : ""}${Math.round(pop * 100)} % šance${snow >= 0.1 ? ` · sníh ${dec1(snow)} cm` : ""}${fogNote}</small></div>
     </div>
-    <div class="mv-facts f6">
-      <div class="mv-fact"><span>Srážky</span><b>${dec1(rain)} mm</b><i>${snow >= 0.1 ? `sníh ${dec1(snow)} cm` : `${Math.round(pop * 100)} % šance`}</i></div>
-      <div class="mv-fact"><span>Slunce</span><b>${dec1(sunH)} h</b><i>z ${lightTxt(dayInfo)}</i></div>
-      <div class="mv-fact"><span>Oblačnost</span><b>${mean("cloud_cover")} %</b><i>průměr</i></div>
-      <div class="mv-fact"><span>Vítr</span><b>${Math.round(wind)} m/s</b><i>nárazy ${Math.round(gust)}</i></div>
-      <div class="mv-fact"><span>Tlak</span><b>${Math.round(p0)} hPa</b><i>${trend}</i></div>
-      <div class="mv-fact"><span>Vlhkost</span><b>${Math.round(H.relative_humidity_2m[i0])} %</b><i>rosný bod ${Math.round(H.dew_point_2m[i0])}°</i></div>
-    </div>
-    <div class="cells" style="position:relative;height:84px;display:block">${cells}</div>${svg}</div>`, al !== "");
+    <div class="cells" style="position:relative;height:60px;display:block">${cells}</div><div style="position:relative">${main}<div class="legend">━ teplota<br>┈ rosný bod<br>▮ srážky mm</div></div>${rows}</div>`, al !== "");
 }
 
 for (const [name, html] of Object.entries({ "24-hours": next24(), "2-days": twoDays(), "5-days": fiveDays() })) {
