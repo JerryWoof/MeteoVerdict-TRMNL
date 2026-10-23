@@ -52,7 +52,7 @@
   {%- if p < 0.1 and first_wet >= 0 and first_dry < 0 -%}{%- assign first_dry = i -%}{%- endif -%}
 {%- endfor -%}
 {%- assign w_hours = last | minus: s -%}
-{%- assign w_cloud = w_cloud | divided_by: w_hours | round -%}
+{%- assign w_cloud = w_cloud | times: 1.0 | divided_by: w_hours | round -%}
 {%- comment -%} the sentence about the rain: from when, until when, all the time, or none {%- endcomment -%}
 {%- if first_wet < 0 -%}
   {%- assign rain_text = T_dry | replace: "#", hours_n -%}
