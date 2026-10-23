@@ -43,8 +43,8 @@
       </div>
     </div>
     <div class="mv-facts">
-      <div class="mv-fact"><span>{{ T_rain }}</span><b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b><i>{{ chance | times: 100 | round }} %</i></div>
-      <div class="mv-fact"><span>{{ T_sunshine }}</span><b>{% if shine != nil %}{{ shine | round: 1 | replace: ".", T_dec }} h{% else %}–{% endif %}</b><i>{% if light %}{{ light | divided_by: 60 | floor }} h {{ light | modulo: 60 }} min{% if light_diff_s != "" %} ({{ light_diff_s }}){% endif %}{% else %}&nbsp;{% endif %}</i></div>
+      <div class="mv-fact"><span>{{ T_rain }}</span><b>{% assign n = rain %}{% include "partials/dec1" %} mm</b><i>{{ chance | times: 100 | round }} %</i></div>
+      <div class="mv-fact"><span>{{ T_sunshine }}</span><b>{% if shine != nil %}{% assign n = shine %}{% include "partials/dec1" %} h{% else %}–{% endif %}</b><i>{% if light %}{{ light | divided_by: 60 | floor }} h {{ light | modulo: 60 }} min{% if light_diff_s != "" %} ({{ light_diff_s }}){% endif %}{% else %}&nbsp;{% endif %}</i></div>
       <div class="mv-fact"><span>{{ T_clouds }}</span><b>{% if cloud != nil %}{{ cloud | round }} %{% else %}–{% endif %}</b><i>&nbsp;</i></div>
       <div class="mv-fact"><span>{{ T_wind }}</span><b>{{ wind | times: wind_k | round }} {{ wind_unit }}</b><i>&nbsp;</i></div>
     </div>
@@ -58,7 +58,7 @@
       <span class="lbl">{% if start == 0 %}{{ T_tomorrow }}{% else %}{{ day_name }}{% endif %}</span>
       {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
       {% include "partials/icon" %}
-      <span><b>{{ tmax | round }}°</b> / {{ tmin | round }}°{% if rain >= 0.1 %} · {{ rain | round: 1 | replace: ".", T_dec }} mm{% endif %}</span>
+      <span><b>{{ tmax | round }}°</b> / {{ tmin | round }}°{% if rain >= 0.1 %} · {% assign n = rain %}{% include "partials/dec1" %} mm{% endif %}</span>
     </div>
     {%- endif -%}
   </div>

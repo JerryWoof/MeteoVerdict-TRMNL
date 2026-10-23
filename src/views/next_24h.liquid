@@ -162,7 +162,7 @@
       </div>
       <div class="range">{% if feels != nil %}{{ T_feels }} {{ feels }}° · {% endif %}{% if w_hi > -99 %}{{ T_high }} {{ w_hi | round }}° · {{ T_low }} {{ w_lo | round }}°{% endif %}</div>
       {%- if rain_text != "" -%}
-      <div class="say">{{ rain_text }}{% if w_rain >= 0.1 %}<small>{{ w_rain | round: 1 | replace: ".", T_dec }} mm{% if w_chance >= 0.05 %} · {{ w_chance | times: 100 | round }} % {{ T_chance }}{% endif %}</small>{% endif %}</div>
+      <div class="say">{{ rain_text }}{% if w_rain >= 0.1 %}<small>{% assign n = w_rain %}{% include "partials/dec1" %} mm{% if w_chance >= 0.05 %} · {{ w_chance | times: 100 | round }} % {{ T_chance }}{% endif %}</small>{% endif %}</div>
       {%- endif -%}
       {%- if alerts != "" -%}<div>{{ alerts }}</div>{%- endif -%}
       <div class="mv-kv">
@@ -196,7 +196,7 @@
             {%- assign i = i2 | at_most: cap -%}{% include "partials/hour_symbol" %}{%- assign icon_class = "" -%}
             {% include "partials/icon" %}
             <div class="t">{% if ct != nil %}{{ ct | round }}°{% else %}–{% endif %}</div>
-            <div class="r">{% if cell_rain >= 0.1 %}{{ cell_rain | round: 1 | replace: ".", T_dec }} mm{% endif %}</div>
+            <div class="r">{% if cell_rain >= 0.1 %}{% assign n = cell_rain %}{% include "partials/dec1" %} mm{% endif %}</div>
           </div>
         {%- endfor -%}
       </div>

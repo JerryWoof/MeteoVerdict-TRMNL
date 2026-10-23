@@ -36,8 +36,8 @@
       <div class="side"><b>{% include "partials/word" %}</b><br>{{ T_low }} {{ tmin | round }}°</div>
     </div>
     <div class="line">
-      <span>{{ drop_glyph }}<b>{{ rain | round: 1 | replace: ".", T_dec }} mm</b> {{ chance | times: 100 | round }} %</span>
-      {%- if shine != nil -%}<span>{{ sun_glyph }}<b>{{ shine | round: 1 | replace: ".", T_dec }} h</b></span>{%- endif -%}
+      <span>{{ drop_glyph }}<b>{% assign n = rain %}{% include "partials/dec1" %} mm</b> {{ chance | times: 100 | round }} %</span>
+      {%- if shine != nil -%}<span>{{ sun_glyph }}<b>{% assign n = shine %}{% include "partials/dec1" %} h</b></span>{%- endif -%}
       {%- if rise -%}<span>{{ rise_svg }}{{ rise }} {{ set_svg }}{{ set }}{% if light_diff_s != "" %} <small>({{ light_diff_s }})</small>{% endif %}</span>{%- endif -%}
     </div>
     {%- assign next_start = start | plus: 1 -%}
@@ -47,7 +47,7 @@
       <b>{% if start == 0 %}{{ T_tomorrow }}{% else %}{{ day_name }}{% endif %}</b>
       {%- assign icon = sym -%}{%- assign night = false -%}{%- assign icon_class = "" -%}
       {% include "partials/icon" %}
-      <span><b>{{ tmax | round }}°</b> / {{ tmin | round }}°{% if rain >= 0.1 %} · {{ rain | round: 1 | replace: ".", T_dec }} mm{% endif %}</span>
+      <span><b>{{ tmax | round }}°</b> / {{ tmin | round }}°{% if rain >= 0.1 %} · {% assign n = rain %}{% include "partials/dec1" %} mm{% endif %}</span>
     </div>
     {%- endif -%}
   </div>
