@@ -47,8 +47,8 @@ written in English with one Czech line:
 >
 > The forecast is MeteoVerdict's. Every day it checks how well about 20 weather models
 > forecast what ČHMÚ stations then measured, and blends them, weighting each model by how
-> accurate it has been in your okres over the last 90 days. By default the temperature and
-> wind come from MeteoVerdict AI, its own AI model. Free, no API key, no account.
+> accurate it has been in your okres over the last 90 days. By default the forecast is
+> MeteoVerdict AI's, its own AI model. Free, no API key, no account.
 >
 > Počasí pro váš okres podle MeteoVerdictu, česky i anglicky.
 >

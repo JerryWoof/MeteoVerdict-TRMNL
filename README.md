@@ -14,11 +14,12 @@ over the last 90 days. So you get a forecast tuned for where you live rather tha
 model's opinion. Free, no API key.
 
 **New in October 2026**
-- **MeteoVerdict AI:** temperature and wind come from MeteoVerdict's own AI model (the
-  default), everything else from the combined forecast; or pick the combined forecast of
-  all models. The footer says which one you are looking at.
-- **The range of the temperature:** with the combined forecast, from tomorrow on, the
-  high comes with its "±", half of MeteoVerdict's 80 % range (*16° ±2*).
+- **MeteoVerdict AI:** the forecast from MeteoVerdict's own AI model (the default; since
+  23 October 2026 its file covers temperature, rain, wind, gusts, clouds, sunshine and
+  the thresholds, not only temperature and wind); or pick the combined forecast of all
+  models. The footer says which one you are looking at.
+- **The range of the temperature:** from tomorrow on, the high comes with its "±", half of
+  MeteoVerdict's 80 % range (*16° ±2*), with both forecasts.
 - **Thresholds from MeteoVerdict itself:** the badges use the same flags as the website
   (*Frost* from the corrected night minimum or the ground, *Rain* when heavy rain is likely,
   gusts over 13.5 m/s).
@@ -116,13 +117,13 @@ rain, an hourly mean wind of 10 m/s.)
 
 ![Today and tomorrow in Prague with the combined forecast](screenshots/today-tomorrow-blend.png)
 
-By default (*Forecast: MeteoVerdict AI*), temperature and wind come from MeteoVerdict's
-own AI model, as on the website, and everything else (rain, clouds, sunshine, symbols,
-gusts, frost) from the combined forecast; the footer says *MeteoVerdict AI*. The AI is
-still experimental and has no "±". With *Forecast: MeteoVerdict (all models combined)*
-everything is the combined forecast, which is checked against the stations every day,
-the highs from tomorrow on come with their ±, and the footer says *MeteoVerdict · 19
-models* (above).
+By default (*Forecast: MeteoVerdict AI*) the values come from MeteoVerdict's own AI model,
+as on the website, and the footer says *MeteoVerdict AI*. The AI is still experimental.
+With *Forecast: MeteoVerdict (all models combined)* everything is the combined forecast,
+which is checked against the stations every day, and the footer says *MeteoVerdict*. Both
+files have the same format (`forecast.model`, `forecast.sources` telling for every field
+where it comes from, `forecast.hourly`, `forecast.parts`) and both give the highs from
+tomorrow on their ±.
 
 ### An obec
 
@@ -231,11 +232,9 @@ requirements (its own styles exceed the linter's limit on inline layout styles).
 
 | Value | Where it comes from |
 |---|---|
-| Temperature, wind | MeteoVerdict AI (experimental), by default; with the combined forecast, MeteoVerdict's blend of about 20 models, weighted and bias-corrected per okres and lead day ([methodology](https://github.com/JerryWoof/MeteoVerdict/blob/main/docs/methodology.md)) |
-| Rain | MeteoVerdict's blend, as above |
-| ± of the high | Half of the 80 % range of the blend's temperature at the day's warmest hour: the true high falls inside the range about 8 times in 10 |
+| Temperature, rain, wind, clouds, sunshine | MeteoVerdict AI (experimental), by default (the file's `forecast.sources` says where each field comes from; a few come from the combined forecast); with the combined forecast, MeteoVerdict's blend of about 20 models, weighted and bias-corrected per okres and lead day ([methodology](https://github.com/JerryWoof/MeteoVerdict/blob/main/docs/methodology.md)) |
+| ± of the high | Half of the 80 % range of the temperature (the AI's or the blend's) at the day's warmest hour: the true high falls inside the range about 8 times in 10 |
 | Chance of rain | MeteoVerdict's chance of rain for each part of the day; the 24-hour sentence takes the highest of the parts it covers |
-| Clouds, sunshine | The mean of the models, corrected against ČHMÚ observations |
 | Thresholds | MeteoVerdict's flags in the open data: frost and ground frost from the corrected night minimum, heavy rain from the calibrated chance of 5 mm, gusts corrected against ČHMÚ gust observations |
 | Obec | MeteoVerdict AI or the blend at the obec's own point, corrected for its elevation (the okres's stations check it only indirectly) |
 | Sunrise, sunset | Calculated for the okres's forecast point (NOAA solar equations) |
@@ -243,8 +242,8 @@ requirements (its own styles exceed the linter's limit on inline layout styles).
 | Hourly symbols (next 24 hours) | The plugin's own, per hour: rain, sleet or snow from 0.5 mm, showers from 0.1 mm, otherwise clear under 25 % cloud, partly cloudy under 70 % |
 | Feels like | Wind chill (Environment Canada formula), at 10 °C or below with wind over 4.8 km/h |
 
-The full-screen footer shows which forecast it is (*MeteoVerdict AI*, or *MeteoVerdict ·
-19 models* for the combined forecast) and when it was made. The half and quarter footers
+The full-screen footer shows which forecast it is (*MeteoVerdict AI*, or *MeteoVerdict*
+for the combined forecast), with the time of the screen and when it was made. The half and quarter footers
 show only the time, plus the date if the forecast isn't from today. A forecast older than
 30 hours gets an *old forecast* badge. If the data has nothing left for today, the screen
 says so instead of showing an old day.
