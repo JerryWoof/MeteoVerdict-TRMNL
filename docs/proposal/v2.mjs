@@ -172,12 +172,11 @@ const EXTRA = `
 .mv-1 .cells .r { font-size:12px; font-weight:700; min-height:14px }
 .mv-1 .main{display:flex;gap:12px;height:296px}.mv-1 .chartbox{width:538px;flex:none;position:relative}
 .strip{position:relative}.strip .t{font-size:17px;font-weight:800;line-height:1;text-align:center}.strip svg{display:block;margin:2px auto 0}
-.panel{width:226px;flex:none;background:#000;color:#fff;border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:7px}
-.panel svg{filter:invert(1)}
-.p-top{display:flex;justify-content:space-between;font-size:13px;font-weight:800;letter-spacing:1.5px}
+.panel{width:226px;flex:none;display:flex;flex-direction:column;gap:7px}
+.p-top{display:flex;justify-content:space-between;align-items:center;background:#000;color:#fff;border-radius:8px;padding:3px 10px;font-size:13px;font-weight:800;letter-spacing:1.2px;white-space:nowrap}
 .p-hero{display:flex;align-items:center;gap:8px}.p-big{font-size:80px;font-weight:800;letter-spacing:-4px;line-height:.9}.p-sub{font-size:14px;font-weight:600;margin-top:2px}
-.p-range{display:flex;gap:22px;font-size:22px;font-weight:600;border-top:2px solid #fff;padding-top:7px}.p-range b{font-weight:800}
-.p-rain{border:2px solid #fff;border-radius:8px;padding:5px 9px;line-height:1.2}.p-rain b{display:block;font-size:19px;font-weight:800}.p-rain span{font-size:14px;font-weight:600}
+.p-range{display:flex;gap:22px;font-size:22px;font-weight:600;border-top:2px solid #000;padding-top:7px}.p-range b{font-weight:800}
+.p-rain{border:2px solid #000;border-radius:8px;padding:5px 9px;line-height:1.2}.p-rain b{display:block;font-size:19px;font-weight:800}.p-rain span{font-size:14px;font-weight:600}
 .p-sun{display:flex;gap:18px;font-size:17px;margin-top:auto}.p-sun b{font-weight:800}.p-sun svg{width:22px;height:22px;vertical-align:-5px}
 .p-fog{font-size:13px;font-weight:700}
 .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:6px}
