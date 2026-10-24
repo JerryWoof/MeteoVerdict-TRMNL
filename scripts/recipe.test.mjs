@@ -11,7 +11,10 @@ import { LAYOUTS } from "./build.mjs";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const markup = LAYOUTS.map((l) => readFileSync(join(root, "dist", `${l}.liquid`), "utf-8")).join("");
 const settings = readFileSync(join(root, "src", "settings.yml"), "utf-8");
-const POLLING_URL = "https://meteoverdict.cz/api/v1/{{ forecast_model }}/{{ okres_code }}.json";
+const POLLING_URL = [
+  "https://meteoverdict.cz/api/v1/{{ forecast_model }}/{{ okres_code }}.json",
+  `https://meteoverdict.cz/api/v1/{{ forecast_model | replace: "okresy", "obce" }}/{{ okres_code }}/{{ obec }}.json`,
+].join("\n");
 
 test("no view wrapper: TRMNL adds view--full etc. itself", () => {
   assert.doesNotMatch(markup, /\b( view(--|__)full)\b("|')>/);

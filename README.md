@@ -113,6 +113,7 @@ Add it to your TRMNL as a private plugin. That takes about five minutes.
    | Okres | A dropdown of all 77. Required |
    | Forecast | MeteoVerdict AI, the default, or MeteoVerdict (all models combined) |
    | View | What the screen shows: today and tomorrow, next 24 hours, next 48 hours, or 5 days |
+   | Obec | Optional: the id of an obec in that okres (`velemin`), for its own forecast; needs the two-line polling URL below |
    | Place name | Shown in the footer instead of the okres (or obec) name. Optional |
    | Move on to tomorrow in the evening | After 18:00 *Today and tomorrow* shows tomorrow and the day after. On by default |
    | Wind speed in | m/s or km/h |
@@ -126,9 +127,20 @@ Add it to your TRMNL as a private plugin. That takes about five minutes.
 
 ### An obec (private plugins)
 
-Write the two URLs out in full as the polling URL, one per line: the okres file, then the
-obec's. TRMNL passes both files to the layouts, which use the obec's temperature, rain and
-wind and show its name. With MeteoVerdict AI (both files from `ai/`):
+The obec's own forecast comes as a second polling URL: the layouts then use the obec's
+temperature, rain and wind and show its name. With the form field *Obec* (the obec's id,
+e.g. `velemin`, in the okres chosen in *Okres*), the polling URL is these two lines:
+
+```
+https://meteoverdict.cz/api/v1/{{ forecast_model }}/{{ okres_code }}.json
+https://meteoverdict.cz/api/v1/{{ forecast_model | replace: "okresy", "obce" }}/{{ okres_code }}/{{ obec }}.json
+```
+
+Leave *Obec* empty for the okres only (then use the one-line URL above: with an empty
+field the second address does not exist).
+
+Or write the two URLs out in full, one per line, with a fixed obec: the okres file, then
+the obec's. With MeteoVerdict AI (both files from `ai/`):
 
 ```
 https://meteoverdict.cz/api/v1/ai/okresy/CZ0525.json
@@ -137,8 +149,7 @@ https://meteoverdict.cz/api/v1/ai/obce/CZ0525/spindleruv-mlyn.json
 
 With the combined forecast, the same without `ai/`.
 
-Both lines name the obec's okres (`CZ0525` above); the Okres and Forecast fields of the
-form are not used then. The obec's address is its okres code and
+With the full addresses the Okres, Forecast and Obec fields of the form are not used. The obec's address is its okres code and
 its name in lower case without diacritics, with `-` for spaces (`CZ0201/benesov`,
 `CZ0525/spindleruv-mlyn`; a repeated name in one okres gets `-2`, `-3`). The
 [Data page](https://meteoverdict.cz/data.html#trmnl) finds it for you
