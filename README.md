@@ -5,7 +5,7 @@ Weather for your Czech district on a [TRMNL](https://trmnl.com) e-ink display: t
 its timing and chance, sunshine, clouds, wind and gusts, pressure, humidity, sunrise and
 sunset, and badges for frost, rain and gusts. In English or Czech.
 
-![The next 24 hours in Prague](screenshots/next-24-hours.png)
+![The next 48 hours in Prague](screenshots/next-24-hours.png)
 
 The forecast is [MeteoVerdict](https://meteoverdict.cz/)'s. Every day,
 MeteoVerdict checks how well about 20 weather models forecast what ČHMÚ stations then
@@ -21,7 +21,7 @@ A weather display gets a glance on your way out. Pick the view in the plugin's s
 
 ### Next 24 hours, and next 48 hours
 
-![The next 24 hours in Prague](screenshots/next-24-hours.png)
+![The next 48 hours in Prague](screenshots/next-24-hours.png)
 
 For "what will it do, and when?" The window starts now (the head says which days it spans:
 *Friday 23 October → Saturday 24 October*):
@@ -36,7 +36,7 @@ For "what will it do, and when?" The window starts now (the head says which days
 
 ### Today and tomorrow
 
-![Today and tomorrow in Prague](screenshots/today-tomorrow.png)
+![Today and tomorrow in Prague, in Czech](screenshots/today-tomorrow.png)
 
 Two days side by side. For each:
 - the symbol, high and low (tomorrow's high with its ±, half of the 80 % range of the
@@ -64,7 +64,7 @@ For planning the week:
 
 ### TRMNL X
 
-![The next 24 hours on TRMNL X](screenshots/next-24-hours-trmnl-x.png)
+![The next 48 hours on TRMNL X](screenshots/next-24-hours-trmnl-x.png)
 
 The same markup works on the original TRMNL (800 × 480) and on TRMNL X (1872 × 1404):
 the content scales to the width of the screen, and on the taller X the hourly charts grow
