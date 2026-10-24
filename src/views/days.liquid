@@ -56,19 +56,22 @@
 {%- if first_wet < 0 -%}
   {%- assign rain_text = T_dry | replace: "#", hours_n -%}
   {%- if w_hours < hours_n -%}{%- assign rain_text = "" -%}{%- endif -%}
+  {%- assign rain_lab = rain_text -%}{%- assign rain_clock = "" -%}
 {%- elsif first_wet == s1 -%}
   {%- if first_dry < 0 -%}
-    {%- assign rain_text = T_rain_all -%}
+    {%- assign rain_text = T_rain_all -%}{%- assign rain_lab = rain_text -%}{%- assign rain_clock = "" -%}
   {%- else -%}
     {%- assign e = HS.time[first_dry] | date: "%s" | minus: 3600 -%}{% include "partials/local" %}
     {%- assign rain_text = le | date: "%H:%M" | prepend: " " -%}{%- assign rd = le | date: "%Y-%m-%d" -%}
     {%- if rd != real_today -%}{%- assign rain_text = T_tomorrow | downcase | prepend: " " | append: rain_text -%}{%- endif -%}
+    {%- assign rain_clock = le | date: "%H:%M" -%}{%- assign rain_lab = T_rain_until -%}{%- if rd != real_today -%}{%- assign rain_lab = T_tomorrow | downcase | prepend: " " | prepend: T_rain_until -%}{%- endif -%}
     {%- assign rain_text = rain_text | prepend: T_rain_until -%}
   {%- endif -%}
 {%- else -%}
   {%- assign e = HS.time[first_wet] | date: "%s" | minus: 3600 -%}{% include "partials/local" %}
   {%- assign rain_text = le | date: "%H:%M" | prepend: " " -%}{%- assign rd = le | date: "%Y-%m-%d" -%}
   {%- if rd != real_today -%}{%- assign rain_text = T_tomorrow | downcase | prepend: " " | append: rain_text -%}{%- endif -%}
+  {%- assign rain_clock = le | date: "%H:%M" -%}{%- assign rain_lab = T_rain_from -%}{%- if rd != real_today -%}{%- assign rain_lab = T_tomorrow | downcase | prepend: " " | prepend: T_rain_from -%}{%- endif -%}
   {%- assign rain_text = rain_text | prepend: T_rain_from -%}
 {%- endif -%}
 
@@ -324,11 +327,13 @@
   .mv-nh { display: flex; flex-direction: column; gap: 5px; }
   .mv-nh .hero { display: flex; align-items: center; gap: 10px; height: 96px; }
   .mv-nh .hero > svg { width: 92px; height: 92px; flex: none; }
-  .mv-nh .temps { display: flex; flex-direction: column; flex: none; }
+  .mv-nh .temps { display: flex; flex-direction: column; align-items: center; flex: none; }
   .mv-nh .mv-max { font-size: 72px; }
   .mv-nh .min { font-size: 18px; font-weight: 600; margin-top: 2px; white-space: nowrap; }
-  .mv-nh .say { flex: 1; min-width: 0; border: 2px solid #000; border-radius: 8px; padding: 5px 10px; font-size: 19px; font-weight: 800; line-height: 1.2; }
-  .mv-nh .say small { display: block; font-size: 14px; font-weight: 600; margin-top: 2px; }
+  .mv-nh .say { flex: 1; min-width: 0; align-self: stretch; margin: 6px 0; display: grid; grid-template-columns: 1fr auto; column-gap: 12px; align-content: center; align-items: center; border: 2px solid #000; border-radius: 8px; padding: 4px 14px; font-size: 20px; font-weight: 800; line-height: 1.2; }
+  .mv-nh .say .l { grid-column: 1; grid-row: 1; }
+  .mv-nh .say .c { grid-column: 2; grid-row: 1 / span 2; font-size: 44px; font-weight: 800; letter-spacing: -1px; line-height: 1; }
+  .mv-nh .say small { grid-column: 1; grid-row: 2; font-size: 14px; font-weight: 600; margin-top: 2px; }
   .mv-nh .side { text-align: right; line-height: 1.3; white-space: nowrap; }
   .mv-nh .what { font-size: 18px; font-weight: 800; }
   .mv-nh .mv-sun { font-size: 17px; }
@@ -349,7 +354,7 @@
       <span class="min">{{ T_now }}</span>
     </div>
     {%- if rain_text != "" -%}
-    <div class="say">{{ rain_text }}{% if w_rain >= 0.1 %}<small>{% assign n = w_rain %}{% include "partials/dec1" %} mm{% if w_chance >= 0.05 %} · {{ w_chance | times: 100 | round }} % {{ T_chance }}{% endif %}</small>{% endif %}</div>
+    <div class="say"><span class="l">{{ rain_lab }}</span>{% if rain_clock != "" %}<span class="c">{{ rain_clock }}</span>{% endif %}{% if w_rain >= 0.1 %}<small>{% assign n = w_rain %}{% include "partials/dec1" %} mm{% if w_chance >= 0.05 %} · {{ w_chance | times: 100 | round }} % {{ T_chance }}{% endif %}</small>{% endif %}</div>
     {%- else -%}<div style="flex:1"></div>{%- endif -%}
     <div class="side">
       {%- if w_hi > -99 -%}<div class="what">{{ T_high }} {{ w_hi | round }}° · {{ T_low }} {{ w_lo | round }}°</div>{%- endif -%}
