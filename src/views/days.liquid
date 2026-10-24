@@ -178,7 +178,8 @@
     as the dot screen, a line at midnight, ticks and labels every `step` hours, and the
     symbol and temperature of those hours above it.
   {%- endcomment -%}
-  {%- assign gw = 780 -%}{%- assign gh = 132 -%}{%- assign gk = 78.0 | divided_by: hours_n -%}
+  {%- for variant in (0..1) -%}
+  {%- assign gw = 780 -%}{%- assign gh = variant | times: 110 | plus: 132 -%}{%- assign gk = 78.0 | divided_by: hours_n -%}
   {%- assign g_floor = gh | minus: 18 -%}{%- assign g_top = 22 -%}
   {%- assign g_plot = g_floor | minus: g_top -%}{%- assign g_curve = g_plot | times: 0.62 -%}{%- assign g_rain = g_plot | times: 0.4 -%}
   {%- assign w_range = w_hi | minus: w_lo -%}{%- assign w_span = w_range | at_least: 4 -%}
@@ -249,6 +250,25 @@
       {%- endif -%}
     {%- endif -%}
   {%- endfor -%}
+  {%- capture svgv -%}
+  <svg class="mv-chart" width="{{ gw }}" height="{{ gh }}" viewBox="0 0 {{ gw }} {{ gh }}">
+    <g fill="url(#mv-night)" shape-rendering="crispEdges">{{ shade }}</g>
+    {{ marks }}
+    <g fill="#000" shape-rendering="crispEdges">{{ bars }}</g>
+    <polyline points="{{ pts | strip }}" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
+    {%- if w_hi > -99 -%}
+      {%- assign lx_max = gw | minus: 16 -%}{%- assign lx = x_hi | times: gk | at_least: 16 | at_most: lx_max | round -%}
+      {%- assign ly = w_top | minus: w_hi | times: g_curve | divided_by: w_span | plus: g_top | minus: 7 | round -%}
+      <text x="{{ lx }}" y="{{ ly }}" text-anchor="middle" class="mv-lab">{{ w_hi | round }}°</text>
+      {%- assign lx = x_lo | times: gk | at_least: 16 | at_most: lx_max | round -%}
+      {%- assign ly = w_top | minus: w_lo | times: g_curve | divided_by: w_span | plus: g_top | plus: 20 | round -%}
+      <text x="{{ lx }}" y="{{ ly }}" text-anchor="middle" class="mv-lab">{{ w_lo | round }}°</text>
+    {%- endif -%}
+    <path d="M0 {{ g_floor | plus: 1 }}H{{ gw }}" stroke="#000" stroke-width="2" shape-rendering="crispEdges"/>
+  </svg>
+  {%- endcapture -%}
+  {%- if variant == 0 -%}{%- assign svg0 = svgv -%}{%- else -%}{%- assign svg1 = svgv -%}{%- endif -%}
+  {%- endfor -%}
 {%- endif -%}
 {%- comment -%} the hourly curve of the two days and of the five: partials/chart, once {%- endcomment -%}
 {%- if mode != "hours" -%}
@@ -257,6 +277,8 @@
   {%- assign chart_days = chart_days | split: "," -%}
   {%- assign chart_w = 780 -%}{%- assign chart_h = 132 -%}{%- if mode == "five" -%}{%- assign chart_h = 104 -%}{%- endif -%}{%- assign chart_axis = true -%}{%- if mode == "five" -%}{%- assign chart_axis = false -%}{%- endif -%}{%- assign chart_labels = false -%}{%- assign chart_class = "" -%}
   {%- capture chart_html -%}{% include "partials/chart" %}{%- endcapture -%}
+  {%- assign chart_h = chart_h | plus: 110 -%}
+  {%- capture chart_tall -%}{% include "partials/chart" %}{%- endcapture -%}
 {%- endif -%}
 {%- case mode -%}
 {%- when "two" -%}
@@ -282,12 +304,12 @@
   .mv-part .n { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
   .mv-part svg { width: 38px; height: 38px; display: block; margin: 0 auto; }
   .mv-part .t { font-size: 19px; font-weight: 800; line-height: 1; }
-  .mv-tt .mv-chart { margin-top: auto; }
+  .mv-tt .mvx0, .mv-tt .mvx1 { margin-top: auto; }
   .mv-tt .beyond { flex: 1; display: flex; align-items: center; justify-content: center; border: 2px dashed #000; border-radius: 8px; padding: 20px; font-size: 20px; font-weight: 700; text-align: center; }
 </style>
 <div class="mv mv-tt">
   <div class="cols">{{ items }}</div>
-  {{ chart_html }}
+  <div class="mvx0">{{ chart_html }}</div><div class="mvx1">{{ chart_tall }}</div>
 </div>
 {%- when "five" -%}
 <style>
@@ -307,7 +329,7 @@
   .mv-5 .card .g { font-size: 13px; font-weight: 700; white-space: nowrap; }
   .mv-5 .card .b { margin-top: 3px; line-height: 1; }
   .mv-5 .card .b .mv-badge { font-size: 11px; }
-  .mv-5 .mv-chart { margin-top: auto; }
+  .mv-5 .mvx0, .mv-5 .mvx1 { margin-top: auto; }
   .mv-5 .sum { font-size: 15px; text-align: center; }
   .mv-5 .sum b { font-weight: 800; }
 </style>
@@ -315,7 +337,7 @@
   <div class="cards">{{ items }}</div>
   {%- comment -%} the head comes first on screen (order: -1), once the cards have read the days {%- endcomment -%}
   <div class="mv-head"><span class="when">{{ T_days5 }}</span><span class="date">{{ first_long }} – {{ day_name }} {{ day_date }}</span></div>
-  {{ chart_html }}
+  <div class="mvx0">{{ chart_html }}</div><div class="mvx1">{{ chart_tall }}</div>
   <div class="sum">
     {{ T_warmest }} <b>{{ best_t_day }} {{ best_t | round }}°</b>
     {%- if best_r >= 0.5 %} · {{ T_wettest }} <b>{{ best_r_day }} {% assign n = best_r %}{% include "partials/dec1" %} mm</b>{% endif -%}
@@ -343,7 +365,7 @@
   .mv-nh .cells .h { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
   .mv-nh .cells svg { width: 38px; height: 38px; display: block; margin: 0 auto; }
   .mv-nh .cells .t { font-size: 19px; font-weight: 800; line-height: 1; }
-  .mv-nh .mv-chart { margin-top: auto; }
+  .mv-nh .mvx0, .mv-nh .mvx1 { margin-top: auto; }
 </style>
 <div class="mv mv-nh">
   <div class="mv-head"><span class="when">{{ T_next | replace: "#", hours_n }}{% if alerts != "" %}{{ alerts }}{% endif %}</span><span class="date">{{ today_short }} → {{ end_short }}</span></div>
@@ -370,20 +392,6 @@
     <div class="mv-fact"><span>{{ T_humidity }}</span><b>{% if rh_now != nil %}{{ rh_now | round }} %{% else %}–{% endif %}</b><i>{% if dew_now != nil %}{{ T_dew }} {{ dew_now | round }}°{% endif %}&nbsp;</i></div>
   </div>
   <div class="cells">{{ cells }}</div>
-  <svg class="mv-chart" width="{{ gw }}" height="{{ gh }}" viewBox="0 0 {{ gw }} {{ gh }}">
-    <g fill="url(#mv-night)" shape-rendering="crispEdges">{{ shade }}</g>
-    {{ marks }}
-    <g fill="#000" shape-rendering="crispEdges">{{ bars }}</g>
-    <polyline points="{{ pts | strip }}" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
-    {%- if w_hi > -99 -%}
-      {%- assign lx_max = gw | minus: 16 -%}{%- assign lx = x_hi | times: gk | at_least: 16 | at_most: lx_max | round -%}
-      {%- assign ly = w_top | minus: w_hi | times: g_curve | divided_by: w_span | plus: g_top | minus: 7 | round -%}
-      <text x="{{ lx }}" y="{{ ly }}" text-anchor="middle" class="mv-lab">{{ w_hi | round }}°</text>
-      {%- assign lx = x_lo | times: gk | at_least: 16 | at_most: lx_max | round -%}
-      {%- assign ly = w_top | minus: w_lo | times: g_curve | divided_by: w_span | plus: g_top | plus: 20 | round -%}
-      <text x="{{ lx }}" y="{{ ly }}" text-anchor="middle" class="mv-lab">{{ w_lo | round }}°</text>
-    {%- endif -%}
-    <path d="M0 {{ g_floor | plus: 1 }}H{{ gw }}" stroke="#000" stroke-width="2" shape-rendering="crispEdges"/>
-  </svg>
+  <div class="mvx0">{{ svg0 }}</div><div class="mvx1">{{ svg1 }}</div>
 </div>
 {%- endcase -%}

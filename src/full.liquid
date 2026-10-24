@@ -4,10 +4,12 @@
 {%- endcomment -%}
 {% include "shared" %}
 <div class="layout">
+  <div class="mvc">
   {%- if days.size == 0 -%}
   <div class="mv"><p class="mv-empty">{{ T_none }} {{ generated_local | date: "%d.%m. %H:%M" }}.</p></div>
   {%- else -%}
   {% include "views/days" %}
   {%- endif -%}
+  </div>
 </div>
 {% include "partials/title_bar" %}

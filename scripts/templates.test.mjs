@@ -90,7 +90,8 @@ test("rain in a day's last hour is drawn at the end of that day, not before the 
   const html = await renderLayout("full", late, { view: "today_tomorrow" });
   // one chart over both days, 780 px, 16.25 px an hour: the bar of the hour 23–24 ends at
   // the midnight line (390 px), not after it
-  const bars = [...html.matchAll(/<rect x="([-\d.]+)" y="([\d.]+)" width="([\d.]+)"/g)]
+  // the chart comes twice, in two heights (the taller one for TRMNL X): look at the first
+  const bars = [...html.split('<div class="mvx1">')[0].matchAll(/<rect x="([-\d.]+)" y="([\d.]+)" width="([\d.]+)"/g)]
     .filter((m) => m[2] !== "0") // the night's rectangles start at the top
     .map((m) => [Number(m[1]), Number(m[3])]);
   assert.equal(bars.length, 1);

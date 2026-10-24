@@ -143,7 +143,12 @@
 {%- capture set_svg -%}<svg class="mv-glyph" viewBox="0 0 24 24"><path d="M2 19h20M6.5 19a5.5 5.5 0 0 1 11 0M12 3v7M8.5 6.5 12 10l3.5-3.5" fill="none" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>{%- endcapture -%}
 
 <style>
-  .mv { width: 100%; height: 100%; font-family: "Inter", "Helvetica Neue", Arial, sans-serif; color: #000; }
+  .mvc { position: relative; flex: 1 1 auto; align-self: stretch; width: 100%; height: 100%; min-width: 0; min-height: 0; container-type: size; }
+  .mv { --s: 1; position: absolute; left: 0; top: 0; width: calc(100cqw / var(--s)); height: calc(100cqh / var(--s)); transform: scale(var(--s)); transform-origin: 0 0; font-family: "Inter", "Helvetica Neue", Arial, sans-serif; color: #000; }
+  @container (min-width: 900px) { .mv { --s: 1.29; } }
+  @container (min-width: 1400px) { .mv { --s: 2.35; } }
+  .mvx1 { display: none; }
+  @container (min-width: 900px) { .mvx0 { display: none; } .mvx1 { display: block; } }
   .mv svg { overflow: visible; }
   .mv-head { display: flex; justify-content: space-between; align-items: center; background: #000; color: #fff; border-radius: 8px; padding: 3px 12px; white-space: nowrap; }
   .mv-head .when { font-size: 21px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; flex: none; }
@@ -152,7 +157,7 @@
   .mv-pm { font-size: 34%; font-weight: 700; letter-spacing: 0; vertical-align: 95%; margin-left: 2px; }
   .title_bar .mv-note { font-size: 13px; font-weight: 600; margin-left: 10px; }
   .mv-glyph { width: 22px; height: 22px; vertical-align: -5px; }
-  .mv-sun { font-weight: 700; white-space: nowrap; }
+  .mv-sun { font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .mv-facts { display: grid; grid-template-columns: repeat(4, 1fr); border: 2px solid #000; border-radius: 8px; padding: 3px 0; text-align: center; }
   .mv-fact + .mv-fact { border-left: 1px solid #000; }
   .mv-fact span { display: block; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
