@@ -62,6 +62,15 @@ For planning the week:
 - one continuous temperature curve over the five days, rain bars under it;
 - a closing line naming the warmest, wettest and sunniest day.
 
+### TRMNL X
+
+![The next 24 hours on TRMNL X](screenshots/next-24-hours-trmnl-x.png)
+
+The same markup works on the original TRMNL (800 × 480) and on TRMNL X (1872 × 1404):
+the content scales to the width of the screen, and on the taller X the hourly charts grow
+in height to fill it. TRMNL X in landscape is supported; portrait is not (the screen
+would be left half empty).
+
 ### Thresholds
 
 A day gets up to two badges, from MeteoVerdict's own threshold flags:
