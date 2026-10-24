@@ -55,6 +55,12 @@ Filtr `replace` v polling URL funguje (ověřeno: z `ai/okresy` udělá `ai/obce
 obce druhá adresa neexistuje (`…/CZ0423/.json`), proto pro samotný okres nechte jen první
 řádek. Obec bez pole lze dál zadat i ručně: dva řádky s pevným okresem a obcí.
 
+### TRMNL X
+
+Stejné šablony fungují na původním TRMNL (800×480) i na TRMNL X (1872×1404): obsah se
+škáluje podle šířky a grafy se na X zvětší do výšky. Podporovaná je orientace na šířku;
+na výšku není (zůstala by velká prázdná plocha).
+
 ## 3. Jak ověřit
 
 - V náhledu záložky Full nejsou texty `Liquid error`, `NaN`, `undefined`, `{{`.

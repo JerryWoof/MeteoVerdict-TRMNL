@@ -144,7 +144,7 @@ and the [Chef source](https://gist.github.com/ryanckulp/fbe5f68c51db1ae214a97da2
 | Webhook plugins need a copyable URL | **N/A**: the plugin polls |
 | At most 6 of the 8 layout CSS properties | **Open**: 212. See below |
 | *Advisory:* links in field descriptions are HTML `<a>` | **Done**: the `about` field uses `<a href class="underline">` |
-| *Advisory:* responsive classes (`lg:`, `portrait:`) | **Not done**: the layouts are sized for 800 × 480. See the open questions |
+| *Advisory:* responsive classes (`lg:`, `portrait:`) | **Partly**: the layout scales to the screen width with container queries (800 × 480 and TRMNL X landscape), not with `lg:`/`portrait:` classes; portrait is not supported |
 
 ### Review (manual)
 
@@ -161,7 +161,7 @@ and the [Chef source](https://gist.github.com/ryanckulp/fbe5f68c51db1ae214a97da2
 | Framework and Liquid first, CSS only where needed | **Partly**: Framework `layout`/`title_bar` plus the plugin's own classes. See the inline-style check |
 | No inline `opacity`; `label--gray` gets `1bit:text--black` | **Done**: there's no opacity, and Framework gray labels aren't used. Everything is pure black on white |
 | Provided fonts | **Done**: Inter, the Framework's font |
-| Preview on TRMNL OG and TRMNL X (landscape and portrait) | **You**: step 5 |
+| Preview on TRMNL OG and TRMNL X (landscape and portrait) | **You**: step 5. Portrait is not supported and will look half empty |
 | Keep markup DRY with the Shared tab | **Optional**: `dist/` inlines the shared part into each layout, which works. Moving it into the Shared tab is possible later |
 
 ### The inline-style check
