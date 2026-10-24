@@ -14,10 +14,11 @@ const tmp = join(root, ".screens");
 mkdirSync(tmp, { recursive: true });
 mkdirSync(join(root, "screenshots"), { recursive: true });
 
-// MeteoVerdict AI, the default forecast, in English: the 24 hours, the two days and the five days
-const VIEWS = { "next-24-hours": "next_24h", "today-tomorrow": "today_tomorrow", "five-days": "five_days" };
-const SHOTS = Object.fromEntries(Object.entries(VIEWS).map(([name, view]) => [name, async () => renderLayout("full", await load({ okres: "CZ0100", ai: true }), { view, place: "Praha" })]));
-// and the 24 hours on TRMNL X (1872 x 1404)
+// MeteoVerdict AI, the default forecast: the 48 hours (the file keeps its old name, as the README and
+// the Data page link to it), the five days, and today and tomorrow in Czech
+const VIEWS = { "next-24-hours": ["next_48h", "en"], "today-tomorrow": ["today_tomorrow", "cs"], "five-days": ["five_days", "en"] };
+const SHOTS = Object.fromEntries(Object.entries(VIEWS).map(([name, [view, lang]]) => [name, async () => renderLayout("full", await load({ okres: "CZ0100", ai: true }), { view, lang, place: "Praha" })]));
+// and the same 48 hours on TRMNL X (1872 x 1404)
 const X_SHOTS = { "next-24-hours-trmnl-x": SHOTS["next-24-hours"] };
 
 // midday of the day the forecast was made, so the shots show today, not the evening switch
