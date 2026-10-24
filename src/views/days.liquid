@@ -88,7 +88,7 @@
 {%- for day in pair -%}
   {% include "partials/day" %}
   {%- if days contains day -%}{% include "partials/alerts" %}{%- else -%}{%- assign alerts = "" -%}{%- endif -%}
-  {%- if forloop.first -%}{%- assign first_long = day_short | append: " " | append: day_date -%}{%- assign today_alerts = alerts -%}{%- assign light_today = light -%}{%- assign t_rise = rise -%}{%- assign t_set = set -%}{%- assign t_set_min = set_min -%}{%- assign today_long = day_long -%}{%- assign today_short = day_short | append: " " | append: day_date -%}
+  {%- if forloop.first -%}{%- assign first_long = day_name | append: " " | append: day_date -%}{%- assign today_alerts = alerts -%}{%- assign light_today = light -%}{%- assign t_rise = rise -%}{%- assign t_set = set -%}{%- assign t_set_min = set_min -%}{%- assign today_long = day_long -%}{%- assign today_short = day_name | append: " " | append: day_date -%}
   {%- elsif alerts != "" and today_alerts == "" -%}{%- assign today_alerts = alerts -%}{%- endif -%}
   {%- if mode == "two" -%}
     <div class="col">
@@ -159,7 +159,7 @@
 {%- assign alerts = today_alerts -%}
 {%- assign e = HS.time[last] | date: "%s" | plus: 0 -%}{% include "partials/local" %}
 {%- assign end_day = le | date: "%Y-%m-%d" -%}{%- assign end_wd = le | date: "%w" | plus: 0 -%}{%- assign end_mo = le | date: "%m" | plus: 0 | minus: 1 -%}{%- assign end_num = le | date: "%d" | plus: 0 -%}
-{%- if lang == "cs" -%}{%- assign end_short = end_mo | plus: 1 | prepend: ". " | prepend: end_num | append: "." | prepend: " " | prepend: T_days_short[end_wd] -%}{%- else -%}{%- assign end_short = T_months[end_mo] | slice: 0, 3 | prepend: " " | prepend: end_num | prepend: " " | prepend: T_days_short[end_wd] -%}{%- endif -%}
+{%- if lang == "cs" -%}{%- assign end_short = end_mo | plus: 1 | prepend: ". " | prepend: end_num | append: "." | prepend: " " | prepend: T_days[end_wd] -%}{%- else -%}{%- assign end_short = T_months[end_mo] | slice: 0, 3 | prepend: " " | prepend: end_num | prepend: " " | prepend: T_days[end_wd] -%}{%- endif -%}
 {%- if lang == "cs" -%}{%- assign end_long = T_days[end_wd] | append: " " | append: end_num | append: ". " | append: T_months[end_mo] -%}{%- else -%}{%- assign end_long = T_days[end_wd] | append: " " | append: end_num | append: " " | append: T_months[end_mo] -%}{%- endif -%}
 {%- assign now_min = now_local | date: "%H" | times: 60 -%}{%- assign now_min = now_local | date: "%M" | plus: now_min -%}
 {%- assign sun_a = "" -%}{%- assign sun_b = "" -%}
@@ -311,7 +311,7 @@
 <div class="mv mv-5">
   <div class="cards">{{ items }}</div>
   {%- comment -%} the head comes first on screen (order: -1), once the cards have read the days {%- endcomment -%}
-  <div class="mv-head"><span class="when">{{ T_days5 }}</span><span class="date">{{ first_long }} – {{ day_short }} {{ day_date }}</span></div>
+  <div class="mv-head"><span class="when">{{ T_days5 }}</span><span class="date">{{ first_long }} – {{ day_name }} {{ day_date }}</span></div>
   {{ chart_html }}
   <div class="sum">
     {{ T_warmest }} <b>{{ best_t_day }} {{ best_t | round }}°</b>

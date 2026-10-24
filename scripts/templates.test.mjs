@@ -319,23 +319,23 @@ test("an obec file from the AI says MeteoVerdict AI, whatever the okres file", a
 test("next 24 and 48 hours: the span of days, the six facts, the symbols every 3 and 6 hours", async () => {
   freezeTime(NOW_NEW); // 12:00 in Prague on Saturday 24 October; summer time ends that night
   const h24 = text(await renderLayout("full", BENESOV_AI, { view: "next_24h" }));
-  assert.match(h24, /Next 24 hours Frost Sat 24 Oct → Sun 25 Oct/);
+  assert.match(h24, /Next 24 hours Frost Saturday 24 Oct → Sunday 25 Oct/);
   for (const fact of ["Rain", "Sunshine", "Clouds", "Wind", "Pressure", "Humidity"]) assert.match(h24, new RegExp(fact));
   assert.match(h24, /gusts \d+/);
   assert.match(h24, /dew point -?\d+°/);
   assert.match(h24, /Rain from tomorrow 08:00/);
   assert.match(h24, /15 .*18 .*21 .*Sun 00 .*03 .*06 .*09/); // every 3 hours
   const h48 = text(await renderLayout("full", BENESOV_AI, { view: "next_48h", lang: "cs" }));
-  assert.match(h48, /Příštích 48 hodin Mráz So 24\. 10\. → Po 26\. 10\./);
+  assert.match(h48, /Příštích 48 hodin Mráz sobota 24\. 10\. → pondělí 26\. 10\./);
   assert.match(h48, /18 .*Ne 00 .*06 .*12 .*18 .*Po 00 .*06/); // every 6 hours, midnights with the day
   assert.doesNotMatch(h48, /NaN|undefined/);
 });
 
-test("the 24-hour head has short dates, with or without a badge", async () => {
+test("the 24-hour head has the weekday in full and a short date, with or without a badge", async () => {
   freezeTime(NOW_NEW);
   const calm = structuredClone(BENESOV_AI);
   for (const p of calm.forecast.parts) Object.assign(p, { frost: false, ground_frost: false, heavy_rain: false, gust_over_threshold: false });
-  assert.match(text(await renderLayout("full", calm, { view: "next_24h" })), /Next 24 hours Sat 24 Oct → Sun 25 Oct/);
+  assert.match(text(await renderLayout("full", calm, { view: "next_24h" })), /Next 24 hours Saturday 24 Oct → Sunday 25 Oct/);
 });
 
 test("the wind says its gusts", async () => {
@@ -354,6 +354,6 @@ test("a head with badges keeps the date after them (the date is what gets cut), 
   for (const p of one.forecast.parts) p.heavy_rain = false;
   assert.match(text(await renderLayout("full", one, {})), /Tomorrow Frost Sun 25 Oct/);
   const h24 = text(await renderLayout("full", two, { view: "next_24h" }));
-  assert.match(h24, /Next 24 hours Frost Rain Sat 24 Oct → Sun 25 Oct/);
-  assert.match(text(await renderLayout("full", two, { view: "next_24h", lang: "cs" })), /Příštích 24 hodin Mráz Déšť So 24\. 10\. → Ne 25\. 10\./);
+  assert.match(h24, /Next 24 hours Frost Rain Saturday 24 Oct → Sunday 25 Oct/);
+  assert.match(text(await renderLayout("full", two, { view: "next_24h", lang: "cs" })), /Příštích 24 hodin Mráz Déšť sobota 24\. 10\. → neděle 25\. 10\./);
 });
