@@ -19,7 +19,7 @@ A weather display gets a glance on your way out. Pick the view in the plugin's s
 
 ### Next 24 hours, and next 48 hours
 
-![The next 48 hours in Prague](screenshots/next-24-hours.png)
+<img src="screenshots/next-24-hours.png" width="400" alt="The next 48 hours in Prague">
 
 For "what will it do, and when?" The window starts now (the head says which days it spans:
 *Friday 23 October → Saturday 24 October*):
@@ -34,7 +34,7 @@ For "what will it do, and when?" The window starts now (the head says which days
 
 ### Today and tomorrow
 
-![Today and tomorrow in Prague, in Czech](screenshots/today-tomorrow.png)
+<img src="screenshots/today-tomorrow.png" width="400" alt="Today and tomorrow in Prague, in Czech">
 
 Two days side by side. For each:
 - the symbol, high and low (tomorrow's high with its ±, half of the 80 % range of the
@@ -52,7 +52,7 @@ you want to know. This can be switched off in the settings.
 
 ### 5 days
 
-![Five days in Prague](screenshots/five-days.png)
+<img src="screenshots/five-days.png" width="400" alt="Five days in Prague">
 
 For planning the week:
 - each day's symbol, high (with its ± from tomorrow on) and low, rain with its chance,
@@ -62,7 +62,7 @@ For planning the week:
 
 ### TRMNL X
 
-![The next 48 hours on TRMNL X](screenshots/next-24-hours-trmnl-x.png)
+<img src="screenshots/next-24-hours-trmnl-x.png" width="400" alt="The next 48 hours on TRMNL X">
 
 The same markup works on the original TRMNL (800 × 480) and on TRMNL X (1872 × 1404):
 the content scales to the width of the screen, and on the taller X the hourly charts grow
