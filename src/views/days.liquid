@@ -88,16 +88,16 @@
 {%- for day in pair -%}
   {% include "partials/day" %}
   {%- if days contains day -%}{% include "partials/alerts" %}{%- else -%}{%- assign alerts = "" -%}{%- endif -%}
-  {%- if forloop.first -%}{%- assign first_long = day_long -%}{%- assign today_alerts = alerts -%}{%- assign light_today = light -%}{%- assign t_rise = rise -%}{%- assign t_set = set -%}{%- assign t_set_min = set_min -%}{%- assign today_long = day_long -%}{%- assign today_short = day_short | append: " " | append: day_date -%}
+  {%- if forloop.first -%}{%- assign first_long = day_short | append: " " | append: day_date -%}{%- assign today_alerts = alerts -%}{%- assign light_today = light -%}{%- assign t_rise = rise -%}{%- assign t_set = set -%}{%- assign t_set_min = set_min -%}{%- assign today_long = day_long -%}{%- assign today_short = day_short | append: " " | append: day_date -%}
   {%- elsif alerts != "" and today_alerts == "" -%}{%- assign today_alerts = alerts -%}{%- endif -%}
   {%- if mode == "two" -%}
     <div class="col">
       <div class="mv-head">
         <span class="when">
-          {%- if forloop.first and start == 0 -%}{{ T_today }}{%- elsif forloop.first or start == 0 -%}{{ T_tomorrow }}{%- else -%}{{ day_name }}{%- endif -%}
+          {%- if forloop.first and start == 0 -%}{{ T_today }}{%- elsif forloop.first or start == 0 -%}{% if alerts != "" and n_alerts > 1 %}{{ T_tmrw }}{% else %}{{ T_tomorrow }}{% endif %}{%- else -%}{{ day_name }}{%- endif -%}
           {%- if alerts != "" -%}{{ alerts }}{%- endif -%}
         </span>
-        <span class="date">{% if alerts != "" and n_alerts > 1 %}{% elsif alerts != "" %}{{ day_short }} {{ day_date }}{% elsif start == 0 or forloop.first %}{{ day_long }}{% else %}{{ day_date }}{% endif %}</span>
+        <span class="date">{{ day_short }} {{ day_date }}</span>
       </div>
       {%- if days contains day -%}
       <div class="hero">
@@ -149,7 +149,7 @@
           {{ drop_glyph }}<b>{% assign n = rain %}{% include "partials/dec1" %} mm</b> · {{ chance | times: 100 | round }} %<br>
           {%- if shine != nil -%}{{ sun_glyph }}<b>{{ shine | round | replace: ".", T_dec }} h</b> · {% endif %}{{ wind | times: wind_k | round }} {{ wind_unit }}
         </div>
-        <div class="g">{% if gust >= 10 and gusty != true %}{{ T_gusts_l }} {{ gust | times: wind_k | round }} {{ wind_unit }}{% else %}&nbsp;{% endif %}</div>
+        <div class="g">{% if gust >= 10 %}{{ T_gusts_l }} {{ gust | times: wind_k | round }} {{ wind_unit }}{% else %}&nbsp;{% endif %}</div>
         <div class="b">{% if alerts != "" %}{{ alerts }}{% else %}&nbsp;{% endif %}</div>
       </div>
   {%- endif -%}
@@ -269,7 +269,6 @@
   .mv-tt .temps { display: flex; flex-direction: column; flex: none; }
   .mv-tt .mv-max { font-size: 72px; }
   .mv-tt .min { font-size: 20px; font-weight: 600; margin-top: 2px; }
-  .mv-tt .mv-head .when { overflow: hidden; text-overflow: clip; }
   .mv-tt .side { margin-left: auto; text-align: right; line-height: 1.3; min-width: 0; }
   .mv-tt .what { font-size: 18px; font-weight: 800; white-space: nowrap; }
   .mv-tt .diff { font-size: 15px; font-weight: 600; white-space: nowrap; }
@@ -312,7 +311,7 @@
 <div class="mv mv-5">
   <div class="cards">{{ items }}</div>
   {%- comment -%} the head comes first on screen (order: -1), once the cards have read the days {%- endcomment -%}
-  <div class="mv-head"><span class="when">{{ T_days5 }}</span><span class="date">{{ first_long }} – {{ day_long }}</span></div>
+  <div class="mv-head"><span class="when">{{ T_days5 }}</span><span class="date">{{ first_long }} – {{ day_short }} {{ day_date }}</span></div>
   {{ chart_html }}
   <div class="sum">
     {{ T_warmest }} <b>{{ best_t_day }} {{ best_t | round }}°</b>
@@ -342,7 +341,7 @@
   .mv-nh .mv-chart { margin-top: auto; }
 </style>
 <div class="mv mv-nh">
-  <div class="mv-head"><span class="when">{{ T_next | replace: "#", hours_n }}{% if alerts != "" %}{{ alerts }}{% endif %}</span><span class="date">{% if alerts != "" %}{{ today_short }} → {{ end_short }}{% else %}{{ today_long }} → {{ end_long }}{% endif %}</span></div>
+  <div class="mv-head"><span class="when">{{ T_next | replace: "#", hours_n }}{% if alerts != "" %}{{ alerts }}{% endif %}</span><span class="date">{{ today_short }} → {{ end_short }}</span></div>
   <div class="hero">
     {{ hero_svg }}
     <div class="temps">

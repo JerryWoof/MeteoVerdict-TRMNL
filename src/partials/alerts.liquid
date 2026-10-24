@@ -3,7 +3,7 @@
   threshold flags (thresholds, not ČHMÚ warnings): frost (the corrected night minimum ending this morning: air
   frost, else ground frost at 5 cm; older data without those fields: low at or below
   0 °C), heavy rain (`heavy_rain` of a part of the day; older data: 10 mm or more), gusts
-  (`gust_over_threshold`, with the strongest gust; older data: an hourly mean of 10 m/s
+  (`gust_over_threshold`; older data: an hourly mean of 10 m/s
   or more), heat (30 °C or more).
 {%- endcomment -%}
 {%- assign alerts = "" -%}{%- assign n_alerts = 0 -%}
@@ -30,7 +30,7 @@
 {%- endif -%}
 {%- if n_alerts < 2 -%}
   {%- if gusty -%}
-    {%- capture a -%}<span class="mv-badge">{{ T_gusts }} {{ gust_max | times: wind_k | round }} {{ wind_unit }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
+    {%- capture a -%}<span class="mv-badge">{{ T_gusts }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
   {%- elsif gust_flags == false and rows.size > 0 and wind >= 10 -%}
     {%- capture a -%}<span class="mv-badge">{{ T_storm }}</span>{%- endcapture -%}{%- assign alerts = alerts | append: a -%}{%- assign n_alerts = n_alerts | plus: 1 -%}
   {%- endif -%}
