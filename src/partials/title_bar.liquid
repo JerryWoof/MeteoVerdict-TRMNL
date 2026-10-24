@@ -18,7 +18,6 @@
   {%- if stale -%}
   <span class="instance"><span class="mv-badge">{{ T_stale }}</span> {{ T_updated }} {{ gdate }} {{ gtime }}</span>
   {%- else -%}
-  {%- if any_alert -%}<span class="mv-note">{{ T_notice }}</span>{%- endif -%}
   <span class="instance">{% if ai %}{{ T_ai }}{% else %}MeteoVerdict{% endif %} · {{ now_local | date: "%H:%M" }}</span>
   {%- endif -%}
 </div>
