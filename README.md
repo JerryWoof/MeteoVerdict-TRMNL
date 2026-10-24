@@ -5,8 +5,6 @@ Weather for your Czech district on a [TRMNL](https://trmnl.com) e-ink display: t
 its timing and chance, sunshine, clouds, wind and gusts, pressure, humidity, sunrise and
 sunset, and badges for frost, rain and gusts. In English or Czech.
 
-![The next 48 hours in Prague](screenshots/next-24-hours.png)
-
 The forecast is [MeteoVerdict](https://meteoverdict.cz/)'s. Every day,
 MeteoVerdict checks how well about 20 weather models forecast what ČHMÚ stations then
 measured, and blends them, weighting each model by how accurate it has been in your okres
