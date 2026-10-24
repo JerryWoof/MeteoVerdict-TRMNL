@@ -81,6 +81,7 @@
   {%- if p1 > now_local and p0 < w_end and r.rain_probability > w_chance -%}{%- assign w_chance = r.rain_probability -%}{%- endif -%}
 {%- endfor -%}
 {%- assign now_t = H.temperature_2m[s] -%}
+{%- assign pm_now = nil -%}{%- if H.temperature_2m_hi[s] != nil and H.temperature_2m_lo[s] != nil -%}{%- assign pm_now = H.temperature_2m_hi[s] | minus: H.temperature_2m_lo[s] | divided_by: 2.0 | round -%}{%- endif -%}
 {%- assign rh_now = HS.relative_humidity_2m[s] -%}{%- assign dew_now = HS.dew_point_2m[s] -%}
 {%- endif -%}
 {%- capture items -%}
@@ -345,8 +346,7 @@
   <div class="hero">
     {{ hero_svg }}
     <div class="temps">
-      <span class="mv-max">{% if now_t != nil %}{{ now_t | round }}°{% else %}–{% endif %}</span>
-      <span class="min">{{ T_now }} · {{ now_local | date: "%H:%M" }}</span>
+      <span class="mv-max">{% if now_t != nil %}{{ now_t | round }}°{% if pm_now != nil and pm_now >= 1 %}<small class="mv-pm">±{{ pm_now }}</small>{% endif %}{% else %}–{% endif %}</span>
     </div>
     {%- if rain_text != "" -%}
     <div class="say">{{ rain_text }}{% if w_rain >= 0.1 %}<small>{% assign n = w_rain %}{% include "partials/dec1" %} mm{% if w_chance >= 0.05 %} · {{ w_chance | times: 100 | round }} % {{ T_chance }}{% endif %}</small>{% endif %}</div>
