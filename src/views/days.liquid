@@ -20,7 +20,6 @@
 {%- else -%}{%- assign mode = "two" -%}{%- for d in days offset: start limit: 2 -%}{%- assign pair = pair | append: d | append: "," -%}{%- endfor -%}
 {%- endcase -%}
 {%- assign pair = pair | split: "," -%}
-{%- assign any_alert = false -%}
 {%- assign best_t = -99 -%}{%- assign best_r = 0 -%}{%- assign best_s = -1 -%}{%- assign today_alerts = "" -%}
 {%- assign pair_both = 0 -%}
 {%- for d in pair -%}{%- if days contains d -%}{%- assign pair_both = pair_both | plus: 1 -%}{%- endif -%}{%- endfor -%}
@@ -57,19 +56,22 @@
 {%- if first_wet < 0 -%}
   {%- assign rain_text = T_dry | replace: "#", hours_n -%}
   {%- if w_hours < hours_n -%}{%- assign rain_text = "" -%}{%- endif -%}
+  {%- assign rain_lab = rain_text -%}{%- assign rain_clock = "" -%}
 {%- elsif first_wet == s1 -%}
   {%- if first_dry < 0 -%}
-    {%- assign rain_text = T_rain_all -%}
+    {%- assign rain_text = T_rain_all -%}{%- assign rain_lab = rain_text -%}{%- assign rain_clock = "" -%}
   {%- else -%}
     {%- assign e = HS.time[first_dry] | date: "%s" | minus: 3600 -%}{% include "partials/local" %}
     {%- assign rain_text = le | date: "%H:%M" | prepend: " " -%}{%- assign rd = le | date: "%Y-%m-%d" -%}
     {%- if rd != real_today -%}{%- assign rain_text = T_tomorrow | downcase | prepend: " " | append: rain_text -%}{%- endif -%}
+    {%- assign rain_clock = le | date: "%H:%M" -%}{%- assign rain_lab = T_rain_until -%}{%- if rd != real_today -%}{%- assign rain_lab = T_tomorrow | downcase | prepend: " " | prepend: T_rain_until -%}{%- endif -%}
     {%- assign rain_text = rain_text | prepend: T_rain_until -%}
   {%- endif -%}
 {%- else -%}
   {%- assign e = HS.time[first_wet] | date: "%s" | minus: 3600 -%}{% include "partials/local" %}
   {%- assign rain_text = le | date: "%H:%M" | prepend: " " -%}{%- assign rd = le | date: "%Y-%m-%d" -%}
   {%- if rd != real_today -%}{%- assign rain_text = T_tomorrow | downcase | prepend: " " | append: rain_text -%}{%- endif -%}
+  {%- assign rain_clock = le | date: "%H:%M" -%}{%- assign rain_lab = T_rain_from -%}{%- if rd != real_today -%}{%- assign rain_lab = T_tomorrow | downcase | prepend: " " | prepend: T_rain_from -%}{%- endif -%}
   {%- assign rain_text = rain_text | prepend: T_rain_from -%}
 {%- endif -%}
 
@@ -89,17 +91,16 @@
 {%- for day in pair -%}
   {% include "partials/day" %}
   {%- if days contains day -%}{% include "partials/alerts" %}{%- else -%}{%- assign alerts = "" -%}{%- endif -%}
-  {%- if alerts != "" -%}{%- assign any_alert = true -%}{%- endif -%}
-  {%- if forloop.first -%}{%- assign first_long = day_long -%}{%- assign today_alerts = alerts -%}{%- assign light_today = light -%}{%- assign t_rise = rise -%}{%- assign t_set = set -%}{%- assign t_set_min = set_min -%}{%- assign today_long = day_long -%}
+  {%- if forloop.first -%}{%- assign first_long = day_name | append: " " | append: day_date -%}{%- assign today_alerts = alerts -%}{%- assign light_today = light -%}{%- assign t_rise = rise -%}{%- assign t_set = set -%}{%- assign t_set_min = set_min -%}{%- assign today_long = day_long -%}{%- assign today_short = day_name | append: " " | append: day_date -%}
   {%- elsif alerts != "" and today_alerts == "" -%}{%- assign today_alerts = alerts -%}{%- endif -%}
   {%- if mode == "two" -%}
     <div class="col">
       <div class="mv-head">
         <span class="when">
-          {%- if forloop.first and start == 0 -%}{{ T_today }}{%- elsif forloop.first or start == 0 -%}{{ T_tomorrow }}{%- else -%}{{ day_name }}{%- endif -%}
+          {%- if forloop.first and start == 0 -%}{{ T_today }}{%- elsif forloop.first or start == 0 -%}{% if alerts != "" and n_alerts > 1 %}{{ T_tmrw }}{% else %}{{ T_tomorrow }}{% endif %}{%- else -%}{{ day_name }}{%- endif -%}
           {%- if alerts != "" -%}{{ alerts }}{%- endif -%}
         </span>
-        <span class="date">{% if alerts != "" %}{{ day_short }} {{ day_date }}{% elsif start == 0 or forloop.first %}{{ day_long }}{% else %}{{ day_date }}{% endif %}</span>
+        <span class="date">{{ day_short }} {{ day_date }}</span>
       </div>
       {%- if days contains day -%}
       <div class="hero">
@@ -151,16 +152,17 @@
           {{ drop_glyph }}<b>{% assign n = rain %}{% include "partials/dec1" %} mm</b> · {{ chance | times: 100 | round }} %<br>
           {%- if shine != nil -%}{{ sun_glyph }}<b>{{ shine | round | replace: ".", T_dec }} h</b> · {% endif %}{{ wind | times: wind_k | round }} {{ wind_unit }}
         </div>
-        <div class="g">{% if gust >= 10 and gusty != true %}{{ T_gusts_l }} {{ gust | times: wind_k | round }} {{ wind_unit }}{% else %}&nbsp;{% endif %}</div>
+        <div class="g">{% if gust >= 10 %}{{ T_gusts_l }} {{ gust | times: wind_k | round }} {{ wind_unit }}{% else %}&nbsp;{% endif %}</div>
         <div class="b">{% if alerts != "" %}{{ alerts }}{% else %}&nbsp;{% endif %}</div>
       </div>
   {%- endif -%}
 {%- endfor -%}
 {%- endcapture -%}
 {%- if mode == "hours" -%}
-{%- assign alerts = today_alerts -%}{%- if alerts != "" -%}{%- assign any_alert = true -%}{%- endif -%}
+{%- assign alerts = today_alerts -%}
 {%- assign e = HS.time[last] | date: "%s" | plus: 0 -%}{% include "partials/local" %}
 {%- assign end_day = le | date: "%Y-%m-%d" -%}{%- assign end_wd = le | date: "%w" | plus: 0 -%}{%- assign end_mo = le | date: "%m" | plus: 0 | minus: 1 -%}{%- assign end_num = le | date: "%d" | plus: 0 -%}
+{%- if lang == "cs" -%}{%- assign end_short = end_mo | plus: 1 | prepend: ". " | prepend: end_num | append: "." | prepend: " " | prepend: T_days[end_wd] -%}{%- else -%}{%- assign end_short = T_months[end_mo] | slice: 0, 3 | prepend: " " | prepend: end_num | prepend: " " | prepend: T_days[end_wd] -%}{%- endif -%}
 {%- if lang == "cs" -%}{%- assign end_long = T_days[end_wd] | append: " " | append: end_num | append: ". " | append: T_months[end_mo] -%}{%- else -%}{%- assign end_long = T_days[end_wd] | append: " " | append: end_num | append: " " | append: T_months[end_mo] -%}{%- endif -%}
 {%- assign now_min = now_local | date: "%H" | times: 60 -%}{%- assign now_min = now_local | date: "%M" | plus: now_min -%}
 {%- assign sun_a = "" -%}{%- assign sun_b = "" -%}
@@ -270,7 +272,6 @@
   .mv-tt .temps { display: flex; flex-direction: column; flex: none; }
   .mv-tt .mv-max { font-size: 72px; }
   .mv-tt .min { font-size: 20px; font-weight: 600; margin-top: 2px; }
-  .mv-tt .mv-head .when { overflow: hidden; text-overflow: clip; }
   .mv-tt .side { margin-left: auto; text-align: right; line-height: 1.3; min-width: 0; }
   .mv-tt .what { font-size: 18px; font-weight: 800; white-space: nowrap; }
   .mv-tt .diff { font-size: 15px; font-weight: 600; white-space: nowrap; }
@@ -313,7 +314,7 @@
 <div class="mv mv-5">
   <div class="cards">{{ items }}</div>
   {%- comment -%} the head comes first on screen (order: -1), once the cards have read the days {%- endcomment -%}
-  <div class="mv-head"><span class="when">{{ T_days5 }}</span><span class="date">{{ first_long }} – {{ day_long }}</span></div>
+  <div class="mv-head"><span class="when">{{ T_days5 }}</span><span class="date">{{ first_long }} – {{ day_name }} {{ day_date }}</span></div>
   {{ chart_html }}
   <div class="sum">
     {{ T_warmest }} <b>{{ best_t_day }} {{ best_t | round }}°</b>
@@ -326,11 +327,13 @@
   .mv-nh { display: flex; flex-direction: column; gap: 5px; }
   .mv-nh .hero { display: flex; align-items: center; gap: 10px; height: 96px; }
   .mv-nh .hero > svg { width: 92px; height: 92px; flex: none; }
-  .mv-nh .temps { display: flex; flex-direction: column; flex: none; }
+  .mv-nh .temps { display: flex; flex-direction: column; align-items: flex-start; flex: none; }
   .mv-nh .mv-max { font-size: 72px; }
   .mv-nh .min { font-size: 18px; font-weight: 600; margin-top: 2px; white-space: nowrap; }
-  .mv-nh .say { flex: 1; min-width: 0; border: 2px solid #000; border-radius: 8px; padding: 5px 10px; font-size: 19px; font-weight: 800; line-height: 1.2; }
-  .mv-nh .say small { display: block; font-size: 14px; font-weight: 600; margin-top: 2px; }
+  .mv-nh .say { flex: none; width: 370px; margin: 6px auto; align-self: stretch; display: grid; grid-template-columns: 1fr auto; column-gap: 12px; align-content: center; align-items: center; border: 2px solid #000; border-radius: 8px; padding: 4px 14px; font-size: 20px; font-weight: 800; line-height: 1.2; }
+  .mv-nh .say .l { grid-column: 1; grid-row: 1; }
+  .mv-nh .say .c { grid-column: 2; grid-row: 1 / span 2; font-size: 44px; font-weight: 800; letter-spacing: -1px; line-height: 1; }
+  .mv-nh .say small { grid-column: 1; grid-row: 2; font-size: 14px; font-weight: 600; margin-top: 2px; }
   .mv-nh .side { text-align: right; line-height: 1.3; white-space: nowrap; }
   .mv-nh .what { font-size: 18px; font-weight: 800; }
   .mv-nh .mv-sun { font-size: 17px; }
@@ -343,15 +346,15 @@
   .mv-nh .mv-chart { margin-top: auto; }
 </style>
 <div class="mv mv-nh">
-  <div class="mv-head"><span class="when">{{ T_next | replace: "#", hours_n }}{% if alerts != "" %}{{ alerts }}{% endif %}</span><span class="date">{{ today_long }} → {{ end_long }}</span></div>
+  <div class="mv-head"><span class="when">{{ T_next | replace: "#", hours_n }}{% if alerts != "" %}{{ alerts }}{% endif %}</span><span class="date">{{ today_short }} → {{ end_short }}</span></div>
   <div class="hero">
     {{ hero_svg }}
     <div class="temps">
+      <span class="min">{{ T_now }}:</span>
       <span class="mv-max">{% if now_t != nil %}{{ now_t | round }}°{% else %}–{% endif %}</span>
-      <span class="min">{{ T_now }} · {{ now_local | date: "%H:%M" }}</span>
     </div>
     {%- if rain_text != "" -%}
-    <div class="say">{{ rain_text }}{% if w_rain >= 0.1 %}<small>{% assign n = w_rain %}{% include "partials/dec1" %} mm{% if w_chance >= 0.05 %} · {{ w_chance | times: 100 | round }} % {{ T_chance }}{% endif %}</small>{% endif %}</div>
+    <div class="say"><span class="l">{{ rain_lab }}</span>{% if rain_clock != "" %}<span class="c">{{ rain_clock }}</span>{% endif %}{% if w_rain >= 0.1 %}<small>{% assign n = w_rain %}{% include "partials/dec1" %} mm{% if w_chance >= 0.05 %} · {{ w_chance | times: 100 | round }} % {{ T_chance }}{% endif %}</small>{% endif %}</div>
     {%- else -%}<div style="flex:1"></div>{%- endif -%}
     <div class="side">
       {%- if w_hi > -99 -%}<div class="what">{{ T_high }} {{ w_hi | round }}° · {{ T_low }} {{ w_lo | round }}°</div>{%- endif -%}

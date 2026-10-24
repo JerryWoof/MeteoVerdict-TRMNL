@@ -59,8 +59,8 @@ obce druhá adresa neexistuje (`…/CZ0423/.json`), proto pro samotný okres nec
 
 - V náhledu záložky Full nejsou texty `Liquid error`, `NaN`, `undefined`, `{{`.
 - **Patička** vpravo: `MeteoVerdict AI · HH:MM` (výchozí) nebo `MeteoVerdict · HH:MM`
-  (kombinovaná předpověď). Čas je aktuální český čas. Je-li na obrazovce odznak (*Mráz*,
-  *Déšť*, *Nárazy*), uprostřed patičky stojí „Odznaky nejsou výstrahy ČHMÚ“.
+  (kombinovaná předpověď). Čas je aktuální český čas. Odznaky (*Mráz*,
+  *Déšť*, *Nárazy*) jsou v hlavičce dne; jsou-li dva, „Tomorrow“ se zkrátí na „Tmrw“, a kdyby to nestačilo, datum se uřízne. Datum je vždy krátké (24 Oct); v pohledech 24 h, 48 h a 5 dní stojí před ním plný název dne (Saturday), v Dnes a zítra zkratka (Sat).
 - *Příštích 24 hodin*: hlavička s rozsahem dnů (`sobota 24. října → neděle 25. října`),
   šest údajů (srážky, slunce, oblačnost, vítr s nárazy, tlak, vlhkost) a graf s časovou
   osou. *48 hodin* je stejné, s popisky po 6 hodinách.
