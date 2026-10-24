@@ -102,7 +102,7 @@ test("missing values show a dash, not 0°", async () => {
   freezeTime("2026-10-12T15:40:00Z");
   const gaps = variant((f) => hourly(f, "temperature_2m", (v, i) => (i >= 15 && i <= 20 ? null : v)));
   const words = text(await renderLayout("full", gaps, { view: "next_24h" }));
-  assert.match(words, /→ [A-Za-z]+ \d+ \w+ – (Dry|Rain)/);
+  assert.match(words, /→ [A-Za-z]+ \d+ \w+ – Now/);
   assert.match(words, /18 –/);
 });
 
@@ -322,7 +322,7 @@ test("next 24 and 48 hours: the span of days, the six facts, the symbols every 3
   assert.match(h24, /Next 24 hours Frost Saturday 24 Oct → Sunday 25 Oct/);
   for (const fact of ["Rain", "Sunshine", "Clouds", "Wind", "Pressure", "Humidity"]) assert.match(h24, new RegExp(fact));
   assert.match(h24, /gusts \d+/);
-  assert.match(h24, /→ Sunday 25 Oct \d+° ±\d/); // the temperature now with its ±
+  assert.match(h24, /→ Sunday 25 Oct \d+° Now Rain/); // the temperature now, "Now" under it, no time
   assert.doesNotMatch(h24, /Now ·/);
   assert.match(h24, /dew point -?\d+°/);
   assert.match(h24, /Rain from tomorrow 08:00/);

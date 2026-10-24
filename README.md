@@ -25,7 +25,7 @@ A weather display gets a glance on your way out. Pick the view in the plugin's s
 
 For "what will it do, and when?" The window starts now (the head says which days it spans:
 *Friday 23 October → Saturday 24 October*):
-- the temperature now with its ± (half of the 80 % range), a plain sentence about the rain (*Rain from tomorrow 08:00 · 1.1 mm ·
+- the temperature now, a plain sentence about the rain (*Rain from tomorrow 08:00 · 1.1 mm ·
   84 % chance*, *Rain until 20:00*, *Dry for the next 24 hours*), the high and low of the
   window, and the next sunset and sunrise;
 - six facts over the window: rain, sunshine, clouds, wind with its gusts, pressure with its
