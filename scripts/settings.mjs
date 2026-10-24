@@ -50,6 +50,12 @@ ${okresy.map(([name, code]) => `  - ${q(name)}: ${code}`).join("\n")}
   - "MeteoVerdict AI": ai/okresy
   - "MeteoVerdict (all models combined)": okresy
   default: ai/okresy
+- keyname: obec
+  field_type: string
+  name: Obec
+  description: The id of an obec (village or town) in the okres chosen above, for its own forecast instead of the okres's, e.g. velemin. The id is the name in lower case without diacritics, with - for spaces (the list is on the Data page of meteoverdict.cz). Needs the two-line Polling URL (see the plugin's page on GitHub).
+  placeholder: velemin
+  optional: true
 - keyname: view
   field_type: select
   name: View (full screen)

@@ -40,6 +40,21 @@ Soubory získáte z větve `main` repa (`git pull`, nebo na GitHubu **Code → D
 6. Zařízení si novou obrazovku vezme při příštím probuzení podle *Refresh rate*
    (doporučeno hodinově). Hned: v **Devices** u zařízení vyvolejte obnovení.
 
+### Obec místo okresu
+
+Nové pole formuláře **Obec** (po vložení `settings.yml`): id obce v okrese vybraném v poli
+*Okres*, tedy název malými písmeny bez diakritiky, s `-` místo mezer (např. `velemin` u
+okresu Litoměřice). Polling URL má pak dva řádky:
+
+```
+https://meteoverdict.cz/api/v1/{{ forecast_model }}/{{ okres_code }}.json
+https://meteoverdict.cz/api/v1/{{ forecast_model | replace: "okresy", "obce" }}/{{ okres_code }}/{{ obec }}.json
+```
+
+Filtr `replace` v polling URL funguje (ověřeno: z `ai/okresy` udělá `ai/obce`). Bez vyplněné
+obce druhá adresa neexistuje (`…/CZ0423/.json`), proto pro samotný okres nechte jen první
+řádek. Obec bez pole lze dál zadat i ručně: dva řádky s pevným okresem a obcí.
+
 ## 3. Jak ověřit
 
 - V náhledu záložky Full nejsou texty `Liquid error`, `NaN`, `undefined`, `{{`.
